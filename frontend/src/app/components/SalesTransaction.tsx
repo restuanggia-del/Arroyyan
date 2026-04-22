@@ -229,7 +229,7 @@ export function SalesTransaction() {
                       </h4>
                       <button
                         onClick={() => removeFromCart(item.product.id)}
-                        className="text-red-600 hover:bg-red-50 p-1 rounded"
+                        className="text-red-600 hover:bg-red-50 p-1 rounded cursor-pointer"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -238,7 +238,7 @@ export function SalesTransaction() {
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => updateQuantity(item.product.id, -1)}
-                          className="w-7 h-7 border border-gray-300 rounded flex items-center justify-center hover:bg-gray-50"
+                          className="w-7 h-7 border border-gray-300 rounded flex items-center justify-center hover:bg-gray-50 cursor-pointer"
                         >
                           <Minus className="w-4 h-4" />
                         </button>
@@ -247,7 +247,7 @@ export function SalesTransaction() {
                         </span>
                         <button
                           onClick={() => updateQuantity(item.product.id, 1)}
-                          className="w-7 h-7 border border-gray-300 rounded flex items-center justify-center hover:bg-gray-50"
+                          className="w-7 h-7 border border-gray-300 rounded flex items-center justify-center hover:bg-gray-50 cursor-pointer"
                         >
                           <Plus className="w-4 h-4" />
                         </button>

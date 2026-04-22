@@ -106,7 +106,7 @@ export function Calendar() {
         {Array.from({ length: daysInMonth }).map((_, index) => {
           const date = index + 1;
           const event = getEventForDate(date);
-          const isToday = date === 21;
+          const isToday = date === 22;
 
           return (
             <div
