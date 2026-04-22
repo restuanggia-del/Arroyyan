@@ -11,6 +11,7 @@ import { Calendar } from "./components/Calendar";
 import { ProductManagement } from "./components/ProductManagement";
 import { StockManagement } from "./components/StockManagement";
 import { DollarSign, TrendingUp, ShoppingCart, Package } from "lucide-react";
+import { DistributionManagement } from "./components/DistributionManagement";
 
 export default function App() {
   const [activeMenu, setActiveMenu] = useState("dashboard");
@@ -21,6 +22,8 @@ export default function App() {
         return <ProductManagement />;
       case "stok":
         return <StockManagement />;
+      case "distribusi":
+        return <DistributionManagement />;
       case "dashboard":
       default:
         return (
