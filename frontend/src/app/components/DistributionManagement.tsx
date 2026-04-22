@@ -205,7 +205,7 @@ export function DistributionManagement() {
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value as any)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm cursor-pointer"
               >
                 <option value="all">Semua Status</option>
                 <option value="pending">Pending</option>
@@ -216,7 +216,7 @@ export function DistributionManagement() {
 
             <button
               onClick={handleAddDistribution}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors cursor-pointer"
             >
               <Plus className="w-5 h-5" />
               Buat Distribusi Baru

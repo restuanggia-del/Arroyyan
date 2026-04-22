@@ -110,7 +110,7 @@ export function DistributionModal({ onClose, onSave }: DistributionModalProps) {
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
           >
             <X className="w-5 h-5 text-gray-500" />
           </button>
@@ -142,7 +142,7 @@ export function DistributionModal({ onClose, onSave }: DistributionModalProps) {
                 required
                 value={formData.distributorId}
                 onChange={(e) => handleChange("distributorId", e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
               >
                 <option value="">-- Pilih Distributor --</option>
                 {distributors.map((distributor) => (
@@ -161,7 +161,7 @@ export function DistributionModal({ onClose, onSave }: DistributionModalProps) {
                 required
                 value={formData.productId}
                 onChange={(e) => handleChange("productId", e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
               >
                 <option value="">-- Pilih Produk --</option>
                 {products.map((product) => (
@@ -230,14 +230,15 @@ export function DistributionModal({ onClose, onSave }: DistributionModalProps) {
             )}
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Status Pengiriman <span className="text-red-500">*</span>
+              <label className="block text-sm font-medium text-gray-700 mb-2 ">
+                Status Pengiriman{" "}
+                <span className="text-red-500 cursor-pointer">*</span>
               </label>
               <select
                 required
                 value={formData.status}
                 onChange={(e) => handleChange("status", e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
               >
                 <option value="pending">Pending - Belum Dikirim</option>
                 <option value="dalam_perjalanan">Dalam Perjalanan</option>
@@ -263,13 +264,13 @@ export function DistributionModal({ onClose, onSave }: DistributionModalProps) {
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+              className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors cursor-pointer"
             >
               Batal
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center gap-2"
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center gap-2 cursor-pointer"
             >
               <Truck className="w-4 h-4" />
               Buat Distribusi
