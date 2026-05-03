@@ -9,6 +9,7 @@ import {
   Eye,
   X,
 } from "lucide-react";
+import { AddCustomerModal } from "./AddCustomerModal";
 
 interface Purchase {
   id: string;
@@ -130,6 +131,7 @@ const customers: Customer[] = [
 ];
 
 export function CustomerManagement() {
+  const [customerList, setCustomerList] = useState<Customer[]>(customers);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState<"all" | "loyal" | "regular">(
     "all",
@@ -137,8 +139,14 @@ export function CustomerManagement() {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
     null,
   );
+  const [showAddModal, setShowAddModal] = useState(false);
 
-  const filteredCustomers = customers.filter((customer) => {
+  const handleAddCustomer = (customer: Customer) => {
+    setCustomerList([customer, ...customerList]);
+    setShowAddModal(false);
+  };
+
+  const filteredCustomers = customerList.filter((customer) => {
     const matchesSearch =
       customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       customer.phone.includes(searchQuery);
@@ -151,9 +159,11 @@ export function CustomerManagement() {
     return matchesSearch && matchesFilter;
   });
 
-  const loyalCustomerCount = customers.filter((c) => c.isLoyalCustomer).length;
-  const totalCustomers = customers.length;
-  const totalRevenue = customers.reduce((sum, c) => sum + c.totalSpent, 0);
+  const loyalCustomerCount = customerList.filter(
+    (c) => c.isLoyalCustomer,
+  ).length;
+  const totalCustomers = customerList.length;
+  const totalRevenue = customerList.reduce((sum, c) => sum + c.totalSpent, 0);
   const averagePerCustomer = totalRevenue / totalCustomers;
 
   return (
@@ -264,7 +274,10 @@ export function CustomerManagement() {
               </div>
             </div>
 
-            <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+            >
               <Plus className="w-5 h-5" />
               Tambah Pelanggan
             </button>
@@ -373,6 +386,13 @@ export function CustomerManagement() {
           </div>
         </div>
       </div>
+
+      {showAddModal && (
+        <AddCustomerModal
+          onClose={() => setShowAddModal(false)}
+          onSave={handleAddCustomer}
+        />
+      )}
 
       {selectedCustomer && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
