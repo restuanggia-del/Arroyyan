@@ -17,6 +17,7 @@ import { CustomerManagement } from "./components/CustomerManagement";
 import { Reports } from "./components/Reports";
 import { SalesPrediction } from "./components/SalesPrediction";
 import { AuditLog } from "./components/AuditLog";
+import { SystemSettings } from "./components/SystemSettings";
 
 export default function App() {
   const [activeMenu, setActiveMenu] = useState("dashboard");
@@ -39,6 +40,8 @@ export default function App() {
         return <SalesPrediction />;
       case "log":
         return <AuditLog />;
+      case "pengaturan":
+        return <SystemSettings />;
       case "dashboard":
       default:
         return (
