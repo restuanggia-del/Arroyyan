@@ -14,6 +14,7 @@ import { DollarSign, TrendingUp, ShoppingCart, Package } from "lucide-react";
 import { DistributionManagement } from "./components/DistributionManagement";
 import { SalesTransaction } from "./components/SalesTransaction";
 import { CustomerManagement } from "./components/CustomerManagement";
+import { Reports } from "./components/Reports";
 
 export default function App() {
   const [activeMenu, setActiveMenu] = useState("dashboard");
@@ -30,6 +31,8 @@ export default function App() {
         return <SalesTransaction />;
       case "pelanggan":
         return <CustomerManagement />;
+      case "laporan":
+        return <Reports />;
       case "dashboard":
       default:
         return (
