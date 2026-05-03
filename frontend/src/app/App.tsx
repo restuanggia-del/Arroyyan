@@ -13,6 +13,7 @@ import { StockManagement } from "./components/StockManagement";
 import { DollarSign, TrendingUp, ShoppingCart, Package } from "lucide-react";
 import { DistributionManagement } from "./components/DistributionManagement";
 import { SalesTransaction } from "./components/SalesTransaction";
+import { CustomerManagement } from "./components/CustomerManagement";
 
 export default function App() {
   const [activeMenu, setActiveMenu] = useState("dashboard");
@@ -27,6 +28,8 @@ export default function App() {
         return <DistributionManagement />;
       case "transaksi":
         return <SalesTransaction />;
+      case "pelanggan":
+        return <CustomerManagement />;
       case "dashboard":
       default:
         return (
