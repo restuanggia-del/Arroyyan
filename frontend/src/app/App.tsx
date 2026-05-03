@@ -15,6 +15,7 @@ import { DistributionManagement } from "./components/DistributionManagement";
 import { SalesTransaction } from "./components/SalesTransaction";
 import { CustomerManagement } from "./components/CustomerManagement";
 import { Reports } from "./components/Reports";
+import { SalesPrediction } from "./components/SalesPrediction";
 
 export default function App() {
   const [activeMenu, setActiveMenu] = useState("dashboard");
@@ -33,6 +34,8 @@ export default function App() {
         return <CustomerManagement />;
       case "laporan":
         return <Reports />;
+      case "prediksi":
+        return <SalesPrediction />;
       case "dashboard":
       default:
         return (
