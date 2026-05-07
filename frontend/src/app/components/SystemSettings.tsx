@@ -177,7 +177,7 @@ export function SystemSettings() {
             )}
             <button
               onClick={handleSave}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg flex items-center gap-2 transition-colors"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg flex items-center gap-2 transition-colors cursor-pointer"
             >
               <Save className="w-5 h-5" />
               Simpan Perubahan

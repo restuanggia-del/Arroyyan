@@ -243,7 +243,7 @@ export function CustomerManagement() {
               <div className="flex gap-2">
                 <button
                   onClick={() => setFilterType("all")}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${
                     filterType === "all"
                       ? "bg-blue-50 text-blue-600"
                       : "text-gray-600 hover:bg-gray-50"
@@ -253,7 +253,7 @@ export function CustomerManagement() {
                 </button>
                 <button
                   onClick={() => setFilterType("loyal")}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${
                     filterType === "loyal"
                       ? "bg-amber-50 text-amber-600"
                       : "text-gray-600 hover:bg-gray-50"
@@ -263,7 +263,7 @@ export function CustomerManagement() {
                 </button>
                 <button
                   onClick={() => setFilterType("regular")}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${
                     filterType === "regular"
                       ? "bg-gray-100 text-gray-700"
                       : "text-gray-600 hover:bg-gray-50"
@@ -276,7 +276,7 @@ export function CustomerManagement() {
 
             <button
               onClick={() => setShowAddModal(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors cursor-pointer"
             >
               <Plus className="w-5 h-5" />
               Tambah Pelanggan

@@ -544,7 +544,7 @@ export function Reports() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
         <button
           onClick={() => setActiveReport("sales")}
-          className={`p-4 rounded-lg border-2 transition-all ${
+          className={`p-4 rounded-lg border-2 transition-all cursor-pointer ${
             activeReport === "sales"
               ? "border-blue-500 bg-blue-50"
               : "border-gray-200 hover:border-gray-300"
@@ -566,7 +566,7 @@ export function Reports() {
 
         <button
           onClick={() => setActiveReport("distribution")}
-          className={`p-4 rounded-lg border-2 transition-all ${
+          className={`p-4 rounded-lg border-2 transition-all cursor-pointer ${
             activeReport === "distribution"
               ? "border-blue-500 bg-blue-50"
               : "border-gray-200 hover:border-gray-300"
@@ -592,7 +592,7 @@ export function Reports() {
 
         <button
           onClick={() => setActiveReport("topProducts")}
-          className={`p-4 rounded-lg border-2 transition-all ${
+          className={`p-4 rounded-lg border-2 transition-all cursor-pointer ${
             activeReport === "topProducts"
               ? "border-blue-500 bg-blue-50"
               : "border-gray-200 hover:border-gray-300"
@@ -614,7 +614,7 @@ export function Reports() {
 
         <button
           onClick={() => setActiveReport("stock")}
-          className={`p-4 rounded-lg border-2 transition-all ${
+          className={`p-4 rounded-lg border-2 transition-all cursor-pointer ${
             activeReport === "stock"
               ? "border-blue-500 bg-blue-50"
               : "border-gray-200 hover:border-gray-300"

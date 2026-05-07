@@ -229,12 +229,12 @@ export function AuditLog() {
               </div>
 
               <div className="flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-gray-600" />
+                <Calendar className="w-5 h-5 text-gray-600 " />
                 <input
                   type="date"
                   value={dateFilter}
                   onChange={(e) => setDateFilter(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 "
                 />
               </div>
             </div>
@@ -242,7 +242,7 @@ export function AuditLog() {
             <div className="flex gap-2">
               <button
                 onClick={() => setFilterType("all")}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${
                   filterType === "all"
                     ? "bg-gray-100 text-gray-900"
                     : "text-gray-600 hover:bg-gray-50"
@@ -252,7 +252,7 @@ export function AuditLog() {
               </button>
               <button
                 onClick={() => setFilterType("login")}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${
                   filterType === "login"
                     ? "bg-green-100 text-green-700"
                     : "text-gray-600 hover:bg-gray-50"
@@ -262,7 +262,7 @@ export function AuditLog() {
               </button>
               <button
                 onClick={() => setFilterType("transaction")}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${
                   filterType === "transaction"
                     ? "bg-blue-100 text-blue-700"
                     : "text-gray-600 hover:bg-gray-50"
@@ -272,7 +272,7 @@ export function AuditLog() {
               </button>
               <button
                 onClick={() => setFilterType("data_change")}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${
                   filterType === "data_change"
                     ? "bg-orange-100 text-orange-700"
                     : "text-gray-600 hover:bg-gray-50"
