@@ -180,7 +180,7 @@ export function Login({ onLogin, onSwitchToRegister }: LoginProps) {
 
                 <button
                   type="button"
-                  className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                  className="text-sm text-blue-600 hover:text-blue-700 font-medium cursor-pointer"
                 >
                   Lupa password?
                 </button>
@@ -188,7 +188,7 @@ export function Login({ onLogin, onSwitchToRegister }: LoginProps) {
 
               <button
                 type="submit"
-                className="w-full bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white py-4 rounded-2xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+                className="w-full bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white py-4 rounded-2xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer"
               >
                 Masuk
               </button>
@@ -199,7 +199,7 @@ export function Login({ onLogin, onSwitchToRegister }: LoginProps) {
                 Belum punya akun?{" "}
                 <button
                   onClick={onSwitchToRegister}
-                  className="text-blue-600 hover:text-blue-700 font-semibold"
+                  className="text-blue-600 hover:text-blue-700 font-semibold cursor-pointer"
                 >
                   Daftar Sekarang
                 </button>
