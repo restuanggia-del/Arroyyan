@@ -18,10 +18,63 @@ import { Reports } from "./components/Reports";
 import { SalesPrediction } from "./components/SalesPrediction";
 import { AuditLog } from "./components/AuditLog";
 import { SystemSettings } from "./components/SystemSettings";
+import { Register, RegisterData } from "./components/Register";
+import { Login } from "./components/Login";
 
 export default function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authView, setAuthView] = useState<"login" | "register">("login");
+  const [currentUser, setCurrentUser] = useState({
+    name: "Restu Anggia",
+    role: "Admin" as "Admin" | "Distributor",
+  });
   const [activeMenu, setActiveMenu] = useState("dashboard");
 
+  const handleLogin = (
+    email: string,
+    password: string,
+    rememberMe: boolean,
+  ) => {
+    // Simulasi login - dalam implementasi nyata, kirim ke backend
+    console.log("Login:", { email, password, rememberMe });
+
+    // Set user berdasarkan email (simulasi)
+    if (email.includes("admin")) {
+      setCurrentUser({ name: "Restu Anggia", role: "Admin" });
+    } else {
+      setCurrentUser({ name: "Ahmad Distributor", role: "Distributor" });
+    }
+
+    setIsAuthenticated(true);
+  };
+
+  const handleRegister = (data: RegisterData) => {
+    // Simulasi register - dalam implementasi nyata, kirim ke backend
+    console.log("Register:", data);
+    alert(
+      "Pendaftaran berhasil! Akun Anda akan diverifikasi oleh Admin. Silakan cek email untuk konfirmasi.",
+    );
+    setAuthView("login");
+  };
+
+  // Jika belum login, tampilkan halaman auth
+  if (!isAuthenticated) {
+    if (authView === "login") {
+      return (
+        <Login
+          onLogin={handleLogin}
+          onSwitchToRegister={() => setAuthView("register")}
+        />
+      );
+    } else {
+      return (
+        <Register
+          onRegister={handleRegister}
+          onSwitchToLogin={() => setAuthView("login")}
+        />
+      );
+    }
+  }
   const renderContent = () => {
     switch (activeMenu) {
       case "produk":
