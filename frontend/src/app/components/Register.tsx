@@ -124,7 +124,7 @@ export function Register({ onRegister, onSwitchToLogin }: RegisterProps) {
           <div className="w-full max-w-md">
             <button
               onClick={onSwitchToLogin}
-              className="flex items-center gap-2 text-gray-500 hover:text-blue-600 mb-8 transition-colors"
+              className="flex items-center gap-2 text-gray-500 hover:text-blue-600 mb-8 transition-colors cursor-pointer"
             >
               <ArrowLeft className="w-4 h-4" />
               <span className="text-sm font-medium">Kembali ke Login</span>
@@ -249,7 +249,7 @@ export function Register({ onRegister, onSwitchToLogin }: RegisterProps) {
 
               <button
                 type="submit"
-                className="w-full bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white py-4 rounded-2xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+                className="w-full bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white py-4 rounded-2xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer"
               >
                 Buat Akun
               </button>
@@ -260,7 +260,7 @@ export function Register({ onRegister, onSwitchToLogin }: RegisterProps) {
                 Sudah punya akun?{" "}
                 <button
                   onClick={onSwitchToLogin}
-                  className="text-blue-600 hover:text-blue-700 font-semibold"
+                  className="text-blue-600 hover:text-blue-700 font-semibold cursor-pointer"
                 >
                   Masuk
                 </button>
