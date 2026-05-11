@@ -4,9 +4,11 @@ import { useState } from "react";
 interface UserProfileProps {
   name: string;
   role: "Admin" | "Distributor";
+  onSettings: () => void;
+  onLogout: () => void;
 }
 
-export function UserProfile({ name, role }: UserProfileProps) {
+export function UserProfile({ name, role, onSettings, onLogout }: UserProfileProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -27,12 +29,12 @@ export function UserProfile({ name, role }: UserProfileProps) {
 
       {isOpen && (
         <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
-          <button className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2 cursor-pointer">
+          <button onClick={() => { setIsOpen(false); onSettings(); }} className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2 cursor-pointer">
             <Settings className="w-4 h-4" />
             Pengaturan
           </button>
           <hr className="my-2 border-gray-200" />
-          <button className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 cursor-pointer">
+          <button onClick={() => { setIsOpen(false); onLogout(); }} className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 cursor-pointer">
             <LogOut className="w-4 h-4" />
             Keluar
           </button>

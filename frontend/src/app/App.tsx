@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Logo } from "./components/Logo";
 import { SearchBar } from "./components/SearchBar";
 import { UserProfile } from "./components/UserProfile";
@@ -20,37 +20,61 @@ import { AuditLog } from "./components/AuditLog";
 import { SystemSettings } from "./components/SystemSettings";
 import { Register, RegisterData } from "./components/Register";
 import { Login } from "./components/Login";
+import { loginUser, getCurrentUserRole, registerDistributor } from "../services/authService";
+import { supabase } from "../lib/supabase";
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authView, setAuthView] = useState<"login" | "register">("login");
-  const [currentUser, setCurrentUser] = useState({
-    name: "Restu Anggia",
-    role: "Admin" as "Admin" | "Distributor",
-  });
+  const [currentUser, setCurrentUser] = useState<any>(null);
+
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        const userData = await getCurrentUserRole();
+        if (userData) {
+          setCurrentUser(userData);
+          setIsAuthenticated(true);
+        }
+      }
+    };
+    checkSession();
+  }, []);
   const [activeMenu, setActiveMenu] = useState("dashboard");
 
-  const handleLogin = (
+  const handleLogin = async (
     email: string,
     password: string,
     rememberMe: boolean,
   ) => {
-    // Simulasi login - dalam implementasi nyata, kirim ke backend
-    console.log("Login:", { email, password, rememberMe });
-
-    // Set user berdasarkan email (simulasi)
-    if (email.includes("admin")) {
-      setCurrentUser({ name: "Restu Anggia", role: "Admin" });
-    } else {
-      setCurrentUser({ name: "Ahmad Distributor", role: "Distributor" });
+    const result = await loginUser(email, password);
+    if (result.error) {
+      alert("Login gagal: " + result.error.message);
+      return;
     }
 
+    const userData = await getCurrentUserRole();
+    if (!userData) {
+      alert("Gagal mendapatkan data user");
+      return;
+    }
+
+    if (userData.role === "distributor" && !userData.is_approved) {
+      alert("Akun belum disetujui admin");
+      return;
+    }
+
+    setCurrentUser(userData);
     setIsAuthenticated(true);
   };
 
-  const handleRegister = (data: RegisterData) => {
-    // Simulasi register - dalam implementasi nyata, kirim ke backend
-    console.log("Register:", data);
+  const handleRegister = async (data: RegisterData) => {
+    const result = await registerDistributor(data.name, data.email, data.password);
+    if (result.error) {
+      alert("Register gagal: " + result.error.message);
+      return;
+    }
     alert(
       "Pendaftaran berhasil! Akun Anda akan diverifikasi oleh Admin. Silakan cek email untuk konfirmasi.",
     );
@@ -214,7 +238,17 @@ export default function App() {
         <header className="bg-white border-b border-gray-200 px-8 py-4">
           <div className="flex items-center gap-4">
             <SearchBar />
-            <UserProfile name="Restu Anggia" role="Admin" />
+            <UserProfile
+              name={currentUser?.name || "User"}
+              role={currentUser?.role === "admin" ? "Admin" : "Distributor"}
+              onSettings={() => setActiveMenu("pengaturan")}
+              onLogout={() => {
+                setIsAuthenticated(false);
+                setCurrentUser(null);
+                setAuthView("login");
+                setActiveMenu("dashboard");
+              }}
+            />
           </div>
         </header>
 
