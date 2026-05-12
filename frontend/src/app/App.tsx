@@ -70,13 +70,13 @@ export default function App() {
   };
 
   const handleRegister = async (data: RegisterData) => {
-    const result = await registerDistributor(data.name, data.email, data.password);
+    const result = await registerDistributor(data);
     if (result.error) {
       alert("Register gagal: " + result.error.message);
       return;
     }
     alert(
-      "Pendaftaran berhasil! Akun Anda akan diverifikasi oleh Admin. Silakan cek email untuk konfirmasi.",
+      "Pendaftaran berhasil! Akun distributor berhasil dibuat dan dapat login setelah admin menyetujui.",
     );
     setAuthView("login");
   };

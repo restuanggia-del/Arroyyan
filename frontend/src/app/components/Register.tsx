@@ -36,6 +36,7 @@ export function Register({ onRegister, onSwitchToLogin }: RegisterProps) {
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [submitError, setSubmitError] = useState("");
   const [errors, setErrors] = useState({
     name: "",
     email: "",
@@ -48,6 +49,7 @@ export function Register({ onRegister, onSwitchToLogin }: RegisterProps) {
   const handleChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: "" }));
+    setSubmitError("");
   };
 
   const validateForm = () => {
@@ -104,6 +106,14 @@ export function Register({ onRegister, onSwitchToLogin }: RegisterProps) {
     }
 
     setErrors(newErrors);
+    if (!isValid) {
+      setSubmitError(
+        "Periksa kembali data yang diinputkan dan lengkapi field yang bertanda merah.",
+      );
+    } else {
+      setSubmitError("");
+    }
+
     return isValid;
   };
 
@@ -178,6 +188,12 @@ export function Register({ onRegister, onSwitchToLogin }: RegisterProps) {
               </p>
             </div>
 
+            {submitError && (
+              <div className="rounded-2xl bg-red-50 border border-red-200 text-red-700 px-4 py-3 mb-5">
+                {submitError}
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
@@ -192,7 +208,7 @@ export function Register({ onRegister, onSwitchToLogin }: RegisterProps) {
                       type="text"
                       value={formData.name}
                       onChange={(e) => handleChange("name", e.target.value)}
-                      placeholder="PT. Distributor Jaya"
+                      placeholder="Masukkan nama distributor"
                       className={`w-full pl-12 pr-4 py-3.5 rounded-2xl border bg-gray-50 focus:bg-white outline-none transition-all ${
                         errors.name
                           ? "border-red-300 focus:ring-2 focus:ring-red-400"

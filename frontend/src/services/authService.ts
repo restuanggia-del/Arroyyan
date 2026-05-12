@@ -1,35 +1,64 @@
 import { supabase } from "../lib/supabase";
+import { supabaseAdmin } from "../lib/supabaseAdmin";
 
-export const registerDistributor = async (
-    name: string,
-    email: string,
-    password: string
-) => {
+interface RegisterDistributorInput {
+  name: string;
+  email: string;
+  password: string;
+  phone: string;
+  address: string;
+}
 
-    // REGISTER KE AUTH
-    const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-    });
+export const registerDistributor = async (data: RegisterDistributorInput) => {
+  // Buat akun Supabase Auth sebagai admin
+  const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+    email: data.email,
+    password: data.password,
+    email_confirm: true,
+  });
 
-    if (error) {
-        return { error };
-    }
+  if (authError) {
+    return { error: authError };
+  }
 
-    // INSERT KE TABLE USERS
-    const userInsert = await supabase
-        .from("users")
-        .insert([
-            {
-                auth_user_id: data.user?.id,
-                name,
-                email,
-                role: "distributor",
-                is_approved: false,
-            },
-        ]);
+  const authUser = authData.user;
+  if (!authUser) {
+    return { error: { message: "Gagal membuat akun auth distributor." } };
+  }
 
-    return userInsert;
+  // Insert ke tabel users
+  const { data: userData, error: userError } = await supabaseAdmin
+    .from("users")
+    .insert([
+      {
+        auth_user_id: authUser.id,
+        name: data.name,
+        email: data.email,
+        role: "distributor",
+        is_approved: true,
+      },
+    ])
+    .select()
+    .single();
+
+  if (userError) {
+    return { error: userError };
+  }
+
+  // Insert ke tabel distributors
+  const { error: distributorError } = await supabaseAdmin.from("distributors").insert([
+    {
+      user_id: userData.id,
+      phone: data.phone,
+      address: data.address,
+    },
+  ]);
+
+  if (distributorError) {
+    return { error: distributorError };
+  }
+
+  return { data: { authUserId: authUser.id, userId: userData.id } };
 };
 
 export const loginUser = async (
