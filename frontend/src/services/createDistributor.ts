@@ -23,7 +23,6 @@ export async function createDistributor(
         throw new Error('Email sudah terdaftar. Gunakan email lain.');
     }
 
-    //Buat akun di Supabase Authentication
     const { data: authData, error: authError } =
         await supabaseAdmin.auth.admin.createUser({
             email,
@@ -37,7 +36,6 @@ export async function createDistributor(
 
     const authUser = authData.user;
 
-    //Simpan ke tabel users
     const { data: userProfile, error: userError } =
         await supabaseAdmin
             .from('users')
@@ -55,7 +53,6 @@ export async function createDistributor(
         throw new Error(userError.message);
     }
 
-    //Simpan ke tabel distributors
     const { error: distributorError } =
         await supabaseAdmin
             .from('distributors')

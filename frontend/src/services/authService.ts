@@ -10,7 +10,6 @@ interface RegisterDistributorInput {
 }
 
 export const registerDistributor = async (data: RegisterDistributorInput) => {
-  // Buat akun Supabase Auth sebagai admin
   const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
     email: data.email,
     password: data.password,
@@ -26,7 +25,6 @@ export const registerDistributor = async (data: RegisterDistributorInput) => {
     return { error: { message: "Gagal membuat akun auth distributor." } };
   }
 
-  // Insert ke tabel users
   const { data: userData, error: userError } = await supabaseAdmin
     .from("users")
     .insert([
@@ -45,7 +43,6 @@ export const registerDistributor = async (data: RegisterDistributorInput) => {
     return { error: userError };
   }
 
-  // Insert ke tabel distributors
   const { error: distributorError } = await supabaseAdmin.from("distributors").insert([
     {
       user_id: userData.id,

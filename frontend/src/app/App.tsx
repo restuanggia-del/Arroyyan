@@ -20,7 +20,11 @@ import { AuditLog } from "./components/AuditLog";
 import { SystemSettings } from "./components/SystemSettings";
 import { Register, RegisterData } from "./components/Register";
 import { Login } from "./components/Login";
-import { loginUser, getCurrentUserRole, registerDistributor } from "../services/authService";
+import {
+  loginUser,
+  getCurrentUserRole,
+  registerDistributor,
+} from "../services/authService";
 import { supabase } from "../lib/supabase";
 
 export default function App() {
@@ -30,7 +34,9 @@ export default function App() {
 
   useEffect(() => {
     const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (session) {
         const userData = await getCurrentUserRole();
         if (userData) {
@@ -81,7 +87,6 @@ export default function App() {
     setAuthView("login");
   };
 
-  // Jika belum login, tampilkan halaman auth
   if (!isAuthenticated) {
     if (authView === "login") {
       return (
