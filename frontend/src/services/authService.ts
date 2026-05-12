@@ -49,6 +49,7 @@ export const registerDistributor = async (data: RegisterDistributorInput) => {
   const { error: distributorError } = await supabaseAdmin.from("distributors").insert([
     {
       user_id: userData.id,
+      distributor_name: data.name,
       phone: data.phone,
       address: data.address,
     },
