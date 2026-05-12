@@ -234,7 +234,7 @@ export function Register({ onRegister, onSwitchToLogin }: RegisterProps) {
                       type="email"
                       value={formData.email}
                       onChange={(e) => handleChange("email", e.target.value)}
-                      placeholder="email@contoh.com"
+                      placeholder="email@example.com"
                       className={`w-full pl-12 pr-4 py-3.5 rounded-2xl border bg-gray-50 focus:bg-white outline-none transition-all ${
                         errors.email
                           ? "border-red-300 focus:ring-2 focus:ring-red-400"

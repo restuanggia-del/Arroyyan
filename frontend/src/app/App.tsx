@@ -12,6 +12,7 @@ import { ProductManagement } from "./components/ProductManagement";
 import { StockManagement } from "./components/StockManagement";
 import { DollarSign, TrendingUp, ShoppingCart, Package } from "lucide-react";
 import { DistributionManagement } from "./components/DistributionManagement";
+import { DistributorManagement } from "./components/DistributorManagement";
 import { SalesTransaction } from "./components/SalesTransaction";
 import { CustomerManagement } from "./components/CustomerManagement";
 import { Reports } from "./components/Reports";
@@ -25,12 +26,15 @@ import {
   getCurrentUserRole,
   registerDistributor,
 } from "../services/authService";
+import { getPendingDistributors } from "../services/distributorService";
 import { supabase } from "../lib/supabase";
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authView, setAuthView] = useState<"login" | "register">("login");
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [activeMenu, setActiveMenu] = useState("dashboard");
+  const [pendingDistributorCount, setPendingDistributorCount] = useState(0);
 
   useEffect(() => {
     const checkSession = async () => {
@@ -47,7 +51,17 @@ export default function App() {
     };
     checkSession();
   }, []);
-  const [activeMenu, setActiveMenu] = useState("dashboard");
+
+  useEffect(() => {
+    if (isAuthenticated && currentUser?.role === "admin") {
+      fetchPendingCount();
+    }
+  }, [isAuthenticated, currentUser]);
+
+  const fetchPendingCount = async () => {
+    const { data } = await getPendingDistributors();
+    if (data) setPendingDistributorCount(data.length);
+  };
 
   const handleLogin = async (
     email: string,
@@ -67,7 +81,10 @@ export default function App() {
     }
 
     if (userData.role === "distributor" && !userData.is_approved) {
-      alert("Akun belum disetujui admin");
+      alert(
+        "Akun belum disetujui admin. Silakan hubungi admin untuk persetujuan.",
+      );
+      await supabase.auth.signOut();
       return;
     }
 
@@ -87,6 +104,13 @@ export default function App() {
     setAuthView("login");
   };
 
+  const handleMenuChange = (menuId: string) => {
+    setActiveMenu(menuId);
+    if (menuId === "distributor") {
+      fetchPendingCount();
+    }
+  };
+
   if (!isAuthenticated) {
     if (authView === "login") {
       return (
@@ -104,8 +128,11 @@ export default function App() {
       );
     }
   }
+
   const renderContent = () => {
     switch (activeMenu) {
+      case "distributor":
+        return <DistributorManagement />;
       case "produk":
         return <ProductManagement />;
       case "stok":
@@ -236,7 +263,11 @@ export default function App() {
     <div className="flex h-screen bg-gray-50">
       <div className="flex flex-col">
         <Logo />
-        <Sidebar activeMenu={activeMenu} onMenuChange={setActiveMenu} />
+        <Sidebar
+          activeMenu={activeMenu}
+          onMenuChange={handleMenuChange}
+          pendingDistributorCount={pendingDistributorCount}
+        />
       </div>
 
       <div className="flex-1 flex flex-col overflow-hidden">
@@ -247,11 +278,13 @@ export default function App() {
               name={currentUser?.name || "User"}
               role={currentUser?.role === "admin" ? "Admin" : "Distributor"}
               onSettings={() => setActiveMenu("pengaturan")}
-              onLogout={() => {
+              onLogout={async () => {
+                await supabase.auth.signOut();
                 setIsAuthenticated(false);
                 setCurrentUser(null);
                 setAuthView("login");
                 setActiveMenu("dashboard");
+                setPendingDistributorCount(0);
               }}
             />
           </div>
