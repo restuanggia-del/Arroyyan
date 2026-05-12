@@ -16,7 +16,6 @@ export interface DistributorWithUser {
     };
 }
 
-// Ambil semua distributor beserta data user-nya
 export const getAllDistributors = async () => {
     const { data, error } = await supabaseAdmin
         .from("distributors")
@@ -42,7 +41,6 @@ export const getAllDistributors = async () => {
     return { data: data as unknown as DistributorWithUser[], error: null };
 };
 
-// Ambil hanya distributor yang belum diapprove (pending)
 export const getPendingDistributors = async () => {
     const { data, error } = await supabaseAdmin
         .from("distributors")
@@ -69,7 +67,6 @@ export const getPendingDistributors = async () => {
     return { data: data as unknown as DistributorWithUser[], error: null };
 };
 
-// Approve distributor
 export const approveDistributor = async (userId: string) => {
     const { error } = await supabaseAdmin
         .from("users")
@@ -78,7 +75,6 @@ export const approveDistributor = async (userId: string) => {
 
     if (error) return { error };
 
-    // Catat di activity log
     await supabaseAdmin.from("activity_logs").insert([
         {
             activity_type: "approve_distributor",
@@ -89,7 +85,6 @@ export const approveDistributor = async (userId: string) => {
     return { error: null };
 };
 
-// Reject / nonaktifkan distributor (set is_approved = false)
 export const rejectDistributor = async (userId: string) => {
     const { error } = await supabaseAdmin
         .from("users")
@@ -108,9 +103,7 @@ export const rejectDistributor = async (userId: string) => {
     return { error: null };
 };
 
-// Hapus distributor (hati-hati: cascade delete ke tabel distributors juga)
 export const deleteDistributor = async (userId: string) => {
-    // Ambil auth_user_id dulu
     const { data: userData, error: fetchError } = await supabaseAdmin
         .from("users")
         .select("auth_user_id")
@@ -119,13 +112,10 @@ export const deleteDistributor = async (userId: string) => {
 
     if (fetchError || !userData) return { error: fetchError };
 
-    // Hapus dari auth Supabase
     const { error: authDeleteError } =
         await supabaseAdmin.auth.admin.deleteUser(userData.auth_user_id);
     if (authDeleteError) return { error: authDeleteError };
 
-    // Row di users akan terhapus via CASCADE dari auth delete
-    // (jika ada trigger), atau hapus manual:
     const { error: dbDeleteError } = await supabaseAdmin
         .from("users")
         .delete()
@@ -136,7 +126,6 @@ export const deleteDistributor = async (userId: string) => {
     return { error: null };
 };
 
-// Update data distributor
 export const updateDistributor = async (
     distributorId: string,
     data: { distributor_name?: string; phone?: string; address?: string }

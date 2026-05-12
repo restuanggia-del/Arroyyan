@@ -55,7 +55,6 @@ export function DistributorManagement() {
     if (error) {
       alert("Gagal menyetujui distributor: " + error.message);
     } else {
-      // Update state lokal tanpa refetch
       setDistributors((prev) =>
         prev.map((d) =>
           d.users.id === userId
@@ -96,7 +95,6 @@ export function DistributorManagement() {
     setActionLoading(null);
   };
 
-  // Filter & search
   const filtered = distributors.filter((d) => {
     const matchSearch =
       d.distributor_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -126,7 +124,6 @@ export function DistributorManagement() {
 
   return (
     <div className="p-8">
-      {/* Header */}
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 mb-1">
@@ -146,7 +143,6 @@ export function DistributorManagement() {
         </button>
       </div>
 
-      {/* Stat Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <button
           onClick={() => setFilter("all")}
@@ -205,7 +201,6 @@ export function DistributorManagement() {
         </button>
       </div>
 
-      {/* Search & Filter */}
       <div className="bg-white rounded-lg border border-gray-200">
         <div className="border-b border-gray-200 px-6 py-4 flex items-center gap-4">
           <div className="relative flex-1 max-w-sm">
@@ -223,7 +218,6 @@ export function DistributorManagement() {
           </span>
         </div>
 
-        {/* Error state */}
         {error && (
           <div className="mx-6 mt-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3">
             <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
@@ -231,7 +225,6 @@ export function DistributorManagement() {
           </div>
         )}
 
-        {/* Loading state */}
         {loading && (
           <div className="py-16 text-center">
             <RefreshCw className="w-8 h-8 text-gray-400 animate-spin mx-auto mb-3" />
@@ -239,7 +232,6 @@ export function DistributorManagement() {
           </div>
         )}
 
-        {/* Distributor List */}
         {!loading && !error && (
           <div className="p-6 space-y-4">
             {filtered.length === 0 ? (
@@ -258,9 +250,7 @@ export function DistributorManagement() {
                   }`}
                 >
                   <div className="flex items-start justify-between gap-4">
-                    {/* Info distributor */}
                     <div className="flex items-start gap-4 flex-1 min-w-0">
-                      {/* Avatar */}
                       <div
                         className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-lg flex-shrink-0 ${
                           dist.users.is_approved
@@ -322,7 +312,6 @@ export function DistributorManagement() {
                       </div>
                     </div>
 
-                    {/* Action buttons */}
                     <div className="flex items-center gap-2 flex-shrink-0">
                       {actionLoading === dist.users.id ? (
                         <div className="flex items-center gap-2 text-sm text-gray-500">
@@ -367,7 +356,6 @@ export function DistributorManagement() {
         )}
       </div>
 
-      {/* Confirm Delete Modal */}
       {confirmDelete && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm">
