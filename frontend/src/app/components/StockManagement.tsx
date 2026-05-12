@@ -1,118 +1,75 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Warehouse,
   TrendingUp,
   TrendingDown,
   AlertTriangle,
-  Plus,
   ArrowRight,
+  RefreshCw,
+  AlertCircle,
 } from "lucide-react";
 import { StockTransactionModal } from "./StockTransactionModal";
+import {
+  getAllStockSummary,
+  getStockMovements,
+  StockItem,
+  StockMovement,
+  MINIMUM_STOCK,
+} from "../../services/stockService";
 
-interface StockItem {
-  id: string;
-  productName: string;
-  kategori: "Cup" | "Botol";
+interface ProductStockSummary {
+  product_id: string;
+  product_name: string;
+  category: "cup" | "botol";
   stokPusat: number;
   stokDistributor: number;
   minimumStok: number;
 }
 
-interface StockMovement {
-  id: string;
-  date: string;
-  productName: string;
-  type: "masuk" | "keluar";
-  category: "produksi" | "restok" | "distributor" | "penjualan";
-  quantity: number;
-  from: string;
-  to: string;
-  notes: string;
+function buildSummary(items: StockItem[]): ProductStockSummary[] {
+  const map: Record<string, ProductStockSummary> = {};
+
+  for (const item of items) {
+    const pid = item.product_id;
+    if (!map[pid]) {
+      map[pid] = {
+        product_id: pid,
+        product_name: item.products?.product_name ?? "—",
+        category: (item.products?.category ?? "cup") as "cup" | "botol",
+        stokPusat: 0,
+        stokDistributor: 0,
+        minimumStok: MINIMUM_STOCK,
+      };
+    }
+    if (item.distributor_id === null) {
+      map[pid].stokPusat += item.stock_quantity;
+    } else {
+      map[pid].stokDistributor += item.stock_quantity;
+    }
+  }
+
+  return Object.values(map);
 }
 
-const stockData: StockItem[] = [
-  {
-    id: "1",
-    productName: "Arroyyan99 Cup Kecil",
-    kategori: "Cup",
-    stokPusat: 500,
-    stokDistributor: 250,
-    minimumStok: 200,
-  },
-  {
-    id: "2",
-    productName: "Arroyyan99 Cup Sedang",
-    kategori: "Cup",
-    stokPusat: 50,
-    stokDistributor: 100,
-    minimumStok: 100,
-  },
-  {
-    id: "3",
-    productName: "Arroyyan99 Botol Kecil",
-    kategori: "Botol",
-    stokPusat: 30,
-    stokDistributor: 80,
-    minimumStok: 80,
-  },
-  {
-    id: "4",
-    productName: "Arroyyan99 Botol Sedang",
-    kategori: "Botol",
-    stokPusat: 300,
-    stokDistributor: 150,
-    minimumStok: 150,
-  },
-];
+const movementLabel: Record<string, string> = {
+  stock_in: "Produksi / Restok",
+  distribution_out: "Kirim ke Distributor",
+  distribution_in: "Diterima Distributor",
+  sale_out: "Penjualan",
+};
 
-const movementHistory: StockMovement[] = [
-  {
-    id: "1",
-    date: "2026-04-21 10:30",
-    productName: "Arroyyan99 Cup Kecil",
-    type: "masuk",
-    category: "produksi",
-    quantity: 500,
-    from: "Produksi",
-    to: "Stok Pusat",
-    notes: "Produksi batch #2024",
-  },
-  {
-    id: "2",
-    date: "2026-04-21 09:15",
-    productName: "Arroyyan99 Cup Sedang",
-    type: "keluar",
-    category: "distributor",
-    quantity: 200,
-    from: "Stok Pusat",
-    to: "Distributor Jakarta",
-    notes: "Pengiriman ke Distributor Jakarta",
-  },
-  {
-    id: "3",
-    date: "2026-04-20 14:20",
-    productName: "Arroyyan99 Botol Kecil",
-    type: "keluar",
-    category: "penjualan",
-    quantity: 50,
-    from: "Stok Distributor",
-    to: "Toko Maju Jaya",
-    notes: "Penjualan langsung",
-  },
-  {
-    id: "4",
-    date: "2026-04-20 11:00",
-    productName: "Arroyyan99 Botol Sedang",
-    type: "masuk",
-    category: "restok",
-    quantity: 300,
-    from: "Supplier",
-    to: "Stok Pusat",
-    notes: "Restok dari supplier",
-  },
-];
+const movementColor: Record<string, string> = {
+  stock_in: "bg-green-100 text-green-700",
+  distribution_out: "bg-orange-100 text-orange-700",
+  distribution_in: "bg-blue-100 text-blue-700",
+  sale_out: "bg-gray-100 text-gray-700",
+};
 
 export function StockManagement() {
+  const [stockSummary, setStockSummary] = useState<ProductStockSummary[]>([]);
+  const [movements, setMovements] = useState<StockMovement[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"overview" | "movement">(
     "overview",
   );
@@ -121,292 +78,346 @@ export function StockManagement() {
     "masuk",
   );
 
+  const fetchAll = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
+    const [stockRes, movRes] = await Promise.all([
+      getAllStockSummary(),
+      getStockMovements(50),
+    ]);
+
+    if (stockRes.error) {
+      setError("Gagal memuat data stok.");
+    } else {
+      setStockSummary(buildSummary(stockRes.data || []));
+    }
+
+    if (!movRes.error) {
+      setMovements(movRes.data || []);
+    }
+
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    fetchAll();
+  }, [fetchAll]);
+
   const handleAddTransaction = (type: "masuk" | "keluar") => {
     setTransactionType(type);
     setIsModalOpen(true);
   };
 
-  const lowStockItems = stockData.filter(
+  const handleSaveSuccess = () => {
+    setIsModalOpen(false);
+    fetchAll();
+  };
+
+  const lowStockItems = stockSummary.filter(
     (item) => item.stokPusat < item.minimumStok,
   );
 
+  const totalPusat = stockSummary.reduce((s, i) => s + i.stokPusat, 0);
+  const totalDist = stockSummary.reduce((s, i) => s + i.stokDistributor, 0);
+
+  const formatDate = (d: string) =>
+    new Date(d).toLocaleString("id-ID", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
   return (
     <div className="p-8">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-1">
-          Manajemen Stok
-        </h1>
-        <p className="text-gray-600">Kelola stok pusat dan distributor</p>
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-1">
+            Manajemen Stok
+          </h1>
+          <p className="text-gray-600">Kelola stok pusat dan distributor</p>
+        </div>
+        <button
+          onClick={fetchAll}
+          disabled={loading}
+          className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50 cursor-pointer transition-colors"
+        >
+          <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+          Refresh
+        </button>
       </div>
 
-      {lowStockItems.length > 0 && (
-        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6 flex items-start gap-3">
+      {!loading && lowStockItems.length > 0 && (
+        <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 mb-6 flex items-start gap-3">
           <AlertTriangle className="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" />
           <div>
             <h3 className="font-semibold text-orange-900 mb-1">
               Peringatan Stok Minimum
             </h3>
             <p className="text-sm text-orange-700">
-              {lowStockItems.length} produk memiliki stok di bawah minimum.
-              Segera lakukan restok!
+              {lowStockItems.length} produk memiliki stok pusat di bawah{" "}
+              {MINIMUM_STOCK} unit. Segera lakukan restok!
             </p>
+            <ul className="mt-1 text-xs text-orange-600 list-disc list-inside">
+              {lowStockItems.map((i) => (
+                <li key={i.product_id}>
+                  {i.product_name} — stok pusat: {i.stokPusat} unit
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-              <Warehouse className="w-6 h-6 text-blue-600" />
-            </div>
+          <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
+            <Warehouse className="w-6 h-6 text-blue-600" />
           </div>
           <h3 className="text-sm text-gray-600 mb-1">Total Stok Pusat</h3>
           <p className="text-2xl font-bold text-gray-900">
-            {stockData.reduce((sum, item) => sum + item.stokPusat, 0)} Unit
+            {loading ? "—" : `${totalPusat} Unit`}
           </p>
         </div>
-
         <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-              <TrendingUp className="w-6 h-6 text-green-600" />
-            </div>
+          <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
+            <TrendingUp className="w-6 h-6 text-green-600" />
           </div>
           <h3 className="text-sm text-gray-600 mb-1">Total Stok Distributor</h3>
           <p className="text-2xl font-bold text-gray-900">
-            {stockData.reduce((sum, item) => sum + item.stokDistributor, 0)}{" "}
-            Unit
+            {loading ? "—" : `${totalDist} Unit`}
           </p>
         </div>
-
         <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-              <AlertTriangle className="w-6 h-6 text-orange-600" />
-            </div>
+          <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-4">
+            <AlertTriangle className="w-6 h-6 text-orange-600" />
           </div>
           <h3 className="text-sm text-gray-600 mb-1">Produk Stok Kritis</h3>
           <p className="text-2xl font-bold text-gray-900">
-            {lowStockItems.length} Produk
+            {loading ? "—" : `${lowStockItems.length} Produk`}
           </p>
         </div>
       </div>
 
       <div className="bg-white rounded-lg border border-gray-200">
-        <div className="border-b border-gray-200 px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex gap-2">
-              <button
-                onClick={() => setActiveTab("overview")}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${
-                  activeTab === "overview"
-                    ? "bg-blue-50 text-blue-600"
-                    : "text-gray-600 hover:bg-gray-50"
-                }`}
-              >
-                Ringkasan Stok
-              </button>
-              <button
-                onClick={() => setActiveTab("movement")}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${
-                  activeTab === "movement"
-                    ? "bg-blue-50 text-blue-600"
-                    : "text-gray-600 hover:bg-gray-50"
-                }`}
-              >
-                Riwayat Pergerakan
-              </button>
-            </div>
-
-            <div className="flex gap-2">
-              <button
-                onClick={() => handleAddTransaction("masuk")}
-                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors cursor-pointer"
-              >
-                <TrendingUp className="w-4 h-4" />
-                Stok Masuk
-              </button>
-              <button
-                onClick={() => handleAddTransaction("keluar")}
-                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors cursor-pointer"
-              >
-                <TrendingDown className="w-4 h-4" />
-                Stok Keluar
-              </button>
-            </div>
+        <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+          <div className="flex gap-2">
+            <button
+              onClick={() => setActiveTab("overview")}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${
+                activeTab === "overview"
+                  ? "bg-blue-50 text-blue-600"
+                  : "text-gray-600 hover:bg-gray-50"
+              }`}
+            >
+              Ringkasan Stok
+            </button>
+            <button
+              onClick={() => setActiveTab("movement")}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${
+                activeTab === "movement"
+                  ? "bg-blue-50 text-blue-600"
+                  : "text-gray-600 hover:bg-gray-50"
+              }`}
+            >
+              Riwayat Pergerakan
+            </button>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => handleAddTransaction("masuk")}
+              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer"
+            >
+              <TrendingUp className="w-4 h-4" />
+              Stok Masuk
+            </button>
+            <button
+              onClick={() => handleAddTransaction("keluar")}
+              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer"
+            >
+              <TrendingDown className="w-4 h-4" />
+              Stok Keluar
+            </button>
           </div>
         </div>
 
         <div className="p-6">
-          {activeTab === "overview" ? (
+          {error && (
+            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3">
+              <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
+          )}
+
+          {loading ? (
+            <div className="py-16 text-center">
+              <RefreshCw className="w-8 h-8 text-gray-400 animate-spin mx-auto mb-3" />
+              <p className="text-gray-500 text-sm">Memuat data stok...</p>
+            </div>
+          ) : activeTab === "overview" ? (
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-gray-200">
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
-                      Produk
-                    </th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
-                      Kategori
-                    </th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
-                      Stok Pusat
-                    </th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
-                      Stok Distributor
-                    </th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
-                      Total Stok
-                    </th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
-                      Min. Stok
-                    </th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
-                      Status
-                    </th>
+                    {[
+                      "Produk",
+                      "Kategori",
+                      "Stok Pusat",
+                      "Stok Distributor",
+                      "Total",
+                      "Min. Stok",
+                      "Status",
+                    ].map((h) => (
+                      <th
+                        key={h}
+                        className="text-left py-3 px-4 text-sm font-semibold text-gray-700"
+                      >
+                        {h}
+                      </th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {stockData.map((item) => {
-                    const totalStok = item.stokPusat + item.stokDistributor;
-                    const isLowStock = item.stokPusat < item.minimumStok;
-
-                    return (
-                      <tr
-                        key={item.id}
-                        className="border-b border-gray-100 hover:bg-gray-50"
+                  {stockSummary.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={7}
+                        className="py-12 text-center text-gray-500 text-sm"
                       >
-                        <td className="py-3 px-4">
-                          <span className="text-sm font-medium text-gray-900">
-                            {item.productName}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4">
-                          <span
-                            className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
-                              item.kategori === "Cup"
-                                ? "bg-blue-100 text-blue-700"
-                                : "bg-purple-100 text-purple-700"
-                            }`}
-                          >
-                            {item.kategori}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4">
-                          <span className="text-sm text-gray-900">
+                        Belum ada data stok
+                      </td>
+                    </tr>
+                  ) : (
+                    stockSummary.map((item) => {
+                      const isLow = item.stokPusat < item.minimumStok;
+                      const total = item.stokPusat + item.stokDistributor;
+                      return (
+                        <tr
+                          key={item.product_id}
+                          className="border-b border-gray-100 hover:bg-gray-50"
+                        >
+                          <td className="py-3 px-4 text-sm font-medium text-gray-900">
+                            {item.product_name}
+                          </td>
+                          <td className="py-3 px-4">
+                            <span
+                              className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
+                                item.category === "cup"
+                                  ? "bg-blue-100 text-blue-700"
+                                  : "bg-purple-100 text-purple-700"
+                              }`}
+                            >
+                              {item.category === "cup" ? "Cup" : "Botol"}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 text-sm text-gray-900">
                             {item.stokPusat}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4">
-                          <span className="text-sm text-gray-900">
+                          </td>
+                          <td className="py-3 px-4 text-sm text-gray-900">
                             {item.stokDistributor}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4">
-                          <span className="text-sm font-semibold text-gray-900">
-                            {totalStok}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4">
-                          <span className="text-sm text-gray-600">
+                          </td>
+                          <td className="py-3 px-4 text-sm font-semibold text-gray-900">
+                            {total}
+                          </td>
+                          <td className="py-3 px-4 text-sm text-gray-600">
                             {item.minimumStok}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4">
-                          {isLowStock ? (
-                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-700">
-                              <AlertTriangle className="w-3 h-3" />
-                              Stok Rendah
-                            </span>
-                          ) : (
-                            <span className="inline-flex px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
-                              Aman
-                            </span>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
+                          </td>
+                          <td className="py-3 px-4">
+                            {isLow ? (
+                              <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-700">
+                                <AlertTriangle className="w-3 h-3" />
+                                Stok Rendah
+                              </span>
+                            ) : (
+                              <span className="inline-flex px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                                Aman
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
                 </tbody>
               </table>
             </div>
           ) : (
-            <div>
-              <div className="space-y-4">
-                {movementHistory.map((movement) => (
-                  <div
-                    key={movement.id}
-                    className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
-                  >
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-start gap-3">
-                        <div
-                          className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                            movement.type === "masuk"
-                              ? "bg-green-100"
-                              : "bg-red-100"
-                          }`}
-                        >
-                          {movement.type === "masuk" ? (
-                            <TrendingUp
-                              className={`w-5 h-5 ${
-                                movement.type === "masuk"
-                                  ? "text-green-600"
-                                  : "text-red-600"
+            <div className="space-y-3">
+              {movements.length === 0 ? (
+                <p className="text-center text-gray-500 py-12 text-sm">
+                  Belum ada riwayat pergerakan stok
+                </p>
+              ) : (
+                movements.map((mov) => {
+                  const isIn =
+                    mov.movement_type === "stock_in" ||
+                    mov.movement_type === "distribution_in";
+                  return (
+                    <div
+                      key={mov.id}
+                      className="border border-gray-200 rounded-xl p-4 hover:bg-gray-50 transition-colors"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-start gap-3">
+                          <div
+                            className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                              isIn ? "bg-green-100" : "bg-red-100"
+                            }`}
+                          >
+                            {isIn ? (
+                              <TrendingUp className="w-5 h-5 text-green-600" />
+                            ) : (
+                              <TrendingDown className="w-5 h-5 text-red-600" />
+                            )}
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-gray-900 mb-0.5">
+                              {mov.products?.product_name ?? "—"}
+                            </p>
+                            <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1.5">
+                              <span>
+                                {mov.distributors?.distributor_name ??
+                                  "Stok Pusat"}
+                              </span>
+                              <ArrowRight className="w-3 h-3" />
+                              <span>{isIn ? "Stok Masuk" : "Stok Keluar"}</span>
+                            </div>
+                            <span
+                              className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
+                                movementColor[mov.movement_type] ??
+                                "bg-gray-100 text-gray-600"
                               }`}
-                            />
-                          ) : (
-                            <TrendingDown className="w-5 h-5 text-red-600" />
-                          )}
-                        </div>
-                        <div>
-                          <h4 className="font-medium text-gray-900 mb-1">
-                            {movement.productName}
-                          </h4>
-                          <div className="flex items-center gap-2 text-sm text-gray-600">
-                            <span>{movement.from}</span>
-                            <ArrowRight className="w-4 h-4" />
-                            <span>{movement.to}</span>
+                            >
+                              {movementLabel[mov.movement_type] ??
+                                mov.movement_type}
+                            </span>
+                            {mov.note && (
+                              <p className="text-xs text-gray-500 mt-1">
+                                {mov.note}
+                              </p>
+                            )}
                           </div>
                         </div>
-                      </div>
-                      <div className="text-right">
-                        <p
-                          className={`text-lg font-bold ${
-                            movement.type === "masuk"
-                              ? "text-green-600"
-                              : "text-red-600"
-                          }`}
-                        >
-                          {movement.type === "masuk" ? "+" : "-"}
-                          {movement.quantity}
-                        </p>
-                        <p className="text-xs text-gray-500">{movement.date}</p>
+                        <div className="text-right flex-shrink-0 ml-4">
+                          <p
+                            className={`text-lg font-bold ${
+                              isIn ? "text-green-600" : "text-red-600"
+                            }`}
+                          >
+                            {isIn ? "+" : "-"}
+                            {mov.quantity}
+                          </p>
+                          <p className="text-xs text-gray-400">
+                            {formatDate(mov.created_at)}
+                          </p>
+                        </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span
-                        className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
-                          movement.category === "produksi"
-                            ? "bg-blue-100 text-blue-700"
-                            : movement.category === "restok"
-                              ? "bg-purple-100 text-purple-700"
-                              : movement.category === "distributor"
-                                ? "bg-orange-100 text-orange-700"
-                                : "bg-gray-100 text-gray-700"
-                        }`}
-                      >
-                        {movement.category.charAt(0).toUpperCase() +
-                          movement.category.slice(1)}
-                      </span>
-                      <span className="text-sm text-gray-600">
-                        {movement.notes}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  );
+                })
+              )}
             </div>
           )}
         </div>
@@ -416,7 +427,7 @@ export function StockManagement() {
         <StockTransactionModal
           type={transactionType}
           onClose={() => setIsModalOpen(false)}
-          onSave={() => setIsModalOpen(false)}
+          onSaveSuccess={handleSaveSuccess}
         />
       )}
     </div>
