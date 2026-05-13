@@ -10,14 +10,21 @@ import {
   X,
   RefreshCw,
   AlertCircle,
+  Building2,
+  Truck,
 } from "lucide-react";
 import { getActiveProducts, Product } from "../../services/productService";
-import { getDistributorStock } from "../../services/stockService";
+import {
+  getCentralStock,
+  getDistributorStock,
+} from "../../services/stockService";
 import { getAllCustomers, Customer } from "../../services/customerService";
 import {
   createTransaction,
   TransactionItem,
 } from "../../services/transactionService";
+
+// ─── TYPES ───────────────────────────────────────────────────────────────────
 
 interface CartItem {
   product: Product;
@@ -26,10 +33,19 @@ interface CartItem {
 }
 
 interface SalesTransactionProps {
-  distributorId: string;
+  role: "admin" | "distributor";
+  // UUID tabel distributors — wajib kalau role=distributor
+  distributorId?: string;
 }
 
-export function SalesTransaction({ distributorId }: SalesTransactionProps) {
+const formatRp = (n: number) => "Rp " + n.toLocaleString("id-ID");
+
+// ─── MAIN COMPONENT ──────────────────────────────────────────────────────────
+
+export function SalesTransaction({
+  role,
+  distributorId,
+}: SalesTransactionProps) {
   const [products, setProducts] = useState<Product[]>([]);
   const [stockMap, setStockMap] = useState<Record<string, number>>({});
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -39,35 +55,43 @@ export function SalesTransaction({ distributorId }: SalesTransactionProps) {
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "transfer">(
     "cash",
   );
-  const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
+  const [selectedCustomerId, setSelectedCustomerId] = useState("");
   const [showReceipt, setShowReceipt] = useState(false);
   const [lastTransaction, setLastTransaction] = useState<any>(null);
   const [saving, setSaving] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
+  // ── Fetch data ─────────────────────────────────────────────────────────────
+
   const loadData = useCallback(async () => {
     setLoadingData(true);
-    const [prodRes, stockRes, custRes] = await Promise.all([
+    const [prodRes, custRes, stockRes] = await Promise.all([
       getActiveProducts(),
-      getDistributorStock(distributorId),
       getAllCustomers(),
+      role === "admin"
+        ? getCentralStock()
+        : distributorId
+          ? getDistributorStock(distributorId)
+          : Promise.resolve({ data: [] }),
     ]);
 
     setProducts(prodRes.data ?? []);
     setCustomers(custRes.data ?? []);
 
-    // Map product_id → stok distributor
+    // Bangun map: product_id → stok tersedia
     const map: Record<string, number> = {};
-    for (const s of stockRes.data ?? []) {
+    for (const s of (stockRes as any).data ?? []) {
       map[s.product_id] = s.stock_quantity;
     }
     setStockMap(map);
     setLoadingData(false);
-  }, [distributorId]);
+  }, [role, distributorId]);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  // ── Cart helpers ───────────────────────────────────────────────────────────
 
   const addToCart = (product: Product) => {
     const max = stockMap[product.id] ?? 0;
@@ -104,6 +128,8 @@ export function SalesTransaction({ distributorId }: SalesTransactionProps) {
 
   const subtotal = cart.reduce((s, i) => s + i.product.price * i.quantity, 0);
 
+  // ── Checkout ───────────────────────────────────────────────────────────────
+
   const handleCheckout = async () => {
     if (cart.length === 0) {
       setCheckoutError("Keranjang masih kosong!");
@@ -119,11 +145,16 @@ export function SalesTransaction({ distributorId }: SalesTransactionProps) {
       price: i.product.price,
     }));
 
+    const txOptions =
+      role === "admin"
+        ? { mode: "admin" as const }
+        : { mode: "distributor" as const, distributorId: distributorId! };
+
     const { data, error } = await createTransaction(
-      distributorId,
-      selectedCustomerId || null,
       items,
       paymentMethod,
+      selectedCustomerId || null,
+      txOptions,
     );
 
     if (error) {
@@ -136,9 +167,10 @@ export function SalesTransaction({ distributorId }: SalesTransactionProps) {
     setLastTransaction({
       id: data.id.slice(0, 8).toUpperCase(),
       date: new Date().toLocaleString("id-ID"),
+      sumber: role === "admin" ? "Penjualan Pabrik" : "Penjualan Distributor",
       customer: customer?.customer_name ?? "Umum",
       phone: customer?.phone ?? "",
-      items: cart,
+      items: [...cart],
       subtotal,
       total: subtotal,
       paymentMethod,
@@ -155,18 +187,54 @@ export function SalesTransaction({ distributorId }: SalesTransactionProps) {
     setShowReceipt(false);
     setLastTransaction(null);
     setCheckoutError(null);
-    loadData();
+    loadData(); // refresh stok setelah transaksi
   };
 
-  const formatRp = (n: number) => "Rp " + n.toLocaleString("id-ID");
+  // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
     <div className="p-8">
+      {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900 mb-1">
           Transaksi Penjualan
         </h1>
-        <p className="text-gray-600">Point of Sales</p>
+        <p className="text-gray-600">Point of Sales — Arroyyan99</p>
+      </div>
+
+      {/* Banner mode */}
+      <div
+        className={`flex items-center gap-3 px-4 py-3 rounded-xl mb-6 border ${
+          role === "admin"
+            ? "bg-blue-50 border-blue-200"
+            : "bg-green-50 border-green-200"
+        }`}
+      >
+        {role === "admin" ? (
+          <Building2 className="w-5 h-5 text-blue-600 flex-shrink-0" />
+        ) : (
+          <Truck className="w-5 h-5 text-green-600 flex-shrink-0" />
+        )}
+        <div>
+          <p
+            className={`text-sm font-semibold ${
+              role === "admin" ? "text-blue-800" : "text-green-800"
+            }`}
+          >
+            {role === "admin"
+              ? "Mode Penjualan Pabrik"
+              : "Mode Penjualan Distributor"}
+          </p>
+          <p
+            className={`text-xs ${
+              role === "admin" ? "text-blue-600" : "text-green-600"
+            }`}
+          >
+            {role === "admin"
+              ? "Stok yang berkurang: stok pusat"
+              : "Stok yang berkurang: stok distributor Anda"}
+          </p>
+        </div>
       </div>
 
       {loadingData ? (
@@ -176,51 +244,64 @@ export function SalesTransaction({ distributorId }: SalesTransactionProps) {
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* ── Kiri: Produk + Pelanggan ── */}
           <div className="lg:col-span-2 space-y-6">
+            {/* Grid produk */}
             <div className="bg-white rounded-xl border border-gray-200 p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">
                 Pilih Produk
               </h2>
               {products.length === 0 ? (
-                <p className="text-gray-500 text-sm">Belum ada produk aktif.</p>
+                <p className="text-sm text-gray-500">Belum ada produk aktif.</p>
               ) : (
                 <div className="grid grid-cols-2 gap-4">
                   {products.map((product) => {
                     const stock = stockMap[product.id] ?? 0;
+                    const inCart = cart.find(
+                      (i) => i.product.id === product.id,
+                    );
                     return (
                       <button
                         key={product.id}
                         onClick={() => addToCart(product)}
                         disabled={stock === 0}
-                        className={`border-2 rounded-xl p-4 text-left transition-all cursor-pointer ${
+                        className={`border-2 rounded-xl p-4 text-left transition-all relative ${
                           stock === 0
-                            ? "border-gray-200 opacity-50 cursor-not-allowed"
-                            : "border-gray-200 hover:border-blue-500 hover:bg-blue-50"
+                            ? "border-gray-200 opacity-50 cursor-not-allowed bg-gray-50"
+                            : inCart
+                              ? "border-blue-500 bg-blue-50 cursor-pointer"
+                              : "border-gray-200 hover:border-blue-400 hover:bg-blue-50 cursor-pointer"
                         }`}
                       >
-                        <div className="flex items-start justify-between mb-2">
-                          <h3 className="font-medium text-gray-900 text-sm leading-tight">
+                        {/* Badge jumlah di keranjang */}
+                        {inCart && (
+                          <span className="absolute top-2 right-2 bg-blue-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+                            {inCart.quantity}
+                          </span>
+                        )}
+                        <div className="flex items-start gap-2 mb-2">
+                          <span className="text-xl">
+                            {product.category === "cup" ? "🥤" : "🍶"}
+                          </span>
+                          <h3 className="font-medium text-gray-900 text-sm leading-tight flex-1">
                             {product.product_name}
                             {product.size ? ` (${product.size})` : ""}
                           </h3>
-                          <span
-                            className={`text-xs px-2 py-0.5 rounded-full flex-shrink-0 ml-2 ${
-                              stock > 50
-                                ? "bg-green-100 text-green-700"
-                                : stock > 0
-                                  ? "bg-orange-100 text-orange-700"
-                                  : "bg-red-100 text-red-700"
-                            }`}
-                          >
-                            {stock} unit
-                          </span>
                         </div>
-                        <p className="text-lg font-bold text-blue-600">
+                        <p className="text-base font-bold text-blue-600 mb-1.5">
                           {formatRp(product.price)}
                         </p>
-                        <p className="text-xs text-gray-400 mt-1">
-                          per {product.unit}
-                        </p>
+                        <span
+                          className={`text-xs px-2 py-0.5 rounded-full ${
+                            stock > 50
+                              ? "bg-green-100 text-green-700"
+                              : stock > 0
+                                ? "bg-orange-100 text-orange-700"
+                                : "bg-red-100 text-red-700"
+                          }`}
+                        >
+                          Stok: {stock} {product.unit}
+                        </span>
                       </button>
                     );
                   })}
@@ -228,8 +309,9 @@ export function SalesTransaction({ distributorId }: SalesTransactionProps) {
               )}
             </div>
 
+            {/* Pilih pelanggan */}
             <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">
+              <h2 className="text-lg font-semibold text-gray-900 mb-3">
                 Pelanggan
               </h2>
               <select
@@ -242,12 +324,14 @@ export function SalesTransaction({ distributorId }: SalesTransactionProps) {
                   <option key={c.id} value={c.id}>
                     {c.customer_name}
                     {c.phone ? ` — ${c.phone}` : ""}
+                    {c.is_subscribed ? " ⭐" : ""}
                   </option>
                 ))}
               </select>
             </div>
           </div>
 
+          {/* ── Kanan: Keranjang ── */}
           <div>
             <div className="bg-white rounded-xl border border-gray-200 p-6 sticky top-8">
               <div className="flex items-center gap-2 mb-4">
@@ -256,21 +340,23 @@ export function SalesTransaction({ distributorId }: SalesTransactionProps) {
                   Keranjang
                 </h2>
                 <span className="ml-auto bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full text-sm font-medium">
-                  {cart.length}
+                  {cart.reduce((s, i) => s + i.quantity, 0)} item
                 </span>
               </div>
 
+              {/* Error checkout */}
               {checkoutError && (
-                <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg flex gap-2 text-sm text-red-700">
+                <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-xl flex gap-2 text-sm text-red-700">
                   <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                  {checkoutError}
+                  <span>{checkoutError}</span>
                 </div>
               )}
 
-              <div className="space-y-3 mb-5 max-h-64 overflow-y-auto">
+              {/* Daftar item */}
+              <div className="space-y-3 mb-5 max-h-72 overflow-y-auto">
                 {cart.length === 0 ? (
-                  <p className="text-center text-gray-400 py-8 text-sm">
-                    Keranjang kosong
+                  <p className="text-center text-gray-400 py-10 text-sm">
+                    Klik produk untuk menambahkan
                   </p>
                 ) : (
                   cart.map((item) => (
@@ -281,6 +367,7 @@ export function SalesTransaction({ distributorId }: SalesTransactionProps) {
                       <div className="flex items-start justify-between mb-2">
                         <p className="text-sm font-medium text-gray-900 flex-1 leading-tight">
                           {item.product.product_name}
+                          {item.product.size ? ` (${item.product.size})` : ""}
                         </p>
                         <button
                           onClick={() => removeFromCart(item.product.id)}
@@ -297,7 +384,7 @@ export function SalesTransaction({ distributorId }: SalesTransactionProps) {
                           >
                             <Minus className="w-3.5 h-3.5" />
                           </button>
-                          <span className="w-8 text-center text-sm font-medium">
+                          <span className="w-8 text-center text-sm font-semibold">
                             {item.quantity}
                           </span>
                           <button
@@ -307,50 +394,58 @@ export function SalesTransaction({ distributorId }: SalesTransactionProps) {
                             <Plus className="w-3.5 h-3.5" />
                           </button>
                         </div>
-                        <p className="text-sm font-semibold text-gray-900">
+                        <p className="text-sm font-bold text-gray-900">
                           {formatRp(item.product.price * item.quantity)}
                         </p>
                       </div>
+                      <p className="text-xs text-gray-400 mt-1">
+                        Maks: {item.maxStock} unit
+                      </p>
                     </div>
                   ))
                 )}
               </div>
 
-              <div className="border-t border-gray-200 pt-4 mb-4">
-                <div className="flex justify-between mb-1 text-sm text-gray-600">
+              {/* Total */}
+              <div className="border-t border-gray-200 pt-4 mb-4 space-y-2">
+                <div className="flex justify-between text-sm text-gray-600">
                   <span>Subtotal</span>
                   <span>{formatRp(subtotal)}</span>
                 </div>
-                <div className="flex justify-between font-bold text-gray-900 text-base mb-4">
+                <div className="flex justify-between font-bold text-gray-900">
                   <span>Total</span>
-                  <span className="text-blue-600">{formatRp(subtotal)}</span>
-                </div>
-
-                <p className="text-sm font-medium text-gray-700 mb-2">
-                  Metode Pembayaran
-                </p>
-                <div className="grid grid-cols-2 gap-2 mb-4">
-                  {(["cash", "transfer"] as const).map((method) => (
-                    <button
-                      key={method}
-                      onClick={() => setPaymentMethod(method)}
-                      className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border-2 transition-all cursor-pointer text-sm font-medium ${
-                        paymentMethod === method
-                          ? "border-blue-500 bg-blue-50 text-blue-600"
-                          : "border-gray-200 hover:border-gray-300 text-gray-700"
-                      }`}
-                    >
-                      {method === "cash" ? (
-                        <Banknote className="w-4 h-4" />
-                      ) : (
-                        <CreditCard className="w-4 h-4" />
-                      )}
-                      {method === "cash" ? "Cash" : "Transfer"}
-                    </button>
-                  ))}
+                  <span className="text-blue-600 text-lg">
+                    {formatRp(subtotal)}
+                  </span>
                 </div>
               </div>
 
+              {/* Metode pembayaran */}
+              <p className="text-sm font-medium text-gray-700 mb-2">
+                Metode Pembayaran
+              </p>
+              <div className="grid grid-cols-2 gap-2 mb-4">
+                {(["cash", "transfer"] as const).map((method) => (
+                  <button
+                    key={method}
+                    onClick={() => setPaymentMethod(method)}
+                    className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border-2 transition-all cursor-pointer text-sm font-medium ${
+                      paymentMethod === method
+                        ? "border-blue-500 bg-blue-50 text-blue-600"
+                        : "border-gray-200 hover:border-gray-300 text-gray-700"
+                    }`}
+                  >
+                    {method === "cash" ? (
+                      <Banknote className="w-4 h-4" />
+                    ) : (
+                      <CreditCard className="w-4 h-4" />
+                    )}
+                    {method === "cash" ? "Cash" : "Transfer"}
+                  </button>
+                ))}
+              </div>
+
+              {/* Tombol proses */}
               <button
                 onClick={handleCheckout}
                 disabled={cart.length === 0 || saving}
@@ -364,6 +459,7 @@ export function SalesTransaction({ distributorId }: SalesTransactionProps) {
         </div>
       )}
 
+      {/* ── Modal Struk ── */}
       {showReceipt && lastTransaction && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl">
@@ -380,12 +476,16 @@ export function SalesTransaction({ distributorId }: SalesTransactionProps) {
             </div>
 
             <div id="receipt" className="p-6 font-mono text-sm">
+              {/* Kop struk */}
               <div className="text-center mb-5">
                 <h1 className="text-xl font-bold">ARROYYAN99</h1>
                 <p className="text-xs text-gray-500">Air Minum Dalam Kemasan</p>
-                <p className="text-xs text-gray-500">Tulang Bawang, Lampung</p>
+                <p className="text-xs text-gray-500">
+                  Bogatama, Tulang Bawang, Lampung
+                </p>
               </div>
 
+              {/* Info transaksi */}
               <div className="border-t border-b border-gray-300 py-3 mb-3 text-xs space-y-1">
                 <div className="flex justify-between">
                   <span>No</span>
@@ -394,6 +494,10 @@ export function SalesTransaction({ distributorId }: SalesTransactionProps) {
                 <div className="flex justify-between">
                   <span>Tanggal</span>
                   <span>{lastTransaction.date}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Sumber</span>
+                  <span>{lastTransaction.sumber}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Pelanggan</span>
@@ -407,6 +511,7 @@ export function SalesTransaction({ distributorId }: SalesTransactionProps) {
                 )}
               </div>
 
+              {/* Tabel item */}
               <table className="w-full mb-3 text-xs">
                 <thead>
                   <tr className="border-b border-gray-300">
@@ -419,7 +524,10 @@ export function SalesTransaction({ distributorId }: SalesTransactionProps) {
                 <tbody>
                   {lastTransaction.items.map((item: CartItem, i: number) => (
                     <tr key={i} className="border-b border-gray-100">
-                      <td className="py-1">{item.product.product_name}</td>
+                      <td className="py-1 leading-tight">
+                        {item.product.product_name}
+                        {item.product.size ? ` (${item.product.size})` : ""}
+                      </td>
                       <td className="text-center py-1">{item.quantity}</td>
                       <td className="text-right py-1">
                         {item.product.price.toLocaleString("id-ID")}
@@ -434,6 +542,7 @@ export function SalesTransaction({ distributorId }: SalesTransactionProps) {
                 </tbody>
               </table>
 
+              {/* Total */}
               <div className="border-t border-gray-300 pt-3 mb-3 space-y-1 text-xs">
                 <div className="flex justify-between">
                   <span>Subtotal</span>
@@ -445,10 +554,11 @@ export function SalesTransaction({ distributorId }: SalesTransactionProps) {
                 </div>
               </div>
 
+              {/* Metode bayar */}
               <div className="border-t border-gray-300 pt-3 mb-4 text-xs">
                 <div className="flex justify-between">
                   <span>Pembayaran</span>
-                  <span className="font-semibold uppercase">
+                  <span className="font-bold uppercase">
                     {lastTransaction.paymentMethod === "cash"
                       ? "TUNAI"
                       : "TRANSFER"}
@@ -458,20 +568,22 @@ export function SalesTransaction({ distributorId }: SalesTransactionProps) {
 
               <div className="text-center text-xs text-gray-500">
                 <p>Terima kasih atas pembelian Anda!</p>
+                <p>Semoga sehat selalu 💧</p>
               </div>
             </div>
 
+            {/* Tombol aksi struk */}
             <div className="border-t border-gray-200 px-6 py-4 flex gap-3 print:hidden">
               <button
                 onClick={() => window.print()}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl flex items-center justify-center gap-2 text-sm cursor-pointer"
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl flex items-center justify-center gap-2 text-sm cursor-pointer transition-colors"
               >
                 <Printer className="w-4 h-4" />
                 Cetak Struk
               </button>
               <button
                 onClick={handleNewTransaction}
-                className="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-xl text-sm cursor-pointer"
+                className="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2.5 rounded-xl text-sm font-medium cursor-pointer transition-colors"
               >
                 Transaksi Baru
               </button>

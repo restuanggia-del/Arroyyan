@@ -34,7 +34,7 @@ export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authView, setAuthView] = useState<"login" | "register">("login");
   const [currentUser, setCurrentUser] = useState<any>(null);
-  // distributorId = UUID dari tabel distributors (berbeda dari users.id)
+  // distributorId = UUID dari tabel distributors (bukan users.id)
   const [distributorId, setDistributorId] = useState<string>("");
   const [activeMenu, setActiveMenu] = useState("dashboard");
   const [pendingDistributorCount, setPendingDistributorCount] = useState(0);
@@ -69,6 +69,7 @@ export default function App() {
     if (data) setPendingDistributorCount(data.length);
   };
 
+  // Ambil distributors.id berdasarkan users.id
   const fetchDistributorId = async (userId: string) => {
     const { data } = await supabaseAdmin
       .from("distributors")
@@ -148,7 +149,7 @@ export default function App() {
     );
   }
 
-  const activeDistributorId = distributorId;
+  const userRole = currentUser?.role as "admin" | "distributor";
 
   const renderContent = () => {
     switch (activeMenu) {
@@ -161,22 +162,11 @@ export default function App() {
       case "distribusi":
         return <DistributionManagement currentUserId={currentUser?.id ?? ""} />;
       case "transaksi":
-        return activeDistributorId ? (
-          <SalesTransaction distributorId={activeDistributorId} />
-        ) : (
-          <div className="p-8">
-            <div className="bg-orange-50 border border-orange-200 rounded-xl p-6 text-center">
-              <ShoppingCart className="w-12 h-12 text-orange-400 mx-auto mb-3" />
-              <h2 className="text-lg font-semibold text-gray-900 mb-2">
-                Transaksi Penjualan
-              </h2>
-              <p className="text-gray-600 text-sm">
-                Fitur transaksi penjualan hanya tersedia untuk akun distributor.
-                Distributor dapat login dan melakukan transaksi dari akun
-                mereka.
-              </p>
-            </div>
-          </div>
+        return (
+          <SalesTransaction
+            role={userRole}
+            distributorId={distributorId || undefined}
+          />
         );
       case "pelanggan":
         return <CustomerManagement />;
@@ -312,7 +302,7 @@ export default function App() {
             <SearchBar />
             <UserProfile
               name={currentUser?.name ?? "User"}
-              role={currentUser?.role === "admin" ? "Admin" : "Distributor"}
+              role={userRole === "admin" ? "Admin" : "Distributor"}
               onSettings={() => setActiveMenu("pengaturan")}
               onLogout={handleLogout}
             />
