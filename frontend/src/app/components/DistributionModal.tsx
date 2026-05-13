@@ -1,107 +1,169 @@
-import { useState } from "react";
-import { X, Truck, Package, AlertCircle } from "lucide-react";
-
-interface Distribution {
-  id: string;
-  date: string;
-  distributorName: string;
-  distributorAddress: string;
-  productName: string;
-  quantity: number;
-  status: "pending" | "dalam_perjalanan" | "selesai";
-  notes: string;
-}
+import { useState, useEffect } from "react";
+import {
+  X,
+  Truck,
+  Package,
+  AlertCircle,
+  Plus,
+  Trash2,
+  RefreshCw,
+} from "lucide-react";
+import {
+  getAllDistributors,
+  DistributorWithUser,
+} from "../../services/distributorService";
+import { getActiveProducts, Product } from "../../services/productService";
+import { getCentralStock } from "../../services/stockService";
+import {
+  createDistribution,
+  DistributionItem,
+} from "../../services/distributionService";
 
 interface DistributionModalProps {
+  currentUserId: string;
   onClose: () => void;
-  onSave: (distribution: Distribution) => void;
+  onSaveSuccess: () => void;
 }
 
-const distributors = [
-  {
-    id: "1",
-    name: "Distributor Jakarta Pusat",
-    address: "Jl. Sudirman No. 123, Jakarta Pusat",
-  },
-  { id: "2", name: "Distributor Bandung", address: "Jl. Dago No. 45, Bandung" },
-  {
-    id: "3",
-    name: "Distributor Surabaya",
-    address: "Jl. Pemuda No. 78, Surabaya",
-  },
-  {
-    id: "4",
-    name: "Distributor Semarang",
-    address: "Jl. Pandanaran No. 90, Semarang",
-  },
-  {
-    id: "5",
-    name: "Distributor Yogyakarta",
-    address: "Jl. Malioboro No. 56, Yogyakarta",
-  },
-];
+interface ItemRow {
+  product_id: string;
+  quantity: number;
+}
 
-const products = [
-  { id: "1", name: "Arroyyan99 Cup Kecil", stokPabrik: 500 },
-  { id: "2", name: "Arroyyan99 Cup Sedang", stokPabrik: 300 },
-  { id: "3", name: "Arroyyan99 Botol Kecil", stokPabrik: 400 },
-  { id: "4", name: "Arroyyan99 Botol Sedang", stokPabrik: 350 },
-];
+export function DistributionModal({
+  currentUserId,
+  onClose,
+  onSaveSuccess,
+}: DistributionModalProps) {
+  const [distributors, setDistributors] = useState<DistributorWithUser[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [centralStockMap, setCentralStockMap] = useState<
+    Record<string, number>
+  >({});
+  const [loadingData, setLoadingData] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
-export function DistributionModal({ onClose, onSave }: DistributionModalProps) {
-  const [formData, setFormData] = useState({
-    distributorId: "",
-    productId: "",
-    quantity: 0,
-    status: "pending" as "pending" | "dalam_perjalanan" | "selesai",
-    notes: "",
-  });
+  const [distributorId, setDistributorId] = useState("");
+  const [items, setItems] = useState<ItemRow[]>([
+    { product_id: "", quantity: 1 },
+  ]);
 
-  const [showStockWarning, setShowStockWarning] = useState(false);
+  // Fetch distributor, produk aktif, stok pusat
+  useEffect(() => {
+    const load = async () => {
+      setLoadingData(true);
+      const [distRes, prodRes, stockRes] = await Promise.all([
+        getAllDistributors(),
+        getActiveProducts(),
+        getCentralStock(),
+      ]);
 
-  const selectedDistributor = distributors.find(
-    (d) => d.id === formData.distributorId,
-  );
-  const selectedProduct = products.find((p) => p.id === formData.productId);
+      // Hanya distributor yang approved
+      setDistributors((distRes.data ?? []).filter((d) => d.users.is_approved));
+      setProducts(prodRes.data ?? []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+      // Map product_id → stok pusat
+      const map: Record<string, number> = {};
+      for (const s of stockRes.data ?? []) {
+        map[s.product_id] = s.stock_quantity;
+      }
+      setCentralStockMap(map);
+      setLoadingData(false);
+    };
+    load();
+  }, []);
+
+  // ── Item row helpers ──────────────────────────────────────────────────────
+
+  const addItem = () =>
+    setItems((prev) => [...prev, { product_id: "", quantity: 1 }]);
+
+  const removeItem = (idx: number) =>
+    setItems((prev) => prev.filter((_, i) => i !== idx));
+
+  const updateItem = (
+    idx: number,
+    field: keyof ItemRow,
+    value: string | number,
+  ) =>
+    setItems((prev) =>
+      prev.map((item, i) => (i === idx ? { ...item, [field]: value } : item)),
+    );
+
+  // Produk yang belum dipilih di baris lain (hindari duplikat)
+  const availableProducts = (currentIdx: number) =>
+    products.filter(
+      (p) =>
+        !items.some((item, i) => i !== currentIdx && item.product_id === p.id),
+    );
+
+  // ── Submit ────────────────────────────────────────────────────────────────
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError(null);
 
-    if (selectedProduct && formData.quantity > selectedProduct.stokPabrik) {
-      setShowStockWarning(true);
+    if (!distributorId) {
+      setFormError("Pilih distributor terlebih dahulu.");
       return;
     }
 
-    if (!selectedDistributor || !selectedProduct) return;
+    const validItems = items.filter(
+      (item) => item.product_id && item.quantity > 0,
+    );
+    if (validItems.length === 0) {
+      setFormError("Tambahkan minimal 1 produk.");
+      return;
+    }
 
-    const now = new Date();
-    const dateString = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")} ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+    // Validasi stok pusat di sisi frontend dulu
+    for (const item of validItems) {
+      const available = centralStockMap[item.product_id] ?? 0;
+      if (item.quantity > available) {
+        const prod = products.find((p) => p.id === item.product_id);
+        setFormError(
+          `Stok pusat tidak mencukupi untuk ${prod?.product_name ?? "produk"}. Tersedia: ${available} unit.`,
+        );
+        return;
+      }
+    }
 
-    const newDistribution: Distribution = {
-      id: Date.now().toString(),
-      date: dateString,
-      distributorName: selectedDistributor.name,
-      distributorAddress: selectedDistributor.address,
-      productName: selectedProduct.name,
-      quantity: formData.quantity,
-      status: formData.status,
-      notes: formData.notes,
-    };
+    setSaving(true);
 
-    onSave(newDistribution);
+    const distributionItems: DistributionItem[] = validItems.map((item) => ({
+      product_id: item.product_id,
+      quantity: item.quantity,
+      product_name: products.find((p) => p.id === item.product_id)
+        ?.product_name,
+    }));
+
+    const { error } = await createDistribution(
+      distributorId,
+      currentUserId,
+      distributionItems,
+    );
+
+    if (error) {
+      setFormError((error as any).message ?? "Gagal membuat distribusi.");
+      setSaving(false);
+      return;
+    }
+
+    setSaving(false);
+    onSaveSuccess();
   };
 
-  const handleChange = (field: string, value: string | number) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    setShowStockWarning(false);
-  };
+  const totalItems = items.filter((i) => i.product_id && i.quantity > 0);
+  const totalQty = totalItems.reduce((s, i) => s + i.quantity, 0);
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
+        {/* Header */}
+        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between rounded-t-2xl">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+            <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
               <Truck className="w-5 h-5 text-blue-600" />
             </div>
             <h2 className="text-xl font-semibold text-gray-900">
@@ -110,173 +172,220 @@ export function DistributionModal({ onClose, onSave }: DistributionModalProps) {
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
+            className="p-2 hover:bg-gray-100 rounded-lg cursor-pointer"
           >
             <X className="w-5 h-5 text-gray-500" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6">
-          <div className="space-y-4">
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-              <div className="flex items-start gap-3">
-                <Package className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                <div>
-                  <h3 className="font-medium text-blue-900 mb-1">
-                    Update Stok Otomatis
-                  </h3>
-                  <p className="text-sm text-blue-700">
-                    Setelah distribusi dibuat, stok pabrik akan otomatis
-                    berkurang dan stok distributor akan bertambah sesuai jumlah
-                    yang dikirim.
-                  </p>
-                </div>
-              </div>
+        {loadingData ? (
+          <div className="py-16 text-center">
+            <RefreshCw className="w-8 h-8 animate-spin text-gray-400 mx-auto mb-3" />
+            <p className="text-sm text-gray-500">Memuat data...</p>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="p-6 space-y-5">
+            {/* Info box */}
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex gap-3">
+              <Package className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-blue-700">
+                Stok pusat akan otomatis berkurang dan stok distributor akan
+                bertambah setelah distribusi dibuat.
+              </p>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Pilih Distributor <span className="text-red-500">*</span>
-              </label>
-              <select
-                required
-                value={formData.distributorId}
-                onChange={(e) => handleChange("distributorId", e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
-              >
-                <option value="">-- Pilih Distributor --</option>
-                {distributors.map((distributor) => (
-                  <option key={distributor.id} value={distributor.id}>
-                    {distributor.name} - {distributor.address}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Pilih Produk <span className="text-red-500">*</span>
-              </label>
-              <select
-                required
-                value={formData.productId}
-                onChange={(e) => handleChange("productId", e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
-              >
-                <option value="">-- Pilih Produk --</option>
-                {products.map((product) => (
-                  <option key={product.id} value={product.id}>
-                    {product.name} (Stok Pabrik: {product.stokPabrik} unit)
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {selectedProduct && (
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-700">
-                    Stok Pabrik Tersedia:
-                  </span>
-                  <span className="font-semibold text-gray-900">
-                    {selectedProduct.stokPabrik} unit
-                  </span>
-                </div>
+            {/* Error */}
+            {formError && (
+              <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex gap-3">
+                <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
+                <p className="text-sm text-red-700">{formError}</p>
               </div>
             )}
 
+            {/* Pilih Distributor */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Jumlah Kirim <span className="text-red-500">*</span>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Tujuan Distributor <span className="text-red-500">*</span>
               </label>
-              <input
-                type="number"
+              <select
                 required
-                min="1"
-                max={selectedProduct?.stokPabrik || undefined}
-                value={formData.quantity}
-                onChange={(e) =>
-                  handleChange("quantity", parseInt(e.target.value) || 0)
-                }
-                placeholder="Masukkan jumlah"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              {selectedProduct && formData.quantity > 0 && (
-                <div className="mt-2 text-sm">
-                  <p className="text-gray-600">
-                    Stok setelah distribusi:{" "}
-                    <span className="font-semibold">
-                      {selectedProduct.stokPabrik - formData.quantity} unit
-                    </span>
-                  </p>
-                </div>
+                value={distributorId}
+                onChange={(e) => {
+                  setDistributorId(e.target.value);
+                  setFormError(null);
+                }}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+              >
+                <option value="">-- Pilih Distributor --</option>
+                {distributors.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.distributor_name}
+                    {d.address ? ` — ${d.address}` : ""}
+                  </option>
+                ))}
+              </select>
+              {distributors.length === 0 && (
+                <p className="text-xs text-orange-600 mt-1">
+                  Belum ada distributor yang disetujui.
+                </p>
               )}
             </div>
 
-            {showStockWarning && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
-                <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-                <div>
-                  <h3 className="font-medium text-red-900 mb-1">
-                    Stok Tidak Mencukupi
-                  </h3>
-                  <p className="text-sm text-red-700">
-                    Jumlah yang akan dikirim melebihi stok yang tersedia di
-                    pabrik. Silakan kurangi jumlah atau lakukan restok terlebih
-                    dahulu.
-                  </p>
+            {/* Daftar Produk */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-sm font-medium text-gray-700">
+                  Produk yang Dikirim <span className="text-red-500">*</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={addItem}
+                  className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 cursor-pointer"
+                >
+                  <Plus className="w-4 h-4" />
+                  Tambah Produk
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                {items.map((item, idx) => {
+                  const selected = products.find(
+                    (p) => p.id === item.product_id,
+                  );
+                  const available = item.product_id
+                    ? (centralStockMap[item.product_id] ?? 0)
+                    : null;
+                  const isOverStock =
+                    available !== null && item.quantity > available;
+
+                  return (
+                    <div
+                      key={idx}
+                      className="border border-gray-200 rounded-xl p-4 bg-gray-50"
+                    >
+                      <div className="flex gap-3 items-start">
+                        {/* Pilih produk */}
+                        <div className="flex-1">
+                          <select
+                            required
+                            value={item.product_id}
+                            onChange={(e) =>
+                              updateItem(idx, "product_id", e.target.value)
+                            }
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer bg-white"
+                          >
+                            <option value="">-- Pilih Produk --</option>
+                            {availableProducts(idx).map((p) => (
+                              <option key={p.id} value={p.id}>
+                                {p.product_name}
+                                {p.size ? ` (${p.size})` : ""}
+                              </option>
+                            ))}
+                          </select>
+                          {available !== null && (
+                            <p
+                              className={`text-xs mt-1 ${isOverStock ? "text-red-600" : "text-gray-500"}`}
+                            >
+                              Stok pusat tersedia: {available} unit
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Jumlah */}
+                        <div className="w-28">
+                          <input
+                            type="number"
+                            required
+                            min="1"
+                            max={available ?? undefined}
+                            value={item.quantity}
+                            onChange={(e) =>
+                              updateItem(
+                                idx,
+                                "quantity",
+                                parseInt(e.target.value) || 1,
+                              )
+                            }
+                            className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                              isOverStock
+                                ? "border-red-400 bg-red-50"
+                                : "border-gray-300"
+                            }`}
+                            placeholder="Jumlah"
+                          />
+                        </div>
+
+                        {/* Hapus baris */}
+                        {items.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removeItem(idx)}
+                            className="p-2 text-red-500 hover:bg-red-50 rounded-lg cursor-pointer mt-0.5"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Ringkasan */}
+            {totalItems.length > 0 && (
+              <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
+                <p className="text-sm font-medium text-gray-700 mb-2">
+                  Ringkasan Pengiriman
+                </p>
+                <div className="space-y-1">
+                  {totalItems.map((item, idx) => {
+                    const prod = products.find((p) => p.id === item.product_id);
+                    return (
+                      <div
+                        key={idx}
+                        className="flex justify-between text-sm text-gray-600"
+                      >
+                        <span>{prod?.product_name ?? "—"}</span>
+                        <span className="font-medium">
+                          {item.quantity} unit
+                        </span>
+                      </div>
+                    );
+                  })}
+                  <div className="border-t border-gray-200 pt-2 mt-2 flex justify-between text-sm font-semibold text-gray-900">
+                    <span>Total</span>
+                    <span>{totalQty} unit</span>
+                  </div>
                 </div>
               </div>
             )}
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2 ">
-                Status Pengiriman{" "}
-                <span className="text-red-500 cursor-pointer">*</span>
-              </label>
-              <select
-                required
-                value={formData.status}
-                onChange={(e) => handleChange("status", e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+            {/* Actions */}
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={onClose}
+                disabled={saving}
+                className="flex-1 px-4 py-2.5 border border-gray-300 rounded-xl text-sm text-gray-700 hover:bg-gray-50 cursor-pointer disabled:opacity-50"
               >
-                <option value="pending">Pending - Belum Dikirim</option>
-                <option value="dalam_perjalanan">Dalam Perjalanan</option>
-                <option value="selesai">Selesai - Sudah Diterima</option>
-              </select>
+                Batal
+              </button>
+              <button
+                type="submit"
+                disabled={saving || loadingData}
+                className="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold cursor-pointer disabled:opacity-70 flex items-center justify-center gap-2"
+              >
+                {saving ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Truck className="w-4 h-4" />
+                )}
+                {saving ? "Memproses..." : "Buat Distribusi"}
+              </button>
             </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Catatan
-              </label>
-              <textarea
-                value={formData.notes}
-                onChange={(e) => handleChange("notes", e.target.value)}
-                placeholder="Tambahkan catatan pengiriman (opsional)"
-                rows={3}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-              />
-            </div>
-          </div>
-
-          <div className="mt-6 flex items-center justify-end gap-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors cursor-pointer"
-            >
-              Batal
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center gap-2 cursor-pointer"
-            >
-              <Truck className="w-4 h-4" />
-              Buat Distribusi
-            </button>
-          </div>
-        </form>
+          </form>
+        )}
       </div>
     </div>
   );

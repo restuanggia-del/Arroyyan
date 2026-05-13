@@ -28,11 +28,14 @@ import {
 } from "../services/authService";
 import { getPendingDistributors } from "../services/distributorService";
 import { supabase } from "../lib/supabase";
+import { supabaseAdmin } from "../lib/supabaseAdmin";
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authView, setAuthView] = useState<"login" | "register">("login");
   const [currentUser, setCurrentUser] = useState<any>(null);
+  // distributorId = UUID dari tabel distributors (berbeda dari users.id)
+  const [distributorId, setDistributorId] = useState<string>("");
   const [activeMenu, setActiveMenu] = useState("dashboard");
   const [pendingDistributorCount, setPendingDistributorCount] = useState(0);
 
@@ -46,6 +49,9 @@ export default function App() {
         if (userData) {
           setCurrentUser(userData);
           setIsAuthenticated(true);
+          if (userData.role === "distributor") {
+            await fetchDistributorId(userData.id);
+          }
         }
       }
     };
@@ -63,10 +69,20 @@ export default function App() {
     if (data) setPendingDistributorCount(data.length);
   };
 
+  // Ambil distributor.id (UUID tabel distributors) dari users.id
+  const fetchDistributorId = async (userId: string) => {
+    const { data } = await supabaseAdmin
+      .from("distributors")
+      .select("id")
+      .eq("user_id", userId)
+      .single();
+    if (data) setDistributorId(data.id);
+  };
+
   const handleLogin = async (
     email: string,
     password: string,
-    rememberMe: boolean,
+    _rememberMe: boolean,
   ) => {
     const result = await loginUser(email, password);
     if (result.error) {
@@ -81,15 +97,17 @@ export default function App() {
     }
 
     if (userData.role === "distributor" && !userData.is_approved) {
-      alert(
-        "Akun belum disetujui admin. Silakan hubungi admin untuk persetujuan.",
-      );
+      alert("Akun belum disetujui admin. Silakan hubungi admin.");
       await supabase.auth.signOut();
       return;
     }
 
     setCurrentUser(userData);
     setIsAuthenticated(true);
+
+    if (userData.role === "distributor") {
+      await fetchDistributorId(userData.id);
+    }
   };
 
   const handleRegister = async (data: RegisterData) => {
@@ -98,36 +116,43 @@ export default function App() {
       alert("Register gagal: " + result.error.message);
       return;
     }
-    alert(
-      "Pendaftaran berhasil! Akun distributor berhasil dibuat dan dapat login setelah admin menyetujui.",
-    );
+    alert("Pendaftaran berhasil! Silakan tunggu persetujuan admin.");
     setAuthView("login");
   };
 
   const handleMenuChange = (menuId: string) => {
     setActiveMenu(menuId);
-    if (menuId === "distributor") {
-      fetchPendingCount();
-    }
+    if (menuId === "distributor") fetchPendingCount();
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setIsAuthenticated(false);
+    setCurrentUser(null);
+    setDistributorId("");
+    setAuthView("login");
+    setActiveMenu("dashboard");
+    setPendingDistributorCount(0);
   };
 
   if (!isAuthenticated) {
-    if (authView === "login") {
-      return (
-        <Login
-          onLogin={handleLogin}
-          onSwitchToRegister={() => setAuthView("register")}
-        />
-      );
-    } else {
-      return (
-        <Register
-          onRegister={handleRegister}
-          onSwitchToLogin={() => setAuthView("login")}
-        />
-      );
-    }
+    return authView === "login" ? (
+      <Login
+        onLogin={handleLogin}
+        onSwitchToRegister={() => setAuthView("register")}
+      />
+    ) : (
+      <Register
+        onRegister={handleRegister}
+        onSwitchToLogin={() => setAuthView("login")}
+      />
+    );
   }
+
+  // distributorId untuk dipakai di komponen yang butuh
+  // Untuk admin: distributorId kosong, komponen tetap bisa render tapi
+  // transaksi sebaiknya dilakukan oleh distributor
+  const activeDistributorId = distributorId;
 
   const renderContent = () => {
     switch (activeMenu) {
@@ -138,9 +163,25 @@ export default function App() {
       case "stok":
         return <StockManagement />;
       case "distribusi":
-        return <DistributionManagement />;
+        return <DistributionManagement currentUserId={currentUser?.id ?? ""} />;
       case "transaksi":
-        return <SalesTransaction />;
+        return activeDistributorId ? (
+          <SalesTransaction distributorId={activeDistributorId} />
+        ) : (
+          <div className="p-8">
+            <div className="bg-orange-50 border border-orange-200 rounded-xl p-6 text-center">
+              <ShoppingCart className="w-12 h-12 text-orange-400 mx-auto mb-3" />
+              <h2 className="text-lg font-semibold text-gray-900 mb-2">
+                Transaksi Penjualan
+              </h2>
+              <p className="text-gray-600 text-sm">
+                Fitur transaksi penjualan hanya tersedia untuk akun distributor.
+                Distributor dapat login dan melakukan transaksi dari akun
+                mereka.
+              </p>
+            </div>
+          </div>
+        );
       case "pelanggan":
         return <CustomerManagement />;
       case "laporan":
@@ -160,7 +201,8 @@ export default function App() {
                 Dashboard
               </h1>
               <p className="text-gray-600">
-                Selamat datang kembali! Berikut ringkasan bisnis Anda hari ini.
+                Selamat datang kembali, {currentUser?.name}! Berikut ringkasan
+                bisnis Anda hari ini.
               </p>
             </div>
 
@@ -223,24 +265,23 @@ export default function App() {
                       <TrendingUp className="w-12 h-12 text-blue-500" />
                     </div>
                     <p className="text-sm text-gray-600">
-                      Berdasarkan rata-rata pergerakan 3 bulan terakhir,
-                      prediksi penjualan bulan Juli 2026 diperkirakan mencapai
-                      Rp 7.850.000
+                      Berdasarkan rata-rata pergerakan 3 bulan terakhir
                     </p>
                   </div>
                   <div className="mt-4 grid grid-cols-3 gap-4">
-                    <div className="text-center p-3 bg-gray-50 rounded-lg">
-                      <p className="text-xs text-gray-600 mb-1">3 Bulan Lalu</p>
-                      <p className="font-semibold text-gray-900">Rp 6.1M</p>
-                    </div>
-                    <div className="text-center p-3 bg-gray-50 rounded-lg">
-                      <p className="text-xs text-gray-600 mb-1">2 Bulan Lalu</p>
-                      <p className="font-semibold text-gray-900">Rp 7.2M</p>
-                    </div>
-                    <div className="text-center p-3 bg-gray-50 rounded-lg">
-                      <p className="text-xs text-gray-600 mb-1">Bulan Lalu</p>
-                      <p className="font-semibold text-gray-900">Rp 6.8M</p>
-                    </div>
+                    {[
+                      ["3 Bulan Lalu", "Rp 6.1M"],
+                      ["2 Bulan Lalu", "Rp 7.2M"],
+                      ["Bulan Lalu", "Rp 6.8M"],
+                    ].map(([label, val]) => (
+                      <div
+                        key={label}
+                        className="text-center p-3 bg-gray-50 rounded-lg"
+                      >
+                        <p className="text-xs text-gray-600 mb-1">{label}</p>
+                        <p className="font-semibold text-gray-900">{val}</p>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -269,27 +310,18 @@ export default function App() {
           pendingDistributorCount={pendingDistributorCount}
         />
       </div>
-
       <div className="flex-1 flex flex-col overflow-hidden">
         <header className="bg-white border-b border-gray-200 px-8 py-4">
           <div className="flex items-center gap-4">
             <SearchBar />
             <UserProfile
-              name={currentUser?.name || "User"}
+              name={currentUser?.name ?? "User"}
               role={currentUser?.role === "admin" ? "Admin" : "Distributor"}
               onSettings={() => setActiveMenu("pengaturan")}
-              onLogout={async () => {
-                await supabase.auth.signOut();
-                setIsAuthenticated(false);
-                setCurrentUser(null);
-                setAuthView("login");
-                setActiveMenu("dashboard");
-                setPendingDistributorCount(0);
-              }}
+              onLogout={handleLogout}
             />
           </div>
         </header>
-
         <main className="flex-1 overflow-y-auto">{renderContent()}</main>
       </div>
     </div>

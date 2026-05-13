@@ -1,521 +1,534 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Users,
   Phone,
-  ShoppingBag,
   Star,
   Plus,
   Search,
   Eye,
   X,
+  RefreshCw,
+  AlertCircle,
+  Trash2,
+  Edit2,
 } from "lucide-react";
-import { AddCustomerModal } from "./AddCustomerModal";
+import {
+  getAllCustomers,
+  createCustomer,
+  updateCustomer,
+  deleteCustomer,
+  Customer,
+} from "../../services/customerService";
 
-interface Purchase {
-  id: string;
-  date: string;
-  items: string[];
-  total: number;
+interface CustomerModalProps {
+  customer: Customer | null;
+  onClose: () => void;
+  onSaveSuccess: () => void;
 }
 
-interface Customer {
-  id: string;
-  name: string;
-  phone: string;
-  email?: string;
-  address?: string;
-  isLoyalCustomer: boolean;
-  totalPurchases: number;
-  totalSpent: number;
-  lastPurchase: string;
-  purchases: Purchase[];
+function CustomerModal({
+  customer,
+  onClose,
+  onSaveSuccess,
+}: CustomerModalProps) {
+  const [form, setForm] = useState({
+    customer_name: customer?.customer_name ?? "",
+    phone: customer?.phone ?? "",
+    address: customer?.address ?? "",
+    is_subscribed: customer?.is_subscribed ?? false,
+  });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    setError(null);
+
+    const payload = {
+      customer_name: form.customer_name.trim(),
+      phone: form.phone.trim() || null,
+      address: form.address.trim() || null,
+      is_subscribed: form.is_subscribed,
+    };
+
+    const { error } = customer
+      ? await updateCustomer(customer.id, payload)
+      : await createCustomer(payload);
+
+    if (error) {
+      setError((error as any).message);
+      setSaving(false);
+      return;
+    }
+    setSaving(false);
+    onSaveSuccess();
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl">
+        <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-gray-900">
+            {customer ? "Edit Pelanggan" : "Tambah Pelanggan"}
+          </h2>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-gray-100 rounded-lg cursor-pointer"
+          >
+            <X className="w-5 h-5 text-gray-500" />
+          </button>
+        </div>
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {error && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+              {error}
+            </div>
+          )}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Nama <span className="text-red-500">*</span>
+            </label>
+            <input
+              required
+              value={form.customer_name}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, customer_name: e.target.value }))
+              }
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Nama pelanggan"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              No. Telepon
+            </label>
+            <input
+              value={form.phone}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, phone: e.target.value }))
+              }
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="08xxxxxxxxxx"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Alamat
+            </label>
+            <textarea
+              value={form.address}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, address: e.target.value }))
+              }
+              rows={2}
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              placeholder="Alamat lengkap"
+            />
+          </div>
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={form.is_subscribed}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, is_subscribed: e.target.checked }))
+              }
+              className="w-4 h-4 rounded text-blue-600"
+            />
+            <span className="text-sm text-gray-700">
+              Tandai sebagai pelanggan langganan
+            </span>
+          </label>
+          <div className="flex gap-3 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-2.5 border border-gray-300 rounded-xl text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+            >
+              Batal
+            </button>
+            <button
+              type="submit"
+              disabled={saving}
+              className="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-medium cursor-pointer disabled:opacity-70 flex items-center justify-center gap-2"
+            >
+              {saving && <RefreshCw className="w-4 h-4 animate-spin" />}
+              {customer ? "Simpan" : "Tambah"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
 }
 
-const customers: Customer[] = [
-  {
-    id: "1",
-    name: "Budi Santoso",
-    phone: "081234567890",
-    email: "budi.santoso@email.com",
-    address: "Jl. Merdeka No. 45, Jakarta",
-    isLoyalCustomer: true,
-    totalPurchases: 45,
-    totalSpent: 2250000,
-    lastPurchase: "2026-04-21",
-    purchases: [
-      {
-        id: "TRX001",
-        date: "2026-04-21 10:30",
-        items: ["Arroyyan99 Cup Sedang (10)", "Arroyyan99 Botol Kecil (5)"],
-        total: 70000,
-      },
-      {
-        id: "TRX002",
-        date: "2026-04-18 14:20",
-        items: ["Arroyyan99 Cup Kecil (20)"],
-        total: 60000,
-      },
-    ],
-  },
-  {
-    id: "2",
-    name: "Siti Nurhaliza",
-    phone: "082345678901",
-    email: "siti.nur@email.com",
-    address: "Jl. Sudirman No. 12, Bandung",
-    isLoyalCustomer: true,
-    totalPurchases: 32,
-    totalSpent: 1850000,
-    lastPurchase: "2026-04-20",
-    purchases: [
-      {
-        id: "TRX003",
-        date: "2026-04-20 09:15",
-        items: ["Arroyyan99 Botol Sedang (8)"],
-        total: 48000,
-      },
-    ],
-  },
-  {
-    id: "3",
-    name: "Ahmad Rizki",
-    phone: "083456789012",
-    isLoyalCustomer: false,
-    totalPurchases: 8,
-    totalSpent: 420000,
-    lastPurchase: "2026-04-19",
-    purchases: [
-      {
-        id: "TRX004",
-        date: "2026-04-19 16:45",
-        items: ["Arroyyan99 Cup Kecil (15)"],
-        total: 45000,
-      },
-    ],
-  },
-  {
-    id: "4",
-    name: "Dewi Lestari",
-    phone: "084567890123",
-    email: "dewi.lestari@email.com",
-    isLoyalCustomer: true,
-    totalPurchases: 28,
-    totalSpent: 1600000,
-    lastPurchase: "2026-04-21",
-    purchases: [
-      {
-        id: "TRX005",
-        date: "2026-04-21 11:00",
-        items: ["Arroyyan99 Cup Sedang (12)", "Arroyyan99 Cup Kecil (10)"],
-        total: 90000,
-      },
-    ],
-  },
-  {
-    id: "5",
-    name: "Rudi Hartono",
-    phone: "085678901234",
-    isLoyalCustomer: false,
-    totalPurchases: 5,
-    totalSpent: 180000,
-    lastPurchase: "2026-04-15",
-    purchases: [
-      {
-        id: "TRX006",
-        date: "2026-04-15 13:20",
-        items: ["Arroyyan99 Botol Kecil (6)"],
-        total: 24000,
-      },
-    ],
-  },
-];
+// ─── MAIN COMPONENT ──────────────────────────────────────────────────────────
 
 export function CustomerManagement() {
-  const [customerList, setCustomerList] = useState<Customer[]>(customers);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterType, setFilterType] = useState<"all" | "loyal" | "regular">(
-    "all",
-  );
+  const [filterType, setFilterType] = useState<
+    "all" | "subscribed" | "regular"
+  >("all");
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
     null,
   );
-  const [showAddModal, setShowAddModal] = useState(false);
+  const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
+  const [showModal, setShowModal] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<Customer | null>(null);
 
-  const handleAddCustomer = (customer: Customer) => {
-    setCustomerList([customer, ...customerList]);
-    setShowAddModal(false);
+  const fetchCustomers = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    const { data, error } = await getAllCustomers();
+    if (error) setError("Gagal memuat data pelanggan.");
+    else setCustomers(data ?? []);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    fetchCustomers();
+  }, [fetchCustomers]);
+
+  const handleDelete = async () => {
+    if (!confirmDelete) return;
+    const { error } = await deleteCustomer(confirmDelete.id);
+    if (error) alert("Gagal menghapus: " + (error as any).message);
+    else setCustomers((prev) => prev.filter((c) => c.id !== confirmDelete.id));
+    setConfirmDelete(null);
   };
 
-  const filteredCustomers = customerList.filter((customer) => {
-    const matchesSearch =
-      customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      customer.phone.includes(searchQuery);
-
-    const matchesFilter =
+  const filtered = customers.filter((c) => {
+    const matchSearch =
+      c.customer_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (c.phone ?? "").includes(searchQuery);
+    const matchFilter =
       filterType === "all" ||
-      (filterType === "loyal" && customer.isLoyalCustomer) ||
-      (filterType === "regular" && !customer.isLoyalCustomer);
-
-    return matchesSearch && matchesFilter;
+      (filterType === "subscribed" && c.is_subscribed) ||
+      (filterType === "regular" && !c.is_subscribed);
+    return matchSearch && matchFilter;
   });
 
-  const loyalCustomerCount = customerList.filter(
-    (c) => c.isLoyalCustomer,
-  ).length;
-  const totalCustomers = customerList.length;
-  const totalRevenue = customerList.reduce((sum, c) => sum + c.totalSpent, 0);
-  const averagePerCustomer = totalRevenue / totalCustomers;
+  const totalSubscribed = customers.filter((c) => c.is_subscribed).length;
+
+  const formatDate = (d: string) =>
+    new Date(d).toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
 
   return (
     <div className="p-8">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-1">
-          Manajemen Pelanggan
-        </h1>
-        <p className="text-gray-600">
-          Kelola data pelanggan dan riwayat pembelian
-        </p>
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-1">
+            Manajemen Pelanggan
+          </h1>
+          <p className="text-gray-600">Kelola data pelanggan</p>
+        </div>
+        <button
+          onClick={fetchCustomers}
+          disabled={loading}
+          className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50 cursor-pointer"
+        >
+          <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+          Refresh
+        </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-              <Users className="w-6 h-6 text-blue-600" />
-            </div>
+      {/* Stat Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
+            <Users className="w-6 h-6 text-blue-600" />
           </div>
-          <h3 className="text-sm text-gray-600 mb-1">Total Pelanggan</h3>
-          <p className="text-2xl font-bold text-gray-900">{totalCustomers}</p>
-        </div>
-
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center">
-              <Star className="w-6 h-6 text-amber-600" />
-            </div>
-          </div>
-          <h3 className="text-sm text-gray-600 mb-1">Pelanggan Langganan</h3>
+          <p className="text-sm text-gray-600 mb-1">Total Pelanggan</p>
           <p className="text-2xl font-bold text-gray-900">
-            {loyalCustomerCount}
+            {loading ? "—" : customers.length}
           </p>
         </div>
-
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-              <ShoppingBag className="w-6 h-6 text-green-600" />
-            </div>
+        <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <div className="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center mb-4">
+            <Star className="w-6 h-6 text-amber-600" />
           </div>
-          <h3 className="text-sm text-gray-600 mb-1">Total Pendapatan</h3>
+          <p className="text-sm text-gray-600 mb-1">Pelanggan Langganan</p>
           <p className="text-2xl font-bold text-gray-900">
-            Rp {(totalRevenue / 1000000).toFixed(1)}jt
-          </p>
-        </div>
-
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-              <ShoppingBag className="w-6 h-6 text-purple-600" />
-            </div>
-          </div>
-          <h3 className="text-sm text-gray-600 mb-1">Rata-rata/Pelanggan</h3>
-          <p className="text-2xl font-bold text-gray-900">
-            Rp {(averagePerCustomer / 1000).toFixed(0)}k
+            {loading ? "—" : totalSubscribed}
           </p>
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200">
-        <div className="border-b border-gray-200 px-6 py-4">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-4 flex-1">
-              <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Cari nama atau nomor telepon..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setFilterType("all")}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${
-                    filterType === "all"
-                      ? "bg-blue-50 text-blue-600"
-                      : "text-gray-600 hover:bg-gray-50"
-                  }`}
-                >
-                  Semua
-                </button>
-                <button
-                  onClick={() => setFilterType("loyal")}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${
-                    filterType === "loyal"
-                      ? "bg-amber-50 text-amber-600"
-                      : "text-gray-600 hover:bg-gray-50"
-                  }`}
-                >
-                  Langganan
-                </button>
-                <button
-                  onClick={() => setFilterType("regular")}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${
-                    filterType === "regular"
-                      ? "bg-gray-100 text-gray-700"
-                      : "text-gray-600 hover:bg-gray-50"
-                  }`}
-                >
-                  Reguler
-                </button>
-              </div>
+      {/* Tabel */}
+      <div className="bg-white rounded-xl border border-gray-200">
+        <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between flex-wrap gap-3">
+          <div className="flex items-center gap-3 flex-1 flex-wrap">
+            <div className="relative max-w-sm flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Cari nama atau telepon..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
             </div>
-
-            <button
-              onClick={() => setShowAddModal(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors cursor-pointer"
-            >
-              <Plus className="w-5 h-5" />
-              Tambah Pelanggan
-            </button>
+            <div className="flex gap-1">
+              {(["all", "subscribed", "regular"] as const).map((f) => (
+                <button
+                  key={f}
+                  onClick={() => setFilterType(f)}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium cursor-pointer transition-colors ${
+                    filterType === f
+                      ? f === "subscribed"
+                        ? "bg-amber-50 text-amber-700"
+                        : "bg-blue-50 text-blue-600"
+                      : "text-gray-600 hover:bg-gray-50"
+                  }`}
+                >
+                  {f === "all"
+                    ? "Semua"
+                    : f === "subscribed"
+                      ? "Langganan"
+                      : "Reguler"}
+                </button>
+              ))}
+            </div>
           </div>
+          <button
+            onClick={() => {
+              setEditingCustomer(null);
+              setShowModal(true);
+            }}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            Tambah Pelanggan
+          </button>
         </div>
 
         <div className="p-6">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
-                    Nama
-                  </th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
-                    No. Telepon
-                  </th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
-                    Status
-                  </th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
-                    Total Pembelian
-                  </th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
-                    Total Belanja
-                  </th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
-                    Terakhir Beli
-                  </th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
-                    Aksi
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredCustomers.map((customer) => (
-                  <tr
-                    key={customer.id}
-                    className="border-b border-gray-100 hover:bg-gray-50"
-                  >
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-400 rounded-full flex items-center justify-center">
-                          <span className="text-white font-semibold text-sm">
-                            {customer.name.charAt(0)}
-                          </span>
-                        </div>
-                        <span className="text-sm font-medium text-gray-900">
-                          {customer.name}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-2 text-sm text-gray-900">
-                        <Phone className="w-4 h-4 text-gray-400" />
-                        {customer.phone}
-                      </div>
-                    </td>
-                    <td className="py-3 px-4">
-                      {customer.isLoyalCustomer ? (
-                        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
-                          <Star className="w-3 h-3" fill="currentColor" />
-                          Langganan
-                        </span>
-                      ) : (
-                        <span className="inline-flex px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
-                          Reguler
-                        </span>
-                      )}
-                    </td>
-                    <td className="py-3 px-4">
-                      <span className="text-sm text-gray-900">
-                        {customer.totalPurchases}x
-                      </span>
-                    </td>
-                    <td className="py-3 px-4">
-                      <span className="text-sm font-semibold text-gray-900">
-                        Rp {customer.totalSpent.toLocaleString("id-ID")}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4">
-                      <span className="text-sm text-gray-600">
-                        {customer.lastPurchase}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4">
-                      <button
-                        onClick={() => setSelectedCustomer(customer)}
-                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                        title="Lihat Detail"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          {error && (
+            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl flex gap-3">
+              <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
+          )}
 
-            {filteredCustomers.length === 0 && (
-              <div className="text-center py-12">
-                <Users className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                <p className="text-gray-500">Tidak ada pelanggan ditemukan</p>
-              </div>
-            )}
-          </div>
+          {loading ? (
+            <div className="py-16 text-center">
+              <RefreshCw className="w-8 h-8 animate-spin text-gray-400 mx-auto mb-3" />
+              <p className="text-sm text-gray-500">Memuat data pelanggan...</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-200">
+                    {[
+                      "Nama",
+                      "No. Telepon",
+                      "Alamat",
+                      "Status",
+                      "Terdaftar",
+                      "Aksi",
+                    ].map((h) => (
+                      <th
+                        key={h}
+                        className="text-left py-3 px-4 text-sm font-semibold text-gray-700"
+                      >
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={6}
+                        className="py-12 text-center text-gray-500 text-sm"
+                      >
+                        Tidak ada pelanggan ditemukan
+                      </td>
+                    </tr>
+                  ) : (
+                    filtered.map((c) => (
+                      <tr
+                        key={c.id}
+                        className="border-b border-gray-100 hover:bg-gray-50"
+                      >
+                        <td className="py-3 px-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 bg-gradient-to-br from-blue-400 to-purple-400 rounded-full flex items-center justify-center flex-shrink-0">
+                              <span className="text-white font-semibold text-sm">
+                                {c.customer_name.charAt(0).toUpperCase()}
+                              </span>
+                            </div>
+                            <span className="text-sm font-medium text-gray-900">
+                              {c.customer_name}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="flex items-center gap-1.5 text-sm text-gray-600">
+                            <Phone className="w-3.5 h-3.5" />
+                            {c.phone ?? "—"}
+                          </div>
+                        </td>
+                        <td className="py-3 px-4 text-sm text-gray-600 max-w-[180px] truncate">
+                          {c.address ?? "—"}
+                        </td>
+                        <td className="py-3 px-4">
+                          {c.is_subscribed ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
+                              <Star className="w-3 h-3" fill="currentColor" />
+                              Langganan
+                            </span>
+                          ) : (
+                            <span className="inline-flex px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                              Reguler
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-3 px-4 text-sm text-gray-500">
+                          {formatDate(c.created_at)}
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => setSelectedCustomer(c)}
+                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg cursor-pointer"
+                              title="Detail"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                setEditingCustomer(c);
+                                setShowModal(true);
+                              }}
+                              className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg cursor-pointer"
+                              title="Edit"
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => setConfirmDelete(c)}
+                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg cursor-pointer"
+                              title="Hapus"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
 
-      {showAddModal && (
-        <AddCustomerModal
-          onClose={() => setShowAddModal(false)}
-          onSave={handleAddCustomer}
+      {/* Modal tambah/edit */}
+      {showModal && (
+        <CustomerModal
+          customer={editingCustomer}
+          onClose={() => setShowModal(false)}
+          onSaveSuccess={() => {
+            setShowModal(false);
+            fetchCustomers();
+          }}
         />
       )}
 
+      {/* Confirm delete */}
+      {confirmDelete && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm">
+            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Trash2 className="w-6 h-6 text-red-600" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 text-center mb-1">
+              Hapus Pelanggan?
+            </h3>
+            <p className="text-sm text-gray-500 text-center mb-6">
+              {confirmDelete.customer_name}
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmDelete(null)}
+                className="flex-1 px-4 py-2.5 border border-gray-300 rounded-xl text-sm cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                onClick={handleDelete}
+                className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-xl text-sm font-medium cursor-pointer"
+              >
+                Ya, Hapus
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Detail modal */}
       {selectedCustomer && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-gray-900">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl">
+            <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-900">
                 Detail Pelanggan
               </h2>
               <button
                 onClick={() => setSelectedCustomer(null)}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-2 hover:bg-gray-100 rounded-lg cursor-pointer"
               >
                 <X className="w-5 h-5 text-gray-500" />
               </button>
             </div>
-
-            <div className="p-6">
-              <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg p-6 mb-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
-                      <span className="text-white font-bold text-2xl">
-                        {selectedCustomer.name.charAt(0)}
-                      </span>
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-bold text-gray-900 mb-1">
-                        {selectedCustomer.name}
-                      </h3>
-                      {selectedCustomer.isLoyalCustomer && (
-                        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
-                          <Star className="w-3 h-3" fill="currentColor" />
-                          Pelanggan Langganan
-                        </span>
-                      )}
-                    </div>
-                  </div>
+            <div className="p-6 space-y-4">
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+                  <span className="text-white font-bold text-2xl">
+                    {selectedCustomer.customer_name.charAt(0).toUpperCase()}
+                  </span>
                 </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-gray-600 mb-1">No. Telepon</p>
-                    <p className="font-medium text-gray-900">
-                      {selectedCustomer.phone}
-                    </p>
-                  </div>
-                  {selectedCustomer.email && (
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">Email</p>
-                      <p className="font-medium text-gray-900">
-                        {selectedCustomer.email}
-                      </p>
-                    </div>
-                  )}
-                  {selectedCustomer.address && (
-                    <div className="col-span-2">
-                      <p className="text-sm text-gray-600 mb-1">Alamat</p>
-                      <p className="font-medium text-gray-900">
-                        {selectedCustomer.address}
-                      </p>
-                    </div>
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900">
+                    {selectedCustomer.customer_name}
+                  </h3>
+                  {selectedCustomer.is_subscribed && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
+                      <Star className="w-3 h-3" fill="currentColor" />
+                      Langganan
+                    </span>
                   )}
                 </div>
               </div>
-
-              <div className="grid grid-cols-3 gap-4 mb-6">
-                <div className="bg-blue-50 rounded-lg p-4">
-                  <p className="text-sm text-gray-600 mb-1">Total Pembelian</p>
-                  <p className="text-2xl font-bold text-blue-600">
-                    {selectedCustomer.totalPurchases}x
-                  </p>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between py-2 border-b border-gray-100">
+                  <span className="text-gray-500">No. Telepon</span>
+                  <span className="font-medium">
+                    {selectedCustomer.phone ?? "—"}
+                  </span>
                 </div>
-                <div className="bg-green-50 rounded-lg p-4">
-                  <p className="text-sm text-gray-600 mb-1">Total Belanja</p>
-                  <p className="text-2xl font-bold text-green-600">
-                    Rp {(selectedCustomer.totalSpent / 1000).toFixed(0)}k
-                  </p>
+                <div className="flex justify-between py-2 border-b border-gray-100">
+                  <span className="text-gray-500">Alamat</span>
+                  <span className="font-medium text-right max-w-[220px]">
+                    {selectedCustomer.address ?? "—"}
+                  </span>
                 </div>
-                <div className="bg-purple-50 rounded-lg p-4">
-                  <p className="text-sm text-gray-600 mb-1">Terakhir Beli</p>
-                  <p className="text-sm font-semibold text-purple-600">
-                    {selectedCustomer.lastPurchase}
-                  </p>
-                </div>
-              </div>
-
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  Riwayat Pembelian
-                </h3>
-                <div className="space-y-3">
-                  {selectedCustomer.purchases.map((purchase) => (
-                    <div
-                      key={purchase.id}
-                      className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
-                    >
-                      <div className="flex items-start justify-between mb-3">
-                        <div>
-                          <p className="font-semibold text-gray-900 mb-1">
-                            #{purchase.id}
-                          </p>
-                          <p className="text-sm text-gray-600">
-                            {purchase.date}
-                          </p>
-                        </div>
-                        <p className="font-bold text-blue-600">
-                          Rp {purchase.total.toLocaleString("id-ID")}
-                        </p>
-                      </div>
-                      <div className="bg-gray-50 rounded-lg p-3">
-                        <p className="text-xs text-gray-600 mb-2">
-                          Item yang dibeli:
-                        </p>
-                        <ul className="space-y-1">
-                          {purchase.items.map((item, idx) => (
-                            <li key={idx} className="text-sm text-gray-900">
-                              • {item}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
-                  ))}
+                <div className="flex justify-between py-2">
+                  <span className="text-gray-500">Terdaftar</span>
+                  <span className="font-medium">
+                    {formatDate(selectedCustomer.created_at)}
+                  </span>
                 </div>
               </div>
             </div>
