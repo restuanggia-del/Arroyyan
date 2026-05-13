@@ -69,7 +69,6 @@ export default function App() {
     if (data) setPendingDistributorCount(data.length);
   };
 
-  // Ambil distributor.id (UUID tabel distributors) dari users.id
   const fetchDistributorId = async (userId: string) => {
     const { data } = await supabaseAdmin
       .from("distributors")
@@ -149,9 +148,6 @@ export default function App() {
     );
   }
 
-  // distributorId untuk dipakai di komponen yang butuh
-  // Untuk admin: distributorId kosong, komponen tetap bisa render tapi
-  // transaksi sebaiknya dilakukan oleh distributor
   const activeDistributorId = distributorId;
 
   const renderContent = () => {

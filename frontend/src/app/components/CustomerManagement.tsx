@@ -162,8 +162,6 @@ function CustomerModal({
   );
 }
 
-// ─── MAIN COMPONENT ──────────────────────────────────────────────────────────
-
 export function CustomerManagement() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
@@ -239,7 +237,6 @@ export function CustomerManagement() {
         </button>
       </div>
 
-      {/* Stat Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         <div className="bg-white rounded-xl border border-gray-200 p-6">
           <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
@@ -261,7 +258,6 @@ export function CustomerManagement() {
         </div>
       </div>
 
-      {/* Tabel */}
       <div className="bg-white rounded-xl border border-gray-200">
         <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-3 flex-1 flex-wrap">
@@ -434,7 +430,6 @@ export function CustomerManagement() {
         </div>
       </div>
 
-      {/* Modal tambah/edit */}
       {showModal && (
         <CustomerModal
           customer={editingCustomer}
@@ -446,7 +441,6 @@ export function CustomerManagement() {
         />
       )}
 
-      {/* Confirm delete */}
       {confirmDelete && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm">
@@ -477,7 +471,6 @@ export function CustomerManagement() {
         </div>
       )}
 
-      {/* Detail modal */}
       {selectedCustomer && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl">

@@ -21,7 +21,7 @@ import {
 type FilterStatus = "all" | "pending" | "sent" | "received";
 
 interface DistributionManagementProps {
-  currentUserId: string; // dari App.tsx (currentUser.id)
+  currentUserId: string;
 }
 
 const statusLabel: Record<string, string> = {
@@ -95,7 +95,6 @@ export function DistributionManagement({
 
   return (
     <div className="p-8">
-      {/* Header */}
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 mb-1">
@@ -115,7 +114,6 @@ export function DistributionManagement({
         </button>
       </div>
 
-      {/* Stat Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
         {[
           {
@@ -160,7 +158,6 @@ export function DistributionManagement({
         ))}
       </div>
 
-      {/* Table */}
       <div className="bg-white rounded-xl border border-gray-200">
         <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-3">
@@ -188,7 +185,6 @@ export function DistributionManagement({
         </div>
 
         <div className="p-6">
-          {/* Error */}
           {error && (
             <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl flex gap-3">
               <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
@@ -196,7 +192,6 @@ export function DistributionManagement({
             </div>
           )}
 
-          {/* Loading */}
           {loading ? (
             <div className="py-16 text-center">
               <RefreshCw className="w-8 h-8 animate-spin text-gray-400 mx-auto mb-3" />
@@ -220,7 +215,6 @@ export function DistributionManagement({
                         <Truck className="w-6 h-6 text-white" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        {/* Nama distributor + status */}
                         <div className="flex items-center gap-3 mb-1 flex-wrap">
                           <h3 className="font-semibold text-gray-900">
                             {dist.distributors?.distributor_name ?? "—"}
@@ -233,7 +227,6 @@ export function DistributionManagement({
                           </span>
                         </div>
 
-                        {/* Alamat */}
                         {dist.distributors?.address && (
                           <div className="flex items-center gap-1.5 text-sm text-gray-500 mb-3">
                             <MapPin className="w-3.5 h-3.5" />
@@ -241,7 +234,6 @@ export function DistributionManagement({
                           </div>
                         )}
 
-                        {/* Produk yang dikirim */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                           {(dist.distribution_details ?? []).map((detail) => (
                             <div
@@ -260,14 +252,12 @@ export function DistributionManagement({
                       </div>
                     </div>
 
-                    {/* Tanggal + aksi status */}
                     <div className="flex-shrink-0 text-right">
                       <div className="flex items-center gap-1.5 text-sm text-gray-400 mb-3 justify-end">
                         <Calendar className="w-3.5 h-3.5" />
                         <span>{formatDate(dist.distribution_date)}</span>
                       </div>
 
-                      {/* Tombol ubah status */}
                       {updatingId === dist.id ? (
                         <div className="flex items-center gap-2 text-sm text-gray-500 justify-end">
                           <RefreshCw className="w-4 h-4 animate-spin" />

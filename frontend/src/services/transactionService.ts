@@ -1,7 +1,5 @@
 import { supabaseAdmin } from "../lib/supabaseAdmin";
 
-// ─── INTERFACES ─────────────────────────────────────────────────────────────
-
 export interface TransactionItem {
     product_id: string;
     product_name: string;
@@ -26,8 +24,6 @@ export interface Transaction {
         products?: { product_name: string } | null;
     }[];
 }
-
-// ─── GET ─────────────────────────────────────────────────────────────────────
 
 export const getAllTransactions = async () => {
     const { data, error } = await supabaseAdmin
@@ -55,10 +51,6 @@ export const getAllTransactions = async () => {
     return { data: (data as unknown) as Transaction[], error: null };
 };
 
-// ─── CREATE ──────────────────────────────────────────────────────────────────
-// distributorId: UUID dari tabel distributors (bukan users)
-// customerId: UUID dari tabel customers (boleh null)
-
 export const createTransaction = async (
     distributorId: string,
     customerId: string | null,
@@ -70,7 +62,6 @@ export const createTransaction = async (
         0
     );
 
-    // 1. Validasi stok distributor untuk setiap produk
     for (const item of items) {
         const { data: stock, error: stockErr } = await supabaseAdmin
             .from("stocks")
@@ -89,7 +80,6 @@ export const createTransaction = async (
         }
     }
 
-    // 2. Insert header transaksi
     const { data: trx, error: trxErr } = await supabaseAdmin
         .from("transactions")
         .insert([{
@@ -103,7 +93,6 @@ export const createTransaction = async (
 
     if (trxErr) return { data: null, error: trxErr };
 
-    // 3. Insert detail transaksi
     const { error: detailErr } = await supabaseAdmin
         .from("transaction_details")
         .insert(items.map((item) => ({
@@ -116,7 +105,6 @@ export const createTransaction = async (
 
     if (detailErr) return { data: null, error: detailErr };
 
-    // 4. Kurangi stok distributor per produk
     for (const item of items) {
         const { data: stock } = await supabaseAdmin
             .from("stocks")
@@ -132,7 +120,6 @@ export const createTransaction = async (
                 .eq("id", stock.id);
         }
 
-        // Catat di stock_movements
         await supabaseAdmin.from("stock_movements").insert([{
             product_id: item.product_id,
             distributor_id: distributorId,
@@ -142,7 +129,6 @@ export const createTransaction = async (
         }]);
     }
 
-    // 5. Activity log
     await supabaseAdmin.from("activity_logs").insert([{
         activity_type: "create_transaction",
         description: `Transaksi baru #${trx.id.slice(0, 8)}, total: Rp ${totalPrice.toLocaleString("id-ID")}`,

@@ -1,7 +1,5 @@
 import { supabaseAdmin } from "../lib/supabaseAdmin";
 
-// ─── INTERFACES ─────────────────────────────────────────────────────────────
-
 export interface Customer {
     id: string;
     customer_name: string;
@@ -10,8 +8,6 @@ export interface Customer {
     is_subscribed: boolean;
     created_at: string;
 }
-
-// ─── GET ─────────────────────────────────────────────────────────────────────
 
 export const getAllCustomers = async () => {
     const { data, error } = await supabaseAdmin
@@ -22,8 +18,6 @@ export const getAllCustomers = async () => {
     if (error) return { data: null, error };
     return { data: data as Customer[], error: null };
 };
-
-// ─── CREATE ──────────────────────────────────────────────────────────────────
 
 export const createCustomer = async (
     customer: Omit<Customer, "id" | "created_at">
@@ -37,8 +31,6 @@ export const createCustomer = async (
     if (error) return { data: null, error };
     return { data: data as Customer, error: null };
 };
-
-// ─── UPDATE ──────────────────────────────────────────────────────────────────
 
 export const updateCustomer = async (
     id: string,
@@ -54,8 +46,6 @@ export const updateCustomer = async (
     if (error) return { data: null, error };
     return { data: data as Customer, error: null };
 };
-
-// ─── DELETE ──────────────────────────────────────────────────────────────────
 
 export const deleteCustomer = async (id: string) => {
     const { error } = await supabaseAdmin

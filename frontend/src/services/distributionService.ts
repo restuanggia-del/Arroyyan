@@ -1,7 +1,5 @@
 import { supabaseAdmin } from "../lib/supabaseAdmin";
 
-// ─── INTERFACES ─────────────────────────────────────────────────────────────
-
 export interface DistributionItem {
     product_id: string;
     quantity: number;
@@ -23,8 +21,6 @@ export interface Distribution {
         products?: { product_name: string; category: string } | null;
     }[];
 }
-
-// ─── GET ALL ─────────────────────────────────────────────────────────────────
 
 export const getAllDistributions = async () => {
     const { data, error } = await supabaseAdmin
@@ -53,15 +49,11 @@ export const getAllDistributions = async () => {
     return { data: (data as unknown) as Distribution[], error: null };
 };
 
-// ─── CREATE ──────────────────────────────────────────────────────────────────
-// Support multiple produk dalam satu pengiriman
-
 export const createDistribution = async (
     distributorId: string,
     createdBy: string,
     items: DistributionItem[]
 ) => {
-    // 1. Validasi stok pusat untuk setiap produk
     for (const item of items) {
         const { data: stock, error: stockErr } = await supabaseAdmin
             .from("stocks")
@@ -80,7 +72,6 @@ export const createDistribution = async (
         }
     }
 
-    // 2. Insert header distribusi
     const { data: dist, error: distErr } = await supabaseAdmin
         .from("distributions")
         .insert([{
@@ -94,7 +85,6 @@ export const createDistribution = async (
 
     if (distErr) return { error: distErr };
 
-    // 3. Insert detail produk
     const { error: detailErr } = await supabaseAdmin
         .from("distribution_details")
         .insert(items.map((item) => ({
@@ -105,9 +95,7 @@ export const createDistribution = async (
 
     if (detailErr) return { error: detailErr };
 
-    // 4. Update stok otomatis per produk
     for (const item of items) {
-        // Kurangi stok pusat
         const { data: central } = await supabaseAdmin
             .from("stocks")
             .select("id, stock_quantity")
@@ -122,7 +110,6 @@ export const createDistribution = async (
                 .eq("id", central.id);
         }
 
-        // Tambah/buat stok distributor
         const { data: distStock } = await supabaseAdmin
             .from("stocks")
             .select("id, stock_quantity")
@@ -145,7 +132,6 @@ export const createDistribution = async (
                 }]);
         }
 
-        // Catat di stock_movements
         await supabaseAdmin.from("stock_movements").insert([{
             product_id: item.product_id,
             distributor_id: distributorId,
@@ -155,7 +141,6 @@ export const createDistribution = async (
         }]);
     }
 
-    // 5. Activity log
     await supabaseAdmin.from("activity_logs").insert([{
         activity_type: "create_distribution",
         description: `Distribusi baru ke distributor_id: ${distributorId}, ${items.length} jenis produk`,
@@ -163,8 +148,6 @@ export const createDistribution = async (
 
     return { data: dist, error: null };
 };
-
-// ─── UPDATE STATUS ────────────────────────────────────────────────────────────
 
 export const updateDistributionStatus = async (
     distributionId: string,

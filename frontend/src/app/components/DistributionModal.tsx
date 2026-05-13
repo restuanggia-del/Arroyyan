@@ -49,7 +49,6 @@ export function DistributionModal({
     { product_id: "", quantity: 1 },
   ]);
 
-  // Fetch distributor, produk aktif, stok pusat
   useEffect(() => {
     const load = async () => {
       setLoadingData(true);
@@ -59,11 +58,9 @@ export function DistributionModal({
         getCentralStock(),
       ]);
 
-      // Hanya distributor yang approved
       setDistributors((distRes.data ?? []).filter((d) => d.users.is_approved));
       setProducts(prodRes.data ?? []);
 
-      // Map product_id → stok pusat
       const map: Record<string, number> = {};
       for (const s of stockRes.data ?? []) {
         map[s.product_id] = s.stock_quantity;
@@ -73,8 +70,6 @@ export function DistributionModal({
     };
     load();
   }, []);
-
-  // ── Item row helpers ──────────────────────────────────────────────────────
 
   const addItem = () =>
     setItems((prev) => [...prev, { product_id: "", quantity: 1 }]);
@@ -91,14 +86,11 @@ export function DistributionModal({
       prev.map((item, i) => (i === idx ? { ...item, [field]: value } : item)),
     );
 
-  // Produk yang belum dipilih di baris lain (hindari duplikat)
   const availableProducts = (currentIdx: number) =>
     products.filter(
       (p) =>
         !items.some((item, i) => i !== currentIdx && item.product_id === p.id),
     );
-
-  // ── Submit ────────────────────────────────────────────────────────────────
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -117,7 +109,6 @@ export function DistributionModal({
       return;
     }
 
-    // Validasi stok pusat di sisi frontend dulu
     for (const item of validItems) {
       const available = centralStockMap[item.product_id] ?? 0;
       if (item.quantity > available) {
@@ -160,7 +151,6 @@ export function DistributionModal({
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
-        {/* Header */}
         <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between rounded-t-2xl">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
@@ -185,7 +175,6 @@ export function DistributionModal({
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="p-6 space-y-5">
-            {/* Info box */}
             <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex gap-3">
               <Package className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
               <p className="text-sm text-blue-700">
@@ -194,7 +183,6 @@ export function DistributionModal({
               </p>
             </div>
 
-            {/* Error */}
             {formError && (
               <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex gap-3">
                 <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
@@ -202,7 +190,6 @@ export function DistributionModal({
               </div>
             )}
 
-            {/* Pilih Distributor */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">
                 Tujuan Distributor <span className="text-red-500">*</span>
@@ -231,7 +218,6 @@ export function DistributionModal({
               )}
             </div>
 
-            {/* Daftar Produk */}
             <div>
               <div className="flex items-center justify-between mb-2">
                 <label className="text-sm font-medium text-gray-700">
@@ -264,7 +250,6 @@ export function DistributionModal({
                       className="border border-gray-200 rounded-xl p-4 bg-gray-50"
                     >
                       <div className="flex gap-3 items-start">
-                        {/* Pilih produk */}
                         <div className="flex-1">
                           <select
                             required
@@ -291,7 +276,6 @@ export function DistributionModal({
                           )}
                         </div>
 
-                        {/* Jumlah */}
                         <div className="w-28">
                           <input
                             type="number"
@@ -315,7 +299,6 @@ export function DistributionModal({
                           />
                         </div>
 
-                        {/* Hapus baris */}
                         {items.length > 1 && (
                           <button
                             type="button"
@@ -332,7 +315,6 @@ export function DistributionModal({
               </div>
             </div>
 
-            {/* Ringkasan */}
             {totalItems.length > 0 && (
               <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
                 <p className="text-sm font-medium text-gray-700 mb-2">
@@ -361,7 +343,6 @@ export function DistributionModal({
               </div>
             )}
 
-            {/* Actions */}
             <div className="flex gap-3 pt-2">
               <button
                 type="button"

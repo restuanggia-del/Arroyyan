@@ -26,8 +26,6 @@ interface CartItem {
 }
 
 interface SalesTransactionProps {
-  // distributorId: UUID dari tabel distributors (bukan users.id)
-  // currentUser dari App.tsx punya field berbeda tergantung role
   distributorId: string;
 }
 
@@ -71,8 +69,6 @@ export function SalesTransaction({ distributorId }: SalesTransactionProps) {
     loadData();
   }, [loadData]);
 
-  // ── Cart helpers ──────────────────────────────────────────────────────────
-
   const addToCart = (product: Product) => {
     const max = stockMap[product.id] ?? 0;
     if (max === 0) return;
@@ -107,8 +103,6 @@ export function SalesTransaction({ distributorId }: SalesTransactionProps) {
     setCart((prev) => prev.filter((i) => i.product.id !== productId));
 
   const subtotal = cart.reduce((s, i) => s + i.product.price * i.quantity, 0);
-
-  // ── Checkout ──────────────────────────────────────────────────────────────
 
   const handleCheckout = async () => {
     if (cart.length === 0) {
@@ -161,7 +155,7 @@ export function SalesTransaction({ distributorId }: SalesTransactionProps) {
     setShowReceipt(false);
     setLastTransaction(null);
     setCheckoutError(null);
-    loadData(); // refresh stok setelah transaksi
+    loadData();
   };
 
   const formatRp = (n: number) => "Rp " + n.toLocaleString("id-ID");
@@ -182,9 +176,7 @@ export function SalesTransaction({ distributorId }: SalesTransactionProps) {
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Kiri: Produk + Pelanggan */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Grid produk */}
             <div className="bg-white rounded-xl border border-gray-200 p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">
                 Pilih Produk
@@ -236,7 +228,6 @@ export function SalesTransaction({ distributorId }: SalesTransactionProps) {
               )}
             </div>
 
-            {/* Pilih pelanggan */}
             <div className="bg-white rounded-xl border border-gray-200 p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">
                 Pelanggan
@@ -257,7 +248,6 @@ export function SalesTransaction({ distributorId }: SalesTransactionProps) {
             </div>
           </div>
 
-          {/* Kanan: Keranjang */}
           <div>
             <div className="bg-white rounded-xl border border-gray-200 p-6 sticky top-8">
               <div className="flex items-center gap-2 mb-4">
@@ -270,7 +260,6 @@ export function SalesTransaction({ distributorId }: SalesTransactionProps) {
                 </span>
               </div>
 
-              {/* Error */}
               {checkoutError && (
                 <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg flex gap-2 text-sm text-red-700">
                   <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
@@ -278,7 +267,6 @@ export function SalesTransaction({ distributorId }: SalesTransactionProps) {
                 </div>
               )}
 
-              {/* Item keranjang */}
               <div className="space-y-3 mb-5 max-h-64 overflow-y-auto">
                 {cart.length === 0 ? (
                   <p className="text-center text-gray-400 py-8 text-sm">
@@ -328,7 +316,6 @@ export function SalesTransaction({ distributorId }: SalesTransactionProps) {
                 )}
               </div>
 
-              {/* Total + Pembayaran */}
               <div className="border-t border-gray-200 pt-4 mb-4">
                 <div className="flex justify-between mb-1 text-sm text-gray-600">
                   <span>Subtotal</span>
@@ -377,7 +364,6 @@ export function SalesTransaction({ distributorId }: SalesTransactionProps) {
         </div>
       )}
 
-      {/* ── Struk ── */}
       {showReceipt && lastTransaction && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl">
