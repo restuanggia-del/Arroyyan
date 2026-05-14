@@ -25,8 +25,6 @@ type ReportType = "sales" | "distribution" | "topProducts" | "stock";
 
 const formatRp = (n: number) => "Rp " + n.toLocaleString("id-ID");
 
-// ─── EXPORT ──────────────────────────────────────────────────────────────────
-
 const exportToExcel = async (data: any[], fileName: string) => {
   try {
     const XLSX = await import("xlsx");
@@ -65,8 +63,6 @@ const exportToPDF = async (
     alert("Gagal export PDF.\nJalankan: npm install jspdf jspdf-autotable");
   }
 };
-
-// ─── MAIN ─────────────────────────────────────────────────────────────────────
 
 export function Reports() {
   const today = new Date().toISOString().split("T")[0];
@@ -238,8 +234,6 @@ export function Reports() {
     }
     setExporting(false);
   };
-
-  // ── Tabel render ────────────────────────────────────────────────────────────
 
   const renderSales = () => (
     <div>
@@ -589,7 +583,6 @@ export function Reports() {
         </p>
       </div>
 
-      {/* Tab */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         {tabs.map(({ id, label, icon: Icon }) => (
           <button
@@ -614,7 +607,6 @@ export function Reports() {
       </div>
 
       <div className="bg-white rounded-xl border border-gray-200">
-        {/* Toolbar */}
         <div className="border-b border-gray-200 px-6 py-4 flex items-end justify-between flex-wrap gap-4">
           <div className="flex items-end gap-3 flex-wrap">
             <Calendar className="w-5 h-5 text-gray-500 mb-2.5" />

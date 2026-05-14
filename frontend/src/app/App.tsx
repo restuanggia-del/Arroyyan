@@ -41,7 +41,6 @@ import {
 import { supabase } from "../lib/supabase";
 import { supabaseAdmin } from "../lib/supabaseAdmin";
 
-// ─── MOVING AVERAGE HELPER ───────────────────────────────────────────────────
 const calcMA = (values: number[], n: number): number => {
   if (values.length < n) return 0;
   const slice = values.slice(-n);
@@ -55,8 +54,6 @@ const formatRp = (n: number): string => {
   return `Rp ${n.toLocaleString("id-ID")}`;
 };
 
-// ─── MAIN APP ────────────────────────────────────────────────────────────────
-
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authView, setAuthView] = useState<"login" | "register">("login");
@@ -65,7 +62,6 @@ export default function App() {
   const [activeMenu, setActiveMenu] = useState("dashboard");
   const [pendingDistributorCount, setPendingDistributorCount] = useState(0);
 
-  // Dashboard real data states
   const [dashStats, setDashStats] = useState<DashboardStats | null>(null);
   const [dashLoading, setDashLoading] = useState(false);
   const [prediction, setPrediction] = useState<{
@@ -73,8 +69,6 @@ export default function App() {
     months: { label: string; value: number }[];
     nextMonth: string;
   } | null>(null);
-
-  // ── Auth ──────────────────────────────────────────────────────────────────
 
   useEffect(() => {
     const checkSession = async () => {
@@ -100,7 +94,6 @@ export default function App() {
     }
   }, [isAuthenticated, currentUser]);
 
-  // Fetch dashboard data saat masuk halaman dashboard
   useEffect(() => {
     if (isAuthenticated && activeMenu === "dashboard") {
       fetchDashboardData();
@@ -130,7 +123,6 @@ export default function App() {
       ]);
       setDashStats(stats);
 
-      // Hitung prediksi MA 3 bulan
       const values = monthly.map((m) => m.penjualan);
       const predicted = calcMA(values, 3);
       const lastThree = monthly.slice(-3);
@@ -163,8 +155,6 @@ export default function App() {
     }
     setDashLoading(false);
   };
-
-  // ── Handlers ──────────────────────────────────────────────────────────────
 
   const handleLogin = async (email: string, password: string, _: boolean) => {
     const result = await loginUser(email, password);
@@ -217,8 +207,6 @@ export default function App() {
     setPrediction(null);
   };
 
-  // ── Auth screens ──────────────────────────────────────────────────────────
-
   if (!isAuthenticated) {
     return authView === "login" ? (
       <Login
@@ -234,8 +222,6 @@ export default function App() {
   }
 
   const userRole = currentUser?.role as "admin" | "distributor";
-
-  // ── Dashboard content ─────────────────────────────────────────────────────
 
   const renderDashboard = () => (
     <div className="p-8">
@@ -259,7 +245,6 @@ export default function App() {
         </button>
       </div>
 
-      {/* Stat Cards — real data */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <StatCard
           title="Penjualan Hari Ini"
@@ -295,7 +280,6 @@ export default function App() {
         />
       </div>
 
-      {/* Grafik + Top Products */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         <div className="lg:col-span-2">
           <DashboardChart />
@@ -305,7 +289,6 @@ export default function App() {
         </div>
       </div>
 
-      {/* Prediksi MA real + Stok Alert */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         <div className="lg:col-span-2">
           <div className="bg-white rounded-lg border border-gray-200 p-6">
@@ -384,8 +367,6 @@ export default function App() {
       </div>
     </div>
   );
-
-  // ── Router ────────────────────────────────────────────────────────────────
 
   const renderContent = () => {
     switch (activeMenu) {
