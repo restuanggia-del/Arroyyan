@@ -1,5 +1,9 @@
 # Dependencies
 node_modules/
+admin/node_modules/
+
+# Editor
+.vscode/
 
 # Build output
 dist/
@@ -8,7 +12,7 @@ build/
 # Environment variables
 .env
 .env*
-frontend/.env*
+admin/.env*
 
 # Logs
 npm-debug.log*
@@ -18,7 +22,3 @@ pnpm-debug.log*
 # OS files
 .DS_Store
 Thumbs.db
-
-# IDE / Editor
-.vscode/
-.idea/
