@@ -560,18 +560,46 @@ export function Reports() {
       id: "sales" as ReportType,
       label: "Laporan Penjualan",
       icon: ShoppingCart,
+      color: {
+        border: "border-blue-500",
+        ring: "ring-blue-100",
+        bg: "bg-blue-100",
+        icon: "text-blue-600",
+      },
     },
     {
       id: "distribution" as ReportType,
       label: "Laporan Distribusi",
       icon: Truck,
+      color: {
+        border: "border-orange-500",
+        ring: "ring-orange-100",
+        bg: "bg-orange-100",
+        icon: "text-orange-600",
+      },
     },
     {
       id: "topProducts" as ReportType,
       label: "Produk Terlaris",
       icon: TrendingUp,
+      color: {
+        border: "border-green-500",
+        ring: "ring-green-100",
+        bg: "bg-green-100",
+        icon: "text-green-600",
+      },
     },
-    { id: "stock" as ReportType, label: "Laporan Stok", icon: Package },
+    {
+      id: "stock" as ReportType,
+      label: "Laporan Stok",
+      icon: Package,
+      color: {
+        border: "border-purple-500",
+        ring: "ring-purple-100",
+        bg: "bg-purple-100",
+        icon: "text-purple-600",
+      },
+    },
   ];
 
   return (
@@ -584,24 +612,29 @@ export function Reports() {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        {tabs.map(({ id, label, icon: Icon }) => (
+        {tabs.map(({ id, label, icon: Icon, color }) => (
           <button
             key={id}
             onClick={() => setActiveReport(id)}
-            className={`p-4 rounded-xl border-2 transition-all cursor-pointer text-left ${
+            className={`p-4 rounded-xl border-2 transition-all cursor-pointer text-left bg-white ${
               activeReport === id
-                ? "border-blue-500 bg-blue-50"
-                : "border-gray-200 hover:border-gray-300 bg-white"
+                ? `${color.border} ring-2 ${color.ring}`
+                : "border-gray-200 hover:border-gray-300"
             }`}
           >
-            <Icon
-              className={`w-7 h-7 mb-2 ${activeReport === id ? "text-blue-600" : "text-gray-500"}`}
-            />
-            <p
-              className={`font-medium text-sm ${activeReport === id ? "text-blue-900" : "text-gray-700"}`}
+            <div
+              className={`w-12 h-12 rounded-lg flex items-center justify-center mb-2 ${
+                activeReport === id ? color.bg : "bg-gray-100"
+              }`}
             >
-              {label}
-            </p>
+              <Icon
+                className={`w-7 h-7 ${
+                  activeReport === id ? color.icon : "text-gray-500"
+                }`}
+              />
+            </div>
+
+            <p className="font-medium text-sm text-gray-700">{label}</p>
           </button>
         ))}
       </div>
