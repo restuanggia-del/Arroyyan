@@ -34,7 +34,6 @@ export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authView, setAuthView] = useState<"login" | "register">("login");
   const [currentUser, setCurrentUser] = useState<any>(null);
-  // distributorId = UUID dari tabel distributors (bukan users.id)
   const [distributorId, setDistributorId] = useState<string>("");
   const [activeMenu, setActiveMenu] = useState("dashboard");
   const [pendingDistributorCount, setPendingDistributorCount] = useState(0);
@@ -69,7 +68,6 @@ export default function App() {
     if (data) setPendingDistributorCount(data.length);
   };
 
-  // Ambil distributors.id berdasarkan users.id
   const fetchDistributorId = async (userId: string) => {
     const { data } = await supabaseAdmin
       .from("distributors")

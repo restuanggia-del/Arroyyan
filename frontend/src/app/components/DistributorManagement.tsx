@@ -30,8 +30,8 @@ export function DistributorManagement() {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [filter, setFilter] = useState<FilterType>("all");
-  const [actionLoading, setActionLoading] = useState<string | null>(null); // id yang sedang diproses
-  const [confirmDelete, setConfirmDelete] = useState<string | null>(null); // userId yang akan dihapus
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
   const fetchDistributors = async () => {
     setLoading(true);

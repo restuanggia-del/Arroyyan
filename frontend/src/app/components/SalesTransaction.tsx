@@ -24,8 +24,6 @@ import {
   TransactionItem,
 } from "../../services/transactionService";
 
-// ─── TYPES ───────────────────────────────────────────────────────────────────
-
 interface CartItem {
   product: Product;
   quantity: number;
@@ -34,13 +32,10 @@ interface CartItem {
 
 interface SalesTransactionProps {
   role: "admin" | "distributor";
-  // UUID tabel distributors — wajib kalau role=distributor
   distributorId?: string;
 }
 
 const formatRp = (n: number) => "Rp " + n.toLocaleString("id-ID");
-
-// ─── MAIN COMPONENT ──────────────────────────────────────────────────────────
 
 export function SalesTransaction({
   role,
@@ -61,8 +56,6 @@ export function SalesTransaction({
   const [saving, setSaving] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
-  // ── Fetch data ─────────────────────────────────────────────────────────────
-
   const loadData = useCallback(async () => {
     setLoadingData(true);
     const [prodRes, custRes, stockRes] = await Promise.all([
@@ -78,7 +71,6 @@ export function SalesTransaction({
     setProducts(prodRes.data ?? []);
     setCustomers(custRes.data ?? []);
 
-    // Bangun map: product_id → stok tersedia
     const map: Record<string, number> = {};
     for (const s of (stockRes as any).data ?? []) {
       map[s.product_id] = s.stock_quantity;
@@ -90,8 +82,6 @@ export function SalesTransaction({
   useEffect(() => {
     loadData();
   }, [loadData]);
-
-  // ── Cart helpers ───────────────────────────────────────────────────────────
 
   const addToCart = (product: Product) => {
     const max = stockMap[product.id] ?? 0;
@@ -127,8 +117,6 @@ export function SalesTransaction({
     setCart((prev) => prev.filter((i) => i.product.id !== productId));
 
   const subtotal = cart.reduce((s, i) => s + i.product.price * i.quantity, 0);
-
-  // ── Checkout ───────────────────────────────────────────────────────────────
 
   const handleCheckout = async () => {
     if (cart.length === 0) {
@@ -187,14 +175,11 @@ export function SalesTransaction({
     setShowReceipt(false);
     setLastTransaction(null);
     setCheckoutError(null);
-    loadData(); // refresh stok setelah transaksi
+    loadData();
   };
-
-  // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
     <div className="p-8">
-      {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900 mb-1">
           Transaksi Penjualan
@@ -202,7 +187,6 @@ export function SalesTransaction({
         <p className="text-gray-600">Point of Sales — Arroyyan99</p>
       </div>
 
-      {/* Banner mode */}
       <div
         className={`flex items-center gap-3 px-4 py-3 rounded-xl mb-6 border ${
           role === "admin"
@@ -244,9 +228,7 @@ export function SalesTransaction({
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* ── Kiri: Produk + Pelanggan ── */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Grid produk */}
             <div className="bg-white rounded-xl border border-gray-200 p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">
                 Pilih Produk
@@ -273,7 +255,6 @@ export function SalesTransaction({
                               : "border-gray-200 hover:border-blue-400 hover:bg-blue-50 cursor-pointer"
                         }`}
                       >
-                        {/* Badge jumlah di keranjang */}
                         {inCart && (
                           <span className="absolute top-2 right-2 bg-blue-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
                             {inCart.quantity}
@@ -309,7 +290,6 @@ export function SalesTransaction({
               )}
             </div>
 
-            {/* Pilih pelanggan */}
             <div className="bg-white rounded-xl border border-gray-200 p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-3">
                 Pelanggan
@@ -331,7 +311,6 @@ export function SalesTransaction({
             </div>
           </div>
 
-          {/* ── Kanan: Keranjang ── */}
           <div>
             <div className="bg-white rounded-xl border border-gray-200 p-6 sticky top-8">
               <div className="flex items-center gap-2 mb-4">
@@ -344,7 +323,6 @@ export function SalesTransaction({
                 </span>
               </div>
 
-              {/* Error checkout */}
               {checkoutError && (
                 <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-xl flex gap-2 text-sm text-red-700">
                   <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
@@ -352,7 +330,6 @@ export function SalesTransaction({
                 </div>
               )}
 
-              {/* Daftar item */}
               <div className="space-y-3 mb-5 max-h-72 overflow-y-auto">
                 {cart.length === 0 ? (
                   <p className="text-center text-gray-400 py-10 text-sm">
@@ -406,7 +383,6 @@ export function SalesTransaction({
                 )}
               </div>
 
-              {/* Total */}
               <div className="border-t border-gray-200 pt-4 mb-4 space-y-2">
                 <div className="flex justify-between text-sm text-gray-600">
                   <span>Subtotal</span>
@@ -420,7 +396,6 @@ export function SalesTransaction({
                 </div>
               </div>
 
-              {/* Metode pembayaran */}
               <p className="text-sm font-medium text-gray-700 mb-2">
                 Metode Pembayaran
               </p>
@@ -445,7 +420,6 @@ export function SalesTransaction({
                 ))}
               </div>
 
-              {/* Tombol proses */}
               <button
                 onClick={handleCheckout}
                 disabled={cart.length === 0 || saving}
@@ -459,7 +433,6 @@ export function SalesTransaction({
         </div>
       )}
 
-      {/* ── Modal Struk ── */}
       {showReceipt && lastTransaction && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl">
@@ -476,7 +449,6 @@ export function SalesTransaction({
             </div>
 
             <div id="receipt" className="p-6 font-mono text-sm">
-              {/* Kop struk */}
               <div className="text-center mb-5">
                 <h1 className="text-xl font-bold">ARROYYAN99</h1>
                 <p className="text-xs text-gray-500">Air Minum Dalam Kemasan</p>
@@ -485,7 +457,6 @@ export function SalesTransaction({
                 </p>
               </div>
 
-              {/* Info transaksi */}
               <div className="border-t border-b border-gray-300 py-3 mb-3 text-xs space-y-1">
                 <div className="flex justify-between">
                   <span>No</span>
@@ -511,7 +482,6 @@ export function SalesTransaction({
                 )}
               </div>
 
-              {/* Tabel item */}
               <table className="w-full mb-3 text-xs">
                 <thead>
                   <tr className="border-b border-gray-300">
@@ -542,7 +512,6 @@ export function SalesTransaction({
                 </tbody>
               </table>
 
-              {/* Total */}
               <div className="border-t border-gray-300 pt-3 mb-3 space-y-1 text-xs">
                 <div className="flex justify-between">
                   <span>Subtotal</span>
@@ -554,7 +523,6 @@ export function SalesTransaction({
                 </div>
               </div>
 
-              {/* Metode bayar */}
               <div className="border-t border-gray-300 pt-3 mb-4 text-xs">
                 <div className="flex justify-between">
                   <span>Pembayaran</span>
@@ -572,7 +540,6 @@ export function SalesTransaction({
               </div>
             </div>
 
-            {/* Tombol aksi struk */}
             <div className="border-t border-gray-200 px-6 py-4 flex gap-3 print:hidden">
               <button
                 onClick={() => window.print()}
