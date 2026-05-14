@@ -20,7 +20,7 @@ const categorize = (type: string): FilterType => {
   if (type.includes("transaction")) return "transaction";
   if (type.includes("product")) return "product";
   if (type.includes("stock") || type.includes("distribution")) return "stock";
-  return "stock";
+  return "stock"; // default data_change ke stock/other
 };
 
 const getIcon = (type: string) => {
@@ -164,6 +164,7 @@ export function AuditLog() {
         </button>
       </div>
 
+      {/* Stat cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         {statCards.map((card) => (
           <div
@@ -184,6 +185,7 @@ export function AuditLog() {
       </div>
 
       <div className="bg-white rounded-xl border border-gray-200">
+        {/* Filter bar */}
         <div className="border-b border-gray-200 px-6 py-4 space-y-3">
           <div className="flex items-center gap-3 flex-wrap">
             <div className="relative flex-1 min-w-[200px] max-w-sm">
@@ -215,6 +217,7 @@ export function AuditLog() {
             </div>
           </div>
 
+          {/* Type filter */}
           <div className="flex gap-2 flex-wrap">
             {filterBtns.map((f) => (
               <button
@@ -237,6 +240,7 @@ export function AuditLog() {
           </div>
         </div>
 
+        {/* List */}
         <div className="p-6">
           {loading ? (
             <div className="py-16 text-center">

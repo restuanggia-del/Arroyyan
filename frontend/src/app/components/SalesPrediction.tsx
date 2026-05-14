@@ -31,6 +31,8 @@ export function SalesPrediction() {
     });
   }, []);
 
+  // ── Moving Average ──────────────────────────────────────────────────────────
+
   const calcMA = (data: MonthlySales[], n: number): number => {
     if (data.length < n) return 0;
     const slice = data.slice(-n);
@@ -121,6 +123,7 @@ export function SalesPrediction() {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Grafik */}
         <div className="lg:col-span-2 space-y-6">
           <div className="bg-white rounded-xl border border-gray-200 p-6">
             <div className="flex items-center justify-between mb-6">
@@ -201,7 +204,9 @@ export function SalesPrediction() {
           </div>
         </div>
 
+        {/* Panel kanan */}
         <div className="space-y-5">
+          {/* Prediksi utama */}
           <div className="bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl p-6 text-white">
             <div className="flex items-center gap-2 mb-4">
               <TrendingUp className="w-6 h-6" />
@@ -224,6 +229,7 @@ export function SalesPrediction() {
             )}
           </div>
 
+          {/* Akurasi */}
           <div className="bg-white rounded-xl border border-gray-200 p-6">
             <div className="flex items-center gap-2 mb-4">
               <Activity className="w-5 h-5 text-blue-600" />
@@ -251,6 +257,7 @@ export function SalesPrediction() {
             </div>
           </div>
 
+          {/* Data historis */}
           <div className="bg-white rounded-xl border border-gray-200 p-6">
             <div className="flex items-center gap-2 mb-4">
               <Calendar className="w-5 h-5 text-blue-600" />
@@ -275,6 +282,7 @@ export function SalesPrediction() {
             </div>
           </div>
 
+          {/* Statistik */}
           <div className="bg-white rounded-xl border border-gray-200 p-6">
             <div className="flex items-center gap-2 mb-4">
               <DollarSign className="w-5 h-5 text-green-600" />

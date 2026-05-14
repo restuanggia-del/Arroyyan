@@ -25,6 +25,8 @@ type ReportType = "sales" | "distribution" | "topProducts" | "stock";
 
 const formatRp = (n: number) => "Rp " + n.toLocaleString("id-ID");
 
+// ─── EXPORT ──────────────────────────────────────────────────────────────────
+
 const exportToExcel = async (data: any[], fileName: string) => {
   try {
     const XLSX = await import("xlsx");
@@ -63,6 +65,8 @@ const exportToPDF = async (
     alert("Gagal export PDF.\nJalankan: npm install jspdf jspdf-autotable");
   }
 };
+
+// ─── MAIN ─────────────────────────────────────────────────────────────────────
 
 export function Reports() {
   const today = new Date().toISOString().split("T")[0];
@@ -234,6 +238,8 @@ export function Reports() {
     }
     setExporting(false);
   };
+
+  // ── Tabel render ────────────────────────────────────────────────────────────
 
   const renderSales = () => (
     <div>
@@ -560,46 +566,18 @@ export function Reports() {
       id: "sales" as ReportType,
       label: "Laporan Penjualan",
       icon: ShoppingCart,
-      color: {
-        border: "border-blue-500",
-        ring: "ring-blue-100",
-        bg: "bg-blue-100",
-        icon: "text-blue-600",
-      },
     },
     {
       id: "distribution" as ReportType,
       label: "Laporan Distribusi",
       icon: Truck,
-      color: {
-        border: "border-orange-500",
-        ring: "ring-orange-100",
-        bg: "bg-orange-100",
-        icon: "text-orange-600",
-      },
     },
     {
       id: "topProducts" as ReportType,
       label: "Produk Terlaris",
       icon: TrendingUp,
-      color: {
-        border: "border-green-500",
-        ring: "ring-green-100",
-        bg: "bg-green-100",
-        icon: "text-green-600",
-      },
     },
-    {
-      id: "stock" as ReportType,
-      label: "Laporan Stok",
-      icon: Package,
-      color: {
-        border: "border-purple-500",
-        ring: "ring-purple-100",
-        bg: "bg-purple-100",
-        icon: "text-purple-600",
-      },
-    },
+    { id: "stock" as ReportType, label: "Laporan Stok", icon: Package },
   ];
 
   return (
@@ -611,35 +589,32 @@ export function Reports() {
         </p>
       </div>
 
+      {/* Tab */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        {tabs.map(({ id, label, icon: Icon, color }) => (
+        {tabs.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
             onClick={() => setActiveReport(id)}
-            className={`p-4 rounded-xl border-2 transition-all cursor-pointer text-left bg-white ${
+            className={`p-4 rounded-xl border-2 transition-all cursor-pointer text-left ${
               activeReport === id
-                ? `${color.border} ring-2 ${color.ring}`
-                : "border-gray-200 hover:border-gray-300"
+                ? "border-blue-500 bg-blue-50"
+                : "border-gray-200 hover:border-gray-300 bg-white"
             }`}
           >
-            <div
-              className={`w-12 h-12 rounded-lg flex items-center justify-center mb-2 ${
-                activeReport === id ? color.bg : "bg-gray-100"
-              }`}
+            <Icon
+              className={`w-7 h-7 mb-2 ${activeReport === id ? "text-blue-600" : "text-gray-500"}`}
+            />
+            <p
+              className={`font-medium text-sm ${activeReport === id ? "text-blue-900" : "text-gray-700"}`}
             >
-              <Icon
-                className={`w-7 h-7 ${
-                  activeReport === id ? color.icon : "text-gray-500"
-                }`}
-              />
-            </div>
-
-            <p className="font-medium text-sm text-gray-700">{label}</p>
+              {label}
+            </p>
           </button>
         ))}
       </div>
 
       <div className="bg-white rounded-xl border border-gray-200">
+        {/* Toolbar */}
         <div className="border-b border-gray-200 px-6 py-4 flex items-end justify-between flex-wrap gap-4">
           <div className="flex items-end gap-3 flex-wrap">
             <Calendar className="w-5 h-5 text-gray-500 mb-2.5" />

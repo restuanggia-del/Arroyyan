@@ -10,7 +10,13 @@ import { StockAlert } from "./components/StockAlert";
 import { Calendar } from "./components/Calendar";
 import { ProductManagement } from "./components/ProductManagement";
 import { StockManagement } from "./components/StockManagement";
-import { DollarSign, TrendingUp, ShoppingCart, Package } from "lucide-react";
+import {
+  DollarSign,
+  TrendingUp,
+  ShoppingCart,
+  Package,
+  RefreshCw,
+} from "lucide-react";
 import { DistributionManagement } from "./components/DistributionManagement";
 import { DistributorManagement } from "./components/DistributorManagement";
 import { SalesTransaction } from "./components/SalesTransaction";
@@ -27,8 +33,29 @@ import {
   registerDistributor,
 } from "../services/authService";
 import { getPendingDistributors } from "../services/distributorService";
+import {
+  getDashboardStats,
+  getMonthlySales,
+  DashboardStats,
+} from "../services/reportService";
 import { supabase } from "../lib/supabase";
 import { supabaseAdmin } from "../lib/supabaseAdmin";
+
+// ─── MOVING AVERAGE HELPER ───────────────────────────────────────────────────
+const calcMA = (values: number[], n: number): number => {
+  if (values.length < n) return 0;
+  const slice = values.slice(-n);
+  return Math.round(slice.reduce((s, v) => s + v, 0) / n);
+};
+
+const formatRp = (n: number): string => {
+  if (n >= 1_000_000_000) return `Rp ${(n / 1_000_000_000).toFixed(1)}M`;
+  if (n >= 1_000_000) return `Rp ${(n / 1_000_000).toFixed(1)}jt`;
+  if (n >= 1_000) return `Rp ${(n / 1_000).toFixed(0)}k`;
+  return `Rp ${n.toLocaleString("id-ID")}`;
+};
+
+// ─── MAIN APP ────────────────────────────────────────────────────────────────
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -37,6 +64,17 @@ export default function App() {
   const [distributorId, setDistributorId] = useState<string>("");
   const [activeMenu, setActiveMenu] = useState("dashboard");
   const [pendingDistributorCount, setPendingDistributorCount] = useState(0);
+
+  // Dashboard real data states
+  const [dashStats, setDashStats] = useState<DashboardStats | null>(null);
+  const [dashLoading, setDashLoading] = useState(false);
+  const [prediction, setPrediction] = useState<{
+    value: number;
+    months: { label: string; value: number }[];
+    nextMonth: string;
+  } | null>(null);
+
+  // ── Auth ──────────────────────────────────────────────────────────────────
 
   useEffect(() => {
     const checkSession = async () => {
@@ -48,9 +86,8 @@ export default function App() {
         if (userData) {
           setCurrentUser(userData);
           setIsAuthenticated(true);
-          if (userData.role === "distributor") {
+          if (userData.role === "distributor")
             await fetchDistributorId(userData.id);
-          }
         }
       }
     };
@@ -62,6 +99,13 @@ export default function App() {
       fetchPendingCount();
     }
   }, [isAuthenticated, currentUser]);
+
+  // Fetch dashboard data saat masuk halaman dashboard
+  useEffect(() => {
+    if (isAuthenticated && activeMenu === "dashboard") {
+      fetchDashboardData();
+    }
+  }, [isAuthenticated, activeMenu]);
 
   const fetchPendingCount = async () => {
     const { data } = await getPendingDistributors();
@@ -77,11 +121,52 @@ export default function App() {
     if (data) setDistributorId(data.id);
   };
 
-  const handleLogin = async (
-    email: string,
-    password: string,
-    _rememberMe: boolean,
-  ) => {
+  const fetchDashboardData = async () => {
+    setDashLoading(true);
+    try {
+      const [stats, monthly] = await Promise.all([
+        getDashboardStats(),
+        getMonthlySales(),
+      ]);
+      setDashStats(stats);
+
+      // Hitung prediksi MA 3 bulan
+      const values = monthly.map((m) => m.penjualan);
+      const predicted = calcMA(values, 3);
+      const lastThree = monthly.slice(-3);
+
+      const now = new Date();
+      now.setMonth(now.getMonth() + 1);
+      const monthNames = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "Mei",
+        "Jun",
+        "Jul",
+        "Agu",
+        "Sep",
+        "Okt",
+        "Nov",
+        "Des",
+      ];
+      const nextMonth = `${monthNames[now.getMonth()]} ${now.getFullYear()}`;
+
+      setPrediction({
+        value: predicted,
+        months: lastThree.map((m) => ({ label: m.bulan, value: m.penjualan })),
+        nextMonth,
+      });
+    } catch (e) {
+      console.error("Gagal fetch dashboard data:", e);
+    }
+    setDashLoading(false);
+  };
+
+  // ── Handlers ──────────────────────────────────────────────────────────────
+
+  const handleLogin = async (email: string, password: string, _: boolean) => {
     const result = await loginUser(email, password);
     if (result.error) {
       alert("Login gagal: " + result.error.message);
@@ -102,10 +187,7 @@ export default function App() {
 
     setCurrentUser(userData);
     setIsAuthenticated(true);
-
-    if (userData.role === "distributor") {
-      await fetchDistributorId(userData.id);
-    }
+    if (userData.role === "distributor") await fetchDistributorId(userData.id);
   };
 
   const handleRegister = async (data: RegisterData) => {
@@ -131,7 +213,11 @@ export default function App() {
     setAuthView("login");
     setActiveMenu("dashboard");
     setPendingDistributorCount(0);
+    setDashStats(null);
+    setPrediction(null);
   };
+
+  // ── Auth screens ──────────────────────────────────────────────────────────
 
   if (!isAuthenticated) {
     return authView === "login" ? (
@@ -148,6 +234,158 @@ export default function App() {
   }
 
   const userRole = currentUser?.role as "admin" | "distributor";
+
+  // ── Dashboard content ─────────────────────────────────────────────────────
+
+  const renderDashboard = () => (
+    <div className="p-8">
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-1">Dashboard</h1>
+          <p className="text-gray-600">
+            Selamat datang kembali, {currentUser?.name}! Berikut ringkasan
+            bisnis Anda hari ini.
+          </p>
+        </div>
+        <button
+          onClick={fetchDashboardData}
+          disabled={dashLoading}
+          className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50 cursor-pointer transition-colors"
+        >
+          <RefreshCw
+            className={`w-4 h-4 ${dashLoading ? "animate-spin" : ""}`}
+          />
+          Refresh
+        </button>
+      </div>
+
+      {/* Stat Cards — real data */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <StatCard
+          title="Penjualan Hari Ini"
+          value={dashStats ? formatRp(dashStats.salesToday) : "—"}
+          icon={DollarSign}
+          color="bg-gradient-to-br from-blue-500 to-blue-600"
+          loading={dashLoading}
+        />
+        <StatCard
+          title="Penjualan Bulan Ini"
+          value={dashStats ? formatRp(dashStats.salesThisMonth) : "—"}
+          icon={TrendingUp}
+          color="bg-gradient-to-br from-green-500 to-green-600"
+          loading={dashLoading}
+        />
+        <StatCard
+          title="Transaksi Hari Ini"
+          value={
+            dashStats ? `${dashStats.totalTransactionsToday} Transaksi` : "—"
+          }
+          icon={ShoppingCart}
+          color="bg-gradient-to-br from-purple-500 to-purple-600"
+          loading={dashLoading}
+        />
+        <StatCard
+          title="Transaksi Bulan Ini"
+          value={
+            dashStats ? `${dashStats.totalTransactionsMonth} Transaksi` : "—"
+          }
+          icon={Package}
+          color="bg-gradient-to-br from-orange-500 to-orange-600"
+          loading={dashLoading}
+        />
+      </div>
+
+      {/* Grafik + Top Products */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <div className="lg:col-span-2">
+          <DashboardChart />
+        </div>
+        <div>
+          <TopProducts />
+        </div>
+      </div>
+
+      {/* Prediksi MA real + Stok Alert */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <div className="lg:col-span-2">
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Prediksi Penjualan (Moving Average 3 Bulan)
+            </h3>
+
+            {dashLoading ? (
+              <div className="space-y-3">
+                <div className="h-24 bg-gray-100 animate-pulse rounded-lg" />
+                <div className="grid grid-cols-3 gap-4">
+                  {[1, 2, 3].map((i) => (
+                    <div
+                      key={i}
+                      className="h-16 bg-gray-100 animate-pulse rounded-lg"
+                    />
+                  ))}
+                </div>
+              </div>
+            ) : prediction && prediction.value > 0 ? (
+              <>
+                <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg p-6 border border-blue-200">
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <p className="text-sm text-gray-600 mb-1">
+                        Prediksi {prediction.nextMonth}
+                      </p>
+                      <p className="text-3xl font-bold text-blue-600">
+                        {formatRp(prediction.value)}
+                      </p>
+                    </div>
+                    <TrendingUp className="w-12 h-12 text-blue-400" />
+                  </div>
+                  <p className="text-sm text-gray-500">
+                    Berdasarkan rata-rata 3 bulan terakhir dari data transaksi
+                    nyata
+                  </p>
+                </div>
+                <div className="mt-4 grid grid-cols-3 gap-4">
+                  {prediction.months.map((m) => (
+                    <div
+                      key={m.label}
+                      className="text-center p-3 bg-gray-50 rounded-lg"
+                    >
+                      <p className="text-xs text-gray-500 mb-1">{m.label}</p>
+                      <p className="font-semibold text-gray-900 text-sm">
+                        {m.value > 0 ? formatRp(m.value) : "Rp 0"}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-5 text-center">
+                <TrendingUp className="w-10 h-10 text-amber-400 mx-auto mb-2" />
+                <p className="text-sm font-medium text-amber-700">
+                  Belum ada data transaksi
+                </p>
+                <p className="text-xs text-amber-600 mt-1">
+                  Prediksi akan muncul setelah ada riwayat penjualan
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+        <div>
+          <StockAlert />
+        </div>
+      </div>
+
+      {/* Kalender */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <Calendar />
+        </div>
+      </div>
+    </div>
+  );
+
+  // ── Router ────────────────────────────────────────────────────────────────
 
   const renderContent = () => {
     switch (activeMenu) {
@@ -178,109 +416,7 @@ export default function App() {
         return <SystemSettings />;
       case "dashboard":
       default:
-        return (
-          <div className="p-8">
-            <div className="mb-6">
-              <h1 className="text-2xl font-bold text-gray-900 mb-1">
-                Dashboard
-              </h1>
-              <p className="text-gray-600">
-                Selamat datang kembali, {currentUser?.name}! Berikut ringkasan
-                bisnis Anda hari ini.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              <StatCard
-                title="Penjualan Hari Ini"
-                value="Rp 2.450.000"
-                icon={DollarSign}
-                trend={{ value: "+12.5%", isPositive: true }}
-                color="bg-gradient-to-br from-blue-500 to-blue-600"
-              />
-              <StatCard
-                title="Penjualan Bulan Ini"
-                value="Rp 45.200.000"
-                icon={TrendingUp}
-                trend={{ value: "+8.2%", isPositive: true }}
-                color="bg-gradient-to-br from-green-500 to-green-600"
-              />
-              <StatCard
-                title="Total Transaksi"
-                value="156"
-                icon={ShoppingCart}
-                trend={{ value: "+5.1%", isPositive: true }}
-                color="bg-gradient-to-br from-purple-500 to-purple-600"
-              />
-              <StatCard
-                title="Produk Terjual"
-                value="1.234 Unit"
-                icon={Package}
-                trend={{ value: "-2.3%", isPositive: false }}
-                color="bg-gradient-to-br from-orange-500 to-orange-600"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-              <div className="lg:col-span-2">
-                <DashboardChart />
-              </div>
-              <div>
-                <TopProducts />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-              <div className="lg:col-span-2">
-                <div className="bg-white rounded-lg border border-gray-200 p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                    Prediksi Penjualan (Moving Average)
-                  </h3>
-                  <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg p-6 border border-blue-200">
-                    <div className="flex items-center justify-between mb-4">
-                      <div>
-                        <p className="text-sm text-gray-600 mb-1">
-                          Prediksi Bulan Depan
-                        </p>
-                        <p className="text-3xl font-bold text-blue-600">
-                          Rp 7.850.000
-                        </p>
-                      </div>
-                      <TrendingUp className="w-12 h-12 text-blue-500" />
-                    </div>
-                    <p className="text-sm text-gray-600">
-                      Berdasarkan rata-rata pergerakan 3 bulan terakhir
-                    </p>
-                  </div>
-                  <div className="mt-4 grid grid-cols-3 gap-4">
-                    {[
-                      ["3 Bulan Lalu", "Rp 6.1M"],
-                      ["2 Bulan Lalu", "Rp 7.2M"],
-                      ["Bulan Lalu", "Rp 6.8M"],
-                    ].map(([label, val]) => (
-                      <div
-                        key={label}
-                        className="text-center p-3 bg-gray-50 rounded-lg"
-                      >
-                        <p className="text-xs text-gray-600 mb-1">{label}</p>
-                        <p className="font-semibold text-gray-900">{val}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-              <div>
-                <StockAlert />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2">
-                <Calendar />
-              </div>
-            </div>
-          </div>
-        );
+        return renderDashboard();
     }
   };
 

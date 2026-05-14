@@ -1,5 +1,7 @@
 import { supabaseAdmin } from "../lib/supabaseAdmin";
 
+// ─── DASHBOARD STATS ─────────────────────────────────────────────────────────
+
 export interface DashboardStats {
     salesToday: number;
     salesThisMonth: number;
@@ -35,6 +37,8 @@ export const getDashboardStats = async (): Promise<DashboardStats> => {
     };
 };
 
+// ─── GRAFIK HARIAN (7 hari terakhir) ─────────────────────────────────────────
+
 export interface DailySales {
     hari: string;
     penjualan: number;
@@ -64,6 +68,8 @@ export const getDailySales = async (): Promise<DailySales[]> => {
     }
     return days;
 };
+
+// ─── GRAFIK BULANAN (6 bulan terakhir) ───────────────────────────────────────
 
 export interface MonthlySales {
     bulan: string;
@@ -107,6 +113,8 @@ export const getMonthlySales = async (): Promise<MonthlySales[]> => {
     }
     return months;
 };
+
+// ─── TOP PRODUCTS ─────────────────────────────────────────────────────────────
 
 export interface TopProduct {
     product_id: string;
@@ -160,6 +168,8 @@ export const getTopProducts = async (limit = 5): Promise<TopProduct[]> => {
     }));
 };
 
+// ─── STOK KRITIS ─────────────────────────────────────────────────────────────
+
 export interface LowStockItem {
     product_id: string;
     product_name: string;
@@ -183,6 +193,8 @@ export const getLowStockItems = async (minimum = 100): Promise<LowStockItem[]> =
         minimum,
     }));
 };
+
+// ─── LAPORAN PENJUALAN ────────────────────────────────────────────────────────
 
 export interface SalesReportRow {
     id: string;
@@ -224,6 +236,8 @@ export const getSalesReport = async (
         payment: trx.payment_method === "cash" ? "Cash" : "Transfer",
     }));
 };
+
+// ─── LAPORAN DISTRIBUSI ───────────────────────────────────────────────────────
 
 export interface DistributionReportRow {
     id: string;
@@ -272,6 +286,8 @@ export const getDistributionReport = async (
     });
 };
 
+// ─── LAPORAN STOK ─────────────────────────────────────────────────────────────
+
 export interface StockReportRow {
     product_name: string;
     category: string;
@@ -318,6 +334,8 @@ export const getStockReport = async (minimum = 100): Promise<StockReportRow[]> =
         status: p.pusat < minimum ? "Kritis" : "Aman",
     }));
 };
+
+// ─── AUDIT LOG ────────────────────────────────────────────────────────────────
 
 export interface AuditLogRow {
     id: string;
