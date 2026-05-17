@@ -32,7 +32,7 @@ import { getDashboardStats, DistributorUser } from "../../utils/supabaseClient";
 
 interface DashboardPageProps {
   user: DistributorUser;
-  distributorId: string; // Konsisten dengan MainApp
+  distributorId: string;
 }
 
 const formatRp = (n: number) =>
@@ -49,7 +49,6 @@ const today = new Date().toLocaleDateString("id-ID", {
   year: "numeric",
 });
 
-// ── Stat Card ─────────────────────────────────────────────────────────────────
 function StatCard({
   icon,
   label,
@@ -125,8 +124,6 @@ function StatCard({
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-
 export default function DashboardPage({
   user,
   distributorId,
@@ -153,7 +150,6 @@ export default function DashboardPage({
     fetchStats();
   }, [fetchStats]);
 
-  // ── Greeting ────────────────────────────────────────────────────────────────
   const hour = new Date().getHours();
   const greeting =
     hour < 11
@@ -166,7 +162,6 @@ export default function DashboardPage({
 
   return (
     <Box sx={{ p: 2, pb: 3 }}>
-      {/* ── Header ── */}
       <Box
         sx={{
           background: "linear-gradient(135deg, #1e3a8a 0%, #0891b2 100%)",
@@ -242,7 +237,6 @@ export default function DashboardPage({
         </Box>
       </Box>
 
-      {/* ── Error ── */}
       {error && (
         <Alert
           severity="error"
@@ -253,7 +247,6 @@ export default function DashboardPage({
         </Alert>
       )}
 
-      {/* ── Stat Cards ── */}
       <Grid container spacing={1.5} sx={{ mb: 2.5 }}>
         <Grid item xs={6}>
           {loading ? (
@@ -317,7 +310,6 @@ export default function DashboardPage({
         </Grid>
       </Grid>
 
-      {/* ── Produk Terlaris ── */}
       {loading ? (
         <Skeleton
           variant="rounded"
@@ -378,7 +370,6 @@ export default function DashboardPage({
         </Card>
       ) : null}
 
-      {/* ── Stok Menipis / Aman ── */}
       {loading ? (
         <Skeleton variant="rounded" height={120} sx={{ borderRadius: 3 }} />
       ) : (stats?.lowStockProducts?.length ?? 0) > 0 ? (
@@ -477,7 +468,6 @@ export default function DashboardPage({
         </Card>
       )}
 
-      {/* CSS for spin animation */}
       <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
     </Box>
   );

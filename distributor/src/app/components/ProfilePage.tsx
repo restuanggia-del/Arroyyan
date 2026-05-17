@@ -62,7 +62,6 @@ export default function ProfilePage({ user, onLogout }: ProfilePageProps) {
   const [logoutDialog, setLogoutDialog] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
 
-  // Laporan states
   const [loadingReport, setLoadingReport] = useState(false);
   const [dailySales, setDailySales] = useState(0);
   const [dailyTrx, setDailyTrx] = useState(0);
@@ -85,9 +84,7 @@ export default function ProfilePage({ user, onLogout }: ProfilePageProps) {
       const now = new Date();
       const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
 
-      // Query paralel
       const [todayRes, monthRes, detailRes] = await Promise.all([
-        // Transaksi hari ini
         supabaseAdmin
           .from("transactions")
           .select("total_price")
@@ -95,14 +92,12 @@ export default function ProfilePage({ user, onLogout }: ProfilePageProps) {
           .gte("created_at", `${todayStr}T00:00:00`)
           .lte("created_at", `${todayStr}T23:59:59`),
 
-        // Transaksi bulan ini
         supabaseAdmin
           .from("transactions")
           .select("total_price")
           .eq("distributor_id", user.distributor_id)
           .gte("created_at", `${monthStart}T00:00:00`),
 
-        // Detail transaksi untuk top produk
         supabaseAdmin
           .from("transaction_details")
           .select(
@@ -115,21 +110,18 @@ export default function ProfilePage({ user, onLogout }: ProfilePageProps) {
           .eq("transactions.distributor_id", user.distributor_id),
       ]);
 
-      // Harian
       const todayData = todayRes.data ?? [];
       setDailySales(
         todayData.reduce((s, t: any) => s + (t.total_price ?? 0), 0),
       );
       setDailyTrx(todayData.length);
 
-      // Bulanan
       const monthData = monthRes.data ?? [];
       setMonthlySales(
         monthData.reduce((s, t: any) => s + (t.total_price ?? 0), 0),
       );
       setMonthlyTrx(monthData.length);
 
-      // Top produk
       const map: Record<
         string,
         { name: string; totalSold: number; revenue: number }
@@ -159,7 +151,6 @@ export default function ProfilePage({ user, onLogout }: ProfilePageProps) {
 
   return (
     <Box sx={{ p: 2, pb: 4 }}>
-      {/* Tab selector */}
       <Card
         elevation={0}
         sx={{
@@ -188,10 +179,8 @@ export default function ProfilePage({ user, onLogout }: ProfilePageProps) {
         </Tabs>
       </Card>
 
-      {/* ── TAB PROFIL ── */}
       {activeTab === 0 && (
         <Box>
-          {/* Avatar card */}
           <Card
             elevation={0}
             sx={{
@@ -260,7 +249,6 @@ export default function ProfilePage({ user, onLogout }: ProfilePageProps) {
             </CardContent>
           </Card>
 
-          {/* Info detail */}
           <Card
             elevation={0}
             sx={{
@@ -348,7 +336,6 @@ export default function ProfilePage({ user, onLogout }: ProfilePageProps) {
             </CardContent>
           </Card>
 
-          {/* Tombol Logout */}
           <Button
             variant="outlined"
             fullWidth
@@ -363,7 +350,6 @@ export default function ProfilePage({ user, onLogout }: ProfilePageProps) {
         </Box>
       )}
 
-      {/* ── TAB LAPORAN ── */}
       {activeTab === 1 && (
         <Box>
           {loadingReport ? (
@@ -380,7 +366,6 @@ export default function ProfilePage({ user, onLogout }: ProfilePageProps) {
             </Alert>
           ) : (
             <>
-              {/* Laporan Harian */}
               <Card
                 elevation={0}
                 sx={{
@@ -466,7 +451,6 @@ export default function ProfilePage({ user, onLogout }: ProfilePageProps) {
                 </CardContent>
               </Card>
 
-              {/* Laporan Bulanan */}
               <Card
                 elevation={0}
                 sx={{
@@ -551,7 +535,6 @@ export default function ProfilePage({ user, onLogout }: ProfilePageProps) {
                 </CardContent>
               </Card>
 
-              {/* Top Produk */}
               <Card
                 elevation={0}
                 sx={{
@@ -622,7 +605,6 @@ export default function ProfilePage({ user, onLogout }: ProfilePageProps) {
         </Box>
       )}
 
-      {/* Dialog logout */}
       <Dialog
         open={logoutDialog}
         onClose={() => setLogoutDialog(false)}

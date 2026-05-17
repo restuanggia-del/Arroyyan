@@ -40,7 +40,6 @@ export default function App() {
   const [distributorId, setDistributorId] = useState<string>("");
   const [loading, setLoading] = useState(true);
 
-  // Cek session yang sudah ada saat app pertama dibuka
   useEffect(() => {
     const init = async () => {
       try {
@@ -51,7 +50,6 @@ export default function App() {
           setIsAuthenticated(true);
         }
       } catch {
-        // Session tidak valid, tampilkan login
       } finally {
         setLoading(false);
       }
@@ -59,8 +57,6 @@ export default function App() {
     init();
   }, []);
 
-  // Dipanggil oleh LoginPage setelah login berhasil
-  // Konsisten: loginDistributor() → { user, distributorId }
   const handleLogin = (userData: DistributorUser, distId: string) => {
     setUser(userData);
     setDistributorId(distId);

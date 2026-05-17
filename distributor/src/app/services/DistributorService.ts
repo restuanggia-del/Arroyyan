@@ -1,16 +1,12 @@
 import { supabase } from '../utils/supabaseClient';
 
-// ─── AUTH ─────────────────────────────────────────────────────────────────────
-
 export const loginDistributor = async (email: string, password: string) => {
-    // Login via Supabase Auth
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
     });
     if (authError) return { data: null, error: authError };
 
-    // Ambil data user dari tabel users
     const { data: userData, error: userError } = await supabase
         .from('users')
         .select('id, name, email, role, is_approved')
@@ -27,7 +23,6 @@ export const loginDistributor = async (email: string, password: string) => {
         return { data: null, error: { message: 'Akun belum disetujui admin. Hubungi administrator.' } };
     }
 
-    // Ambil distributor_id dari tabel distributors
     const { data: distData, error: distError } = await supabase
         .from('distributors')
         .select('id, distributor_name, phone, address')
@@ -55,13 +50,10 @@ export const logoutDistributor = async () => {
     await supabase.auth.signOut();
 };
 
-// ─── DASHBOARD ────────────────────────────────────────────────────────────────
-
 export const getDashboardStats = async (distributorId: string) => {
     const today = new Date().toISOString().split('T')[0];
 
     const [todayTx, totalStock, lowStock, topProduct] = await Promise.all([
-        // Transaksi hari ini
         supabase
             .from('transactions')
             .select('total_price')
@@ -69,20 +61,17 @@ export const getDashboardStats = async (distributorId: string) => {
             .gte('created_at', `${today}T00:00:00`)
             .lte('created_at', `${today}T23:59:59`),
 
-        // Total stok distributor
         supabase
             .from('stocks')
             .select('stock_quantity')
             .eq('distributor_id', distributorId),
 
-        // Stok menipis (< 50 unit)
         supabase
             .from('stocks')
             .select('stock_quantity, products(product_name, unit)')
             .eq('distributor_id', distributorId)
             .lt('stock_quantity', 50),
 
-        // Produk terlaris dari transaction_details
         supabase
             .from('transaction_details')
             .select('product_id, quantity, products(product_name)')
@@ -112,10 +101,7 @@ export const getDashboardStats = async (distributorId: string) => {
     };
 };
 
-// ─── PRODUK ───────────────────────────────────────────────────────────────────
-
 export const getProductsWithDistributorStock = async (distributorId: string) => {
-    // Produk aktif beserta stok distributor
     const { data: stocks, error } = await supabase
         .from('stocks')
         .select(`
@@ -143,8 +129,6 @@ export const getProductsWithDistributorStock = async (distributorId: string) => 
 
     return { data: result, error: null };
 };
-
-// ─── STOK ─────────────────────────────────────────────────────────────────────
 
 export const getDistributorStock = async (distributorId: string) => {
     const { data, error } = await supabase
@@ -206,8 +190,6 @@ export const getStockHistory = async (distributorId: string) => {
     };
 };
 
-// ─── DISTRIBUSI ───────────────────────────────────────────────────────────────
-
 export const getDistributionsForDistributor = async (distributorId: string) => {
     const { data, error } = await supabase
         .from('distributions')
@@ -249,7 +231,6 @@ export const confirmDistributionReceived = async (distributionFullId: string, di
 
     if (updateErr) return { error: updateErr };
 
-    // Tambah stok distributor untuk setiap item
     const { data: details, error: detailErr } = await supabase
         .from('distribution_details')
         .select('product_id, quantity')
@@ -276,7 +257,6 @@ export const confirmDistributionReceived = async (distributionFullId: string, di
                 .insert([{ product_id: item.product_id, distributor_id: distributorId, stock_quantity: item.quantity }]);
         }
 
-        // Catat movement
         await supabase.from('stock_movements').insert([{
             product_id: item.product_id,
             distributor_id: distributorId,
@@ -288,8 +268,6 @@ export const confirmDistributionReceived = async (distributionFullId: string, di
 
     return { error: null };
 };
-
-// ─── TRANSAKSI ────────────────────────────────────────────────────────────────
 
 export interface TxItem {
     productId: string;
@@ -307,7 +285,6 @@ export const createTransaction = async (
 ) => {
     const total = items.reduce((s, i) => s + i.subtotal, 0);
 
-    // Validasi stok
     for (const item of items) {
         const { data: stock } = await supabase
             .from('stocks')
@@ -321,7 +298,6 @@ export const createTransaction = async (
         }
     }
 
-    // Insert transaksi
     const { data: trx, error: trxErr } = await supabase
         .from('transactions')
         .insert([{
@@ -335,7 +311,6 @@ export const createTransaction = async (
 
     if (trxErr) return { data: null, error: trxErr };
 
-    // Insert detail
     await supabase.from('transaction_details').insert(
         items.map(i => ({
             transaction_id: trx.id,
@@ -346,7 +321,6 @@ export const createTransaction = async (
         }))
     );
 
-    // Kurangi stok
     for (const item of items) {
         const { data: stock } = await supabase
             .from('stocks')
@@ -416,8 +390,6 @@ export const getTransactionHistory = async (distributorId: string, dateFilter?: 
         error: null,
     };
 };
-
-// ─── PELANGGAN ────────────────────────────────────────────────────────────────
 
 export const getCustomers = async () => {
     const { data, error } = await supabase

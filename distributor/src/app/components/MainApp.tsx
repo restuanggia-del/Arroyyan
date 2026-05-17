@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { JSX, useState } from "react";
 import {
   Box,
   BottomNavigation,
@@ -101,7 +101,6 @@ export default function MainApp({
         bgcolor: "#f5f7fa",
       }}
     >
-      {/* ── Top AppBar ── */}
       <AppBar
         position="static"
         elevation={0}
@@ -201,10 +200,8 @@ export default function MainApp({
         </Toolbar>
       </AppBar>
 
-      {/* ── Page Content ── */}
       <Box sx={{ flex: 1, overflow: "auto" }}>{renderPage()}</Box>
 
-      {/* ── Bottom Navigation ── */}
       <Paper
         elevation={8}
         sx={{

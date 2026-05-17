@@ -53,8 +53,6 @@ interface DistributionPageProps {
   distributorId: string;
 }
 
-// ─── STATUS CONFIG ────────────────────────────────────────────────────────────
-
 const statusConfig = {
   pending: {
     label: "Menunggu",
@@ -78,8 +76,6 @@ const statusConfig = {
     borderColor: "#86efac",
   },
 };
-
-// ─── DISTRIBUTION CARD ────────────────────────────────────────────────────────
 
 function DistributionCard({
   distribution,
@@ -114,7 +110,6 @@ function DistributionCard({
       }}
     >
       <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
-        {/* Header */}
         <Box
           sx={{
             display: "flex",
@@ -165,7 +160,6 @@ function DistributionCard({
           />
         </Box>
 
-        {/* Summary */}
         <Box
           sx={{
             display: "flex",
@@ -189,7 +183,6 @@ function DistributionCard({
           </Typography>
         </Box>
 
-        {/* Expand toggle */}
         <Box
           sx={{
             display: "flex",
@@ -211,7 +204,6 @@ function DistributionCard({
           </IconButton>
         </Box>
 
-        {/* Detail produk */}
         {expanded && (
           <Box sx={{ mt: 1.5 }}>
             <Divider sx={{ mb: 1 }} />
@@ -241,7 +233,6 @@ function DistributionCard({
           </Box>
         )}
 
-        {/* Tombol konfirmasi — hanya muncul kalau status = sent */}
         {distribution.status === "sent" && (
           <Button
             fullWidth
@@ -267,8 +258,6 @@ function DistributionCard({
     </Card>
   );
 }
-
-// ─── MAIN PAGE ────────────────────────────────────────────────────────────────
 
 export default function DistributionPage({
   distributorId,
@@ -305,7 +294,6 @@ export default function DistributionPage({
     setConfirmingId(id);
     try {
       await confirmDistributionReceived(id);
-      // Update status lokal tanpa refetch
       setDistributions((prev) =>
         prev.map((d) =>
           d.id === id ? { ...d, status: "received" as const } : d,
@@ -318,7 +306,6 @@ export default function DistributionPage({
     }
   };
 
-  // Filter distribusi
   const filtered =
     filterStatus === "all"
       ? distributions
@@ -336,7 +323,6 @@ export default function DistributionPage({
 
   return (
     <Box sx={{ p: 2, pb: 3 }}>
-      {/* Header */}
       <Box
         sx={{
           background: "linear-gradient(135deg, #1e3a8a 0%, #0891b2 100%)",
@@ -377,7 +363,6 @@ export default function DistributionPage({
         </IconButton>
       </Box>
 
-      {/* Info banner kalau ada yang perlu dikonfirmasi */}
       {!loading && countByStatus("sent") > 0 && (
         <Alert
           severity="info"
@@ -393,7 +378,6 @@ export default function DistributionPage({
         </Alert>
       )}
 
-      {/* Error */}
       {error && (
         <Alert
           severity="error"
@@ -404,7 +388,6 @@ export default function DistributionPage({
         </Alert>
       )}
 
-      {/* Filter tabs */}
       <Box sx={{ display: "flex", gap: 1, mb: 2, overflowX: "auto", pb: 0.5 }}>
         {filterBtns.map((btn) => (
           <Chip
@@ -423,7 +406,6 @@ export default function DistributionPage({
         ))}
       </Box>
 
-      {/* Loading */}
       {loading ? (
         <Box sx={{ space: 2 }}>
           {[1, 2, 3].map((i) => (
@@ -474,7 +456,6 @@ export default function DistributionPage({
         ))
       )}
 
-      {/* Dialog konfirmasi */}
       <Dialog
         open={Boolean(confirmDialog)}
         onClose={() => setConfirmDialog(null)}
@@ -513,7 +494,6 @@ export default function DistributionPage({
         </DialogActions>
       </Dialog>
 
-      {/* CSS spin animation */}
       <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
     </Box>
   );

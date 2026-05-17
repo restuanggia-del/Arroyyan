@@ -40,12 +40,10 @@ import {
   confirmDistributionReceived,
 } from "../../utils/supabaseClient";
 
-// ─── PROPS — konsisten dengan MainApp ─────────────────────────────────────────
 interface StockPageProps {
   distributorId: string;
 }
 
-// ─── UTILS ────────────────────────────────────────────────────────────────────
 const formatDate = (d: string) =>
   new Intl.DateTimeFormat("id-ID", {
     dateStyle: "medium",
@@ -64,7 +62,6 @@ const getMovementMeta = (type: string) => {
   return map[type] ?? { label: type, isIn: true };
 };
 
-// Map distribution status dari Supabase → tampilan
 const getStatusMeta = (status: string) => {
   const map: Record<
     string,
@@ -79,7 +76,6 @@ const getStatusMeta = (status: string) => {
   return map[status] ?? { label: status, color: "info" };
 };
 
-// ─── TAB: STOK SAAT INI ───────────────────────────────────────────────────────
 function StockTab({ distributorId }: { distributorId: string }) {
   const [stock, setStock] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -311,7 +307,6 @@ function StockTab({ distributorId }: { distributorId: string }) {
   );
 }
 
-// ─── TAB: RIWAYAT STOK ────────────────────────────────────────────────────────
 function HistoryTab({ distributorId }: { distributorId: string }) {
   const [history, setHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -376,7 +371,6 @@ function HistoryTab({ distributorId }: { distributorId: string }) {
   return (
     <Box>
       {history.map((item: any) => {
-        // movement_type dari Supabase: 'sale_out', 'distribution_in', dll
         const { label, isIn } = getMovementMeta(item.movement_type);
         return (
           <Card
@@ -464,7 +458,6 @@ function HistoryTab({ distributorId }: { distributorId: string }) {
   );
 }
 
-// ─── TAB: DISTRIBUSI ──────────────────────────────────────────────────────────
 function DistributionTab({ distributorId }: { distributorId: string }) {
   const [distributions, setDistributions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -561,7 +554,6 @@ function DistributionTab({ distributorId }: { distributorId: string }) {
         const { label: statusLabel, color: statusColor } = getStatusMeta(
           dist.status,
         );
-        // Bisa dikonfirmasi jika belum received
         const canConfirm =
           dist.status !== "received" && dist.status !== "cancelled";
 
@@ -771,7 +763,6 @@ function DistributionTab({ distributorId }: { distributorId: string }) {
   );
 }
 
-// ─── MAIN ─────────────────────────────────────────────────────────────────────
 export default function StockPage({ distributorId }: StockPageProps) {
   const [currentTab, setCurrentTab] = useState(0);
 

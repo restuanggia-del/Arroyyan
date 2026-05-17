@@ -15,7 +15,6 @@ import { Droplet } from "lucide-react";
 import { loginDistributor, DistributorUser } from "../../utils/supabaseClient";
 
 interface LoginPageProps {
-  // Konsisten dengan App.tsx: handleLogin(userData, distId)
   onLogin: (user: DistributorUser, distributorId: string) => void;
 }
 
@@ -37,7 +36,6 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
 
     try {
       const { user, distributorId } = await loginDistributor(email, password);
-      // Sesuai App.tsx: handleLogin(userData, distId)
       onLogin(user, distributorId);
     } catch (err: any) {
       setError(err.message ?? "Login gagal. Periksa email dan password Anda.");
@@ -58,7 +56,6 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
         p: 2,
         position: "relative",
         overflow: "hidden",
-        // Decorative circles
         "&::before": {
           content: '""',
           position: "absolute",
@@ -92,7 +89,6 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
           zIndex: 1,
         }}
       >
-        {/* Logo & Judul */}
         <Box sx={{ textAlign: "center", mb: 4 }}>
           <Box
             sx={{
@@ -130,7 +126,6 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
           </Typography>
         </Box>
 
-        {/* Error Alert */}
         {error && (
           <Alert
             severity="error"
@@ -141,7 +136,6 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
           </Alert>
         )}
 
-        {/* Form */}
         <Box component="form" onSubmit={handleSubmit}>
           <TextField
             fullWidth
@@ -218,7 +212,6 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
           </Button>
         </Box>
 
-        {/* Footer note */}
         <Typography
           variant="caption"
           color="text.disabled"

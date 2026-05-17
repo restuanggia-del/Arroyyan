@@ -46,7 +46,6 @@ import {
   getTransactionHistory,
 } from "../../utils/supabaseClient";
 
-// ─── PROPS — konsisten dengan MainApp ─────────────────────────────────────────
 interface TransactionPageProps {
   distributorId: string; // bukan "user"
 }
@@ -60,7 +59,6 @@ interface CartItem {
   unit: string;
 }
 
-// ─── UTILS ────────────────────────────────────────────────────────────────────
 const formatRp = (n: number) =>
   new Intl.NumberFormat("id-ID", {
     style: "currency",
@@ -74,7 +72,6 @@ const formatDate = (d: string) =>
     timeStyle: "short",
   }).format(new Date(d));
 
-// ─── STRUK DIALOG ─────────────────────────────────────────────────────────────
 interface ReceiptDialogProps {
   open: boolean;
   transaction: any;
@@ -235,7 +232,6 @@ function ReceiptDialog({
   );
 }
 
-// ─── RIWAYAT TRANSAKSI ────────────────────────────────────────────────────────
 function TransactionHistory({
   distributorId,
   onBack,
@@ -383,7 +379,6 @@ function TransactionHistory({
   );
 }
 
-// ─── PRODUCT PICKER DIALOG ────────────────────────────────────────────────────
 function ProductPickerDialog({
   open,
   products,
@@ -532,7 +527,6 @@ function ProductPickerDialog({
   );
 }
 
-// ─── MAIN ─────────────────────────────────────────────────────────────────────
 export default function TransactionPage({
   distributorId,
 }: TransactionPageProps) {
@@ -552,7 +546,6 @@ export default function TransactionPage({
   const [submitting, setSubmitting] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
 
-  // ── Load data ──────────────────────────────────────────────────────────────
   const loadData = useCallback(async () => {
     setLoadingData(true);
     try {
@@ -573,7 +566,6 @@ export default function TransactionPage({
     loadData();
   }, [loadData]);
 
-  // ── Cart helpers ───────────────────────────────────────────────────────────
   const addToCart = (product: any) => {
     if (product.stock <= 0) {
       toast.error("Stok habis");
@@ -623,7 +615,6 @@ export default function TransactionPage({
   const total = cart.reduce((s, i) => s + i.price * i.quantity, 0);
   const totalItems = cart.reduce((s, i) => s + i.quantity, 0);
 
-  // ── Submit transaksi ───────────────────────────────────────────────────────
   const handleSubmit = async () => {
     if (cart.length === 0) {
       toast.error("Keranjang masih kosong");
@@ -631,7 +622,6 @@ export default function TransactionPage({
     }
     setSubmitting(true);
     try {
-      // Simpan snapshot cart SEBELUM dikosongkan
       const snapshot = [...cart];
       const custName =
         customers.find((c) => c.id === selectedCustomerId)?.customer_name ?? "";
@@ -648,19 +638,16 @@ export default function TransactionPage({
         selectedCustomerId || null,
       );
 
-      // Simpan untuk struk
       setCartSnapshot(snapshot);
       setCompletedTrx(trx);
       setCompletedCustomerName(custName);
 
-      // Kosongkan form
       setCart([]);
       setSelectedCustomerId("");
       setPaymentMethod("cash");
       setReceiptOpen(true);
       toast.success("Transaksi berhasil!");
 
-      // Refresh stok produk di background
       loadData();
     } catch (err: any) {
       toast.error(err.message ?? "Gagal membuat transaksi");
@@ -676,7 +663,6 @@ export default function TransactionPage({
     setCompletedCustomerName("");
   };
 
-  // ── Views ──────────────────────────────────────────────────────────────────
   if (view === "history") {
     return (
       <TransactionHistory
@@ -1064,7 +1050,7 @@ export default function TransactionPage({
       <ReceiptDialog
         open={receiptOpen}
         transaction={completedTrx}
-        cartSnapshot={cartSnapshot} // Snapshot, bukan live cart
+        cartSnapshot={cartSnapshot}
         paymentMethod={paymentMethod}
         customerName={completedCustomerName}
         onNewTransaction={handleNewTransaction}
