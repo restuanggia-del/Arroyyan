@@ -11,8 +11,6 @@ import {
 } from "lucide-react";
 import { supabaseAdmin } from "../../lib/supabaseAdmin";
 
-// ─── TYPES ───────────────────────────────────────────────────────────────────
-
 type ResultCategory = "produk" | "distributor" | "pelanggan" | "transaksi";
 
 interface SearchResult {
@@ -20,16 +18,12 @@ interface SearchResult {
   category: ResultCategory;
   title: string;
   subtitle: string;
-  meta?: string; // harga, status, total, dsb
+  meta?: string;
 }
-
-// ─── PROPS ───────────────────────────────────────────────────────────────────
 
 interface SearchBarProps {
-  onNavigate: (menu: string) => void; // callback ke App.tsx untuk pindah halaman
+  onNavigate: (menu: string) => void;
 }
-
-// ─── ICON & LABEL PER KATEGORI ───────────────────────────────────────────────
 
 const categoryConfig: Record<
   ResultCategory,
@@ -61,15 +55,12 @@ const categoryConfig: Record<
   },
 };
 
-// ─── SEARCH QUERIES ───────────────────────────────────────────────────────────
-
 const searchAll = async (query: string): Promise<SearchResult[]> => {
   const q = query.trim().toLowerCase();
   if (!q) return [];
 
   const results: SearchResult[] = [];
 
-  // Jalankan semua query paralel
   const [prodRes, distRes, custRes, trxRes] = await Promise.all([
     // Produk
     supabaseAdmin
@@ -78,21 +69,18 @@ const searchAll = async (query: string): Promise<SearchResult[]> => {
       .ilike("product_name", `%${q}%`)
       .limit(3),
 
-    // Distributor
     supabaseAdmin
       .from("distributors")
       .select("id, distributor_name, phone, address, users(is_approved)")
       .ilike("distributor_name", `%${q}%`)
       .limit(3),
 
-    // Pelanggan
     supabaseAdmin
       .from("customers")
       .select("id, customer_name, phone, is_subscribed")
       .or(`customer_name.ilike.%${q}%,phone.ilike.%${q}%`)
       .limit(3),
 
-    // Transaksi — cari by ID prefix atau nama pelanggan
     supabaseAdmin
       .from("transactions")
       .select(
@@ -103,7 +91,6 @@ const searchAll = async (query: string): Promise<SearchResult[]> => {
       .limit(3),
   ]);
 
-  // Map produk
   for (const p of (prodRes.data ?? []) as any[]) {
     results.push({
       id: p.id,
@@ -114,7 +101,6 @@ const searchAll = async (query: string): Promise<SearchResult[]> => {
     });
   }
 
-  // Map distributor
   for (const d of (distRes.data ?? []) as any[]) {
     const approved = (d.users as any)?.is_approved;
     results.push({
@@ -126,7 +112,6 @@ const searchAll = async (query: string): Promise<SearchResult[]> => {
     });
   }
 
-  // Map pelanggan
   for (const c of (custRes.data ?? []) as any[]) {
     results.push({
       id: c.id,
@@ -137,7 +122,6 @@ const searchAll = async (query: string): Promise<SearchResult[]> => {
     });
   }
 
-  // Map transaksi
   for (const t of (trxRes.data ?? []) as any[]) {
     const customerName = (t.customers as any)?.customer_name ?? "Umum";
     results.push({
@@ -152,8 +136,6 @@ const searchAll = async (query: string): Promise<SearchResult[]> => {
   return results;
 };
 
-// ─── COMPONENT ───────────────────────────────────────────────────────────────
-
 export function SearchBar({ onNavigate }: SearchBarProps) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -164,8 +146,6 @@ export function SearchBar({ onNavigate }: SearchBarProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // ── Debounce search ─────────────────────────────────────────────────────────
 
   const doSearch = useCallback(async (q: string) => {
     if (q.trim().length < 2) {
@@ -189,8 +169,6 @@ export function SearchBar({ onNavigate }: SearchBarProps) {
     };
   }, [query, doSearch]);
 
-  // ── Tutup dropdown kalau klik di luar ──────────────────────────────────────
-
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (
@@ -205,8 +183,6 @@ export function SearchBar({ onNavigate }: SearchBarProps) {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
-  // ── Keyboard navigation ────────────────────────────────────────────────────
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (!isOpen || results.length === 0) return;
@@ -228,8 +204,6 @@ export function SearchBar({ onNavigate }: SearchBarProps) {
     }
   };
 
-  // ── Pilih hasil → navigasi ke halaman terkait ──────────────────────────────
-
   const handleSelect = (result: SearchResult) => {
     const config = categoryConfig[result.category];
     onNavigate(config.menu);
@@ -238,8 +212,6 @@ export function SearchBar({ onNavigate }: SearchBarProps) {
     setIsOpen(false);
     inputRef.current?.blur();
   };
-
-  // ── Grouping hasil per kategori ────────────────────────────────────────────
 
   const grouped = Object.entries(categoryConfig)
     .map(([cat, config]) => ({
@@ -258,7 +230,6 @@ export function SearchBar({ onNavigate }: SearchBarProps) {
 
   return (
     <div className="relative flex-1 max-w-md">
-      {/* Input */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
         <input
@@ -274,7 +245,6 @@ export function SearchBar({ onNavigate }: SearchBarProps) {
           className="w-full pl-10 pr-10 py-2.5 bg-gray-100 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all text-sm"
         />
 
-        {/* Loading / Clear button */}
         <div className="absolute right-3 top-1/2 -translate-y-1/2">
           {loading ? (
             <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />
@@ -289,7 +259,6 @@ export function SearchBar({ onNavigate }: SearchBarProps) {
         </div>
       </div>
 
-      {/* Dropdown */}
       {isOpen && (
         <div
           ref={dropdownRef}
@@ -313,14 +282,12 @@ export function SearchBar({ onNavigate }: SearchBarProps) {
           ) : (
             <div className="py-2">
               {grouped.map(({ category, config, items }) => {
-                // Hitung offset index global untuk keyboard nav
                 const groupOffset = results.findIndex(
                   (r) => r.category === category,
                 );
 
                 return (
                   <div key={category}>
-                    {/* Group header */}
                     <div className="flex items-center gap-2 px-4 py-2">
                       <span
                         className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold ${config.color}`}
@@ -331,7 +298,6 @@ export function SearchBar({ onNavigate }: SearchBarProps) {
                       <div className="flex-1 h-px bg-gray-100" />
                     </div>
 
-                    {/* Items */}
                     {items.map((result, localIdx) => {
                       const globalIdx = groupOffset + localIdx;
                       const isActive = globalIdx === activeIndex;
@@ -345,14 +311,12 @@ export function SearchBar({ onNavigate }: SearchBarProps) {
                             isActive ? "bg-blue-50" : "hover:bg-gray-50"
                           }`}
                         >
-                          {/* Icon kategori */}
                           <div
                             className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${config.color}`}
                           >
                             {config.icon}
                           </div>
 
-                          {/* Teks */}
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-gray-900 truncate">
                               {result.title}
@@ -362,7 +326,6 @@ export function SearchBar({ onNavigate }: SearchBarProps) {
                             </p>
                           </div>
 
-                          {/* Meta + arrow */}
                           <div className="flex items-center gap-2 flex-shrink-0">
                             {result.meta && (
                               <span className="text-xs font-medium text-gray-600">
@@ -382,7 +345,6 @@ export function SearchBar({ onNavigate }: SearchBarProps) {
                 );
               })}
 
-              {/* Footer: lihat semua */}
               <div className="border-t border-gray-100 mt-2 pt-2 pb-1 px-4">
                 <p className="text-xs text-gray-400 text-center">
                   {results.length} hasil ditemukan · Klik untuk buka halaman

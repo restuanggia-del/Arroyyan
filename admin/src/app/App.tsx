@@ -41,8 +41,6 @@ import {
 import { supabase } from "../lib/supabase";
 import { supabaseAdmin } from "../lib/supabaseAdmin";
 
-// ─── HELPER ──────────────────────────────────────────────────────────────────
-
 const calcMA = (values: number[], n: number): number => {
   if (values.length < n) return 0;
   const slice = values.slice(-n);
@@ -55,8 +53,6 @@ const formatRp = (n: number): string => {
   if (n >= 1_000) return `Rp ${(n / 1_000).toFixed(0)}k`;
   return `Rp ${n.toLocaleString("id-ID")}`;
 };
-
-// ─── MAIN ────────────────────────────────────────────────────────────────────
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -74,8 +70,6 @@ export default function App() {
     months: { label: string; value: number }[];
     nextMonth: string;
   } | null>(null);
-
-  // ── Session check ─────────────────────────────────────────────────────────
 
   useEffect(() => {
     const checkSession = async () => {
@@ -102,8 +96,6 @@ export default function App() {
   useEffect(() => {
     if (isAuthenticated && activeMenu === "dashboard") fetchDashboardData();
   }, [isAuthenticated, activeMenu]);
-
-  // ── Fetchers ──────────────────────────────────────────────────────────────
 
   const fetchPendingCount = async () => {
     const { data } = await getPendingDistributors();
@@ -159,8 +151,6 @@ export default function App() {
     setDashLoading(false);
   };
 
-  // ── Handlers ──────────────────────────────────────────────────────────────
-
   const handleLogin = async (email: string, password: string, _: boolean) => {
     const result = await loginUser(email, password);
     if (result.error) {
@@ -212,8 +202,6 @@ export default function App() {
     setPrediction(null);
   };
 
-  // ── Auth screens ──────────────────────────────────────────────────────────
-
   if (!isAuthenticated) {
     return authView === "login" ? (
       <Login
@@ -229,8 +217,6 @@ export default function App() {
   }
 
   const userRole = currentUser?.role as "admin" | "distributor";
-
-  // ── Dashboard ─────────────────────────────────────────────────────────────
 
   const renderDashboard = () => (
     <div className="p-8">
@@ -254,7 +240,6 @@ export default function App() {
         </button>
       </div>
 
-      {/* Stat cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <StatCard
           title="Penjualan Hari Ini"
@@ -290,7 +275,6 @@ export default function App() {
         />
       </div>
 
-      {/* Grafik + Top Products */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         <div className="lg:col-span-2">
           <DashboardChart />
@@ -300,7 +284,6 @@ export default function App() {
         </div>
       </div>
 
-      {/* Prediksi + Stok Alert */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         <div className="lg:col-span-2">
           <div className="bg-white rounded-lg border border-gray-200 p-6">
@@ -370,7 +353,6 @@ export default function App() {
         </div>
       </div>
 
-      {/* Kalender */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
           <Calendar />
@@ -378,8 +360,6 @@ export default function App() {
       </div>
     </div>
   );
-
-  // ── Router ────────────────────────────────────────────────────────────────
 
   const renderContent = () => {
     switch (activeMenu) {
@@ -427,7 +407,6 @@ export default function App() {
       <div className="flex-1 flex flex-col overflow-hidden">
         <header className="bg-white border-b border-gray-200 px-8 py-4">
           <div className="flex items-center gap-4">
-            {/* ↓ Pass onNavigate ke SearchBar */}
             <SearchBar onNavigate={handleMenuChange} />
             <UserProfile
               name={currentUser?.name ?? "User"}
