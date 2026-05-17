@@ -20,7 +20,6 @@ interface CompanySettings {
   // ATAU kita tambah kolom via SQL — solusi terbaik: tambah kolom di Supabase
 }
 
-// Field UI yang kita kelola
 interface UISettings {
   company_name: string;
   company_address: string;
@@ -78,8 +77,6 @@ const decodeSettings = (raw: CompanySettings): UISettings => {
   };
 };
 
-// ─── COMPONENT ────────────────────────────────────────────────────────────────
-
 export function SystemSettings() {
   const [settings, setSettings] = useState<UISettings>(DEFAULT_SETTINGS);
   const [settingsId, setSettingsId] = useState<string | null>(null);
@@ -87,8 +84,6 @@ export function SystemSettings() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  // ── Fetch dari Supabase ───────────────────────────────────────────────────
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -105,13 +100,10 @@ export function SystemSettings() {
         setSettingsId(data.id);
         setSettings(decodeSettings(data as CompanySettings));
       }
-      // Kalau belum ada row, pakai DEFAULT_SETTINGS
       setLoading(false);
     };
     fetchSettings();
   }, []);
-
-  // ── Simpan ke Supabase ────────────────────────────────────────────────────
 
   const handleSave = async () => {
     setSaving(true);
@@ -121,13 +113,11 @@ export function SystemSettings() {
 
     let err;
     if (settingsId) {
-      // Update row yang sudah ada
       ({ error: err } = await supabaseAdmin
         .from("system_settings")
         .update(payload)
         .eq("id", settingsId));
     } else {
-      // Insert row baru
       const { data, error: insertErr } = await supabaseAdmin
         .from("system_settings")
         .insert([payload])
@@ -152,8 +142,6 @@ export function SystemSettings() {
     setError(null);
   };
 
-  // ── Tanggal preview real ──────────────────────────────────────────────────
-
   const previewDate = new Date().toLocaleString("id-ID", {
     day: "2-digit",
     month: "2-digit",
@@ -161,8 +149,6 @@ export function SystemSettings() {
     hour: "2-digit",
     minute: "2-digit",
   });
-
-  // ── Render ────────────────────────────────────────────────────────────────
 
   if (loading) {
     return (
@@ -185,9 +171,7 @@ export function SystemSettings() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* ── Kiri: Form ── */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Error */}
           {error && (
             <div className="p-4 bg-red-50 border border-red-200 rounded-xl flex gap-3">
               <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
@@ -195,7 +179,6 @@ export function SystemSettings() {
             </div>
           )}
 
-          {/* Informasi Perusahaan */}
           <div className="bg-white rounded-xl border border-gray-200 p-6">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -262,7 +245,6 @@ export function SystemSettings() {
             </div>
           </div>
 
-          {/* Format Struk */}
           <div className="bg-white rounded-xl border border-gray-200 p-6">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
@@ -312,7 +294,6 @@ export function SystemSettings() {
             </div>
           </div>
 
-          {/* Tombol simpan */}
           <div className="flex items-center justify-end gap-3">
             {saved && (
               <div className="flex items-center gap-2 text-green-600">
@@ -337,9 +318,7 @@ export function SystemSettings() {
           </div>
         </div>
 
-        {/* ── Kanan: Preview + Info ── */}
         <div className="space-y-6">
-          {/* Preview Struk */}
           <div className="bg-white rounded-xl border border-gray-200 p-6">
             <h3 className="font-semibold text-gray-900 mb-4">Preview Struk</h3>
             <div className="border-2 border-dashed border-gray-300 rounded-xl p-5 font-mono text-xs bg-gray-50">
@@ -395,7 +374,6 @@ export function SystemSettings() {
             </div>
           </div>
 
-          {/* Catatan */}
           <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
             <div className="flex items-start gap-3">
               <Settings className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
@@ -412,7 +390,6 @@ export function SystemSettings() {
             </div>
           </div>
 
-          {/* Info sistem */}
           <div className="bg-white rounded-xl border border-gray-200 p-6">
             <h3 className="font-semibold text-gray-900 mb-4">
               Informasi Sistem
