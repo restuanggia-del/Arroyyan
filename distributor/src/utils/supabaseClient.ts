@@ -5,8 +5,14 @@ const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
 const SUPABASE_SERVICE_KEY = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY as string;
 
+// Client biasa — pakai anon key, untuk auth + query setelah login
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-export const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+
+// Client admin — pakai service role key, untuk bypass RLS
+// Digunakan hanya jika service role key tersedia
+export const supabaseAdmin = SUPABASE_SERVICE_KEY
+  ? createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+  : createClient(SUPABASE_URL, SUPABASE_ANON_KEY); // fallback ke anon jika tidak ada
 
 // ─── TIPE ─────────────────────────────────────────────────────────────────────
 export interface DistributorUser {
@@ -23,61 +29,85 @@ export interface DistributorUser {
 
 // ─── AUTH ─────────────────────────────────────────────────────────────────────
 
-/**
- * Login distributor — return { user, distributorId }
- * Konsisten dengan App.tsx: handleLogin(userData, distId)
- */
 export const loginDistributor = async (
   email: string,
   password: string
 ): Promise<{ user: DistributorUser; distributorId: string }> => {
+
+  // 1. Login ke Supabase Auth
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) throw new Error(error.message);
 
   const authUser = data.user;
+  if (!authUser) throw new Error('Login gagal, coba lagi.');
 
-  // Ambil data dari tabel users
-  const { data: userData, error: userError } = await supabaseAdmin
+  // 2. Ambil data dari tabel users
+  // Setelah signInWithPassword, supabase client sudah punya session
+  // sehingga bisa query tabel users langsung (pakai RLS dengan auth.uid())
+  const { data: userData, error: userError } = await supabase
     .from('users')
     .select('id, name, email, role, is_approved')
     .eq('auth_user_id', authUser.id)
     .single();
 
-  if (userError || !userData) throw new Error('Gagal mendapatkan data user');
-  if (userData.role !== 'distributor') throw new Error('Akun ini bukan akun distributor');
-  if (!userData.is_approved)
-    throw new Error('Akun belum disetujui admin. Silakan hubungi administrator.');
+  // Jika gagal dengan supabase biasa (RLS), coba dengan supabaseAdmin
+  let finalUserData = userData;
+  if (userError || !userData) {
+    const { data: adminData, error: adminErr } = await supabaseAdmin
+      .from('users')
+      .select('id, name, email, role, is_approved')
+      .eq('auth_user_id', authUser.id)
+      .single();
 
-  // Ambil data distributor
-  const { data: distData, error: distError } = await supabaseAdmin
+    if (adminErr || !adminData) {
+      throw new Error('Gagal mendapatkan data user. Pastikan akun sudah terdaftar.');
+    }
+    finalUserData = adminData;
+  }
+
+  if (!finalUserData) throw new Error('Data user tidak ditemukan.');
+  if (finalUserData.role !== 'distributor') throw new Error('Akun ini bukan akun distributor.');
+  if (!finalUserData.is_approved) {
+    throw new Error('Akun belum disetujui admin. Silakan hubungi administrator.');
+  }
+
+  // 3. Ambil data distributor
+  const { data: distData, error: distError } = await supabase
     .from('distributors')
     .select('id, distributor_name, phone, address')
-    .eq('user_id', userData.id)
+    .eq('user_id', finalUserData.id)
     .single();
 
-  if (distError || !distData) throw new Error('Data distributor tidak ditemukan');
+  let finalDistData = distData;
+  if (distError || !distData) {
+    const { data: adminDistData, error: adminDistErr } = await supabaseAdmin
+      .from('distributors')
+      .select('id, distributor_name, phone, address')
+      .eq('user_id', finalUserData.id)
+      .single();
+
+    if (adminDistErr || !adminDistData) {
+      throw new Error('Data distributor tidak ditemukan.');
+    }
+    finalDistData = adminDistData;
+  }
 
   const user: DistributorUser = {
-    ...userData,
-    distributor_id: distData.id,
-    distributor_name: distData.distributor_name,
-    phone: distData.phone,
-    address: distData.address,
+    ...finalUserData,
+    distributor_id: finalDistData!.id,
+    distributor_name: finalDistData!.distributor_name,
+    phone: finalDistData!.phone,
+    address: finalDistData!.address,
   };
 
-  // Simpan ke localStorage untuk persistensi
+  // Simpan ke localStorage
   localStorage.setItem('distributor_user', JSON.stringify(user));
-  localStorage.setItem('distributor_id', distData.id);
+  localStorage.setItem('distributor_id', finalDistData!.id);
 
-  return { user, distributorId: distData.id };
+  return { user, distributorId: finalDistData!.id };
 };
 
-/**
- * Cek session yang sudah ada (dipanggil saat App mount)
- * Return user jika masih login, null jika tidak
- */
 export const checkSession = async (): Promise<DistributorUser | null> => {
-  // Cek Supabase session
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) {
     localStorage.removeItem('distributor_user');
@@ -85,43 +115,53 @@ export const checkSession = async (): Promise<DistributorUser | null> => {
     return null;
   }
 
-  // Ambil dari localStorage sebagai cache
+  // Coba dari localStorage dulu
   const cached = localStorage.getItem('distributor_user');
   if (cached) {
     try {
       return JSON.parse(cached) as DistributorUser;
-    } catch {
-      // jika rusak, ambil ulang dari DB
-    }
+    } catch { /* lanjut ambil dari DB */ }
   }
 
-  // Ambil ulang dari DB jika cache tidak ada
-  const { data: userData } = await supabaseAdmin
+  // Ambil dari DB
+  const { data: userData } = await supabase
     .from('users')
     .select('id, name, email, role, is_approved')
     .eq('auth_user_id', session.user.id)
     .single();
 
-  if (!userData || userData.role !== 'distributor' || !userData.is_approved) return null;
+  const finalUser = userData ?? (await supabaseAdmin
+    .from('users')
+    .select('id, name, email, role, is_approved')
+    .eq('auth_user_id', session.user.id)
+    .single()).data;
 
-  const { data: distData } = await supabaseAdmin
+  if (!finalUser || finalUser.role !== 'distributor' || !finalUser.is_approved) return null;
+
+  const { data: distData } = await supabase
     .from('distributors')
     .select('id, distributor_name, phone, address')
-    .eq('user_id', userData.id)
+    .eq('user_id', finalUser.id)
     .single();
 
-  if (!distData) return null;
+  const finalDist = distData ?? (await supabaseAdmin
+    .from('distributors')
+    .select('id, distributor_name, phone, address')
+    .eq('user_id', finalUser.id)
+    .single()).data;
+
+  if (!finalDist) return null;
 
   const user: DistributorUser = {
-    ...userData,
-    distributor_id: distData.id,
-    distributor_name: distData.distributor_name,
-    phone: distData.phone,
-    address: distData.address,
+    ...finalUser,
+    distributor_id: finalDist.id,
+    distributor_name: finalDist.distributor_name,
+    phone: finalDist.phone,
+    address: finalDist.address,
   };
 
   localStorage.setItem('distributor_user', JSON.stringify(user));
-  localStorage.setItem('distributor_id', distData.id);
+  localStorage.setItem('distributor_id', finalDist.id);
 
   return user;
 };
@@ -167,14 +207,10 @@ export const getDashboardStats = async (distributorId: string) => {
   ]);
 
   const todayData = todayTx.data ?? [];
-  const totalSalesToday = todayData.reduce(
-    (s: number, t: any) => s + (t.total_price ?? 0), 0
-  );
+  const totalSalesToday = todayData.reduce((s: number, t: any) => s + (t.total_price ?? 0), 0);
 
   const stockData = stockRes.data ?? [];
-  const totalStock = stockData.reduce(
-    (s: number, item: any) => s + (item.stock_quantity ?? 0), 0
-  );
+  const totalStock = stockData.reduce((s: number, item: any) => s + (item.stock_quantity ?? 0), 0);
 
   const productMap: Record<string, { name: string; totalSold: number }> = {};
   for (const row of (topProductRes.data ?? []) as any[]) {
@@ -239,7 +275,6 @@ export const createTransaction = async (
 ) => {
   const totalPrice = items.reduce((s, i) => s + i.price * i.quantity, 0);
 
-  // Validasi stok semua item dulu
   for (const item of items) {
     const { data: stock } = await supabaseAdmin
       .from('stocks')
@@ -252,7 +287,6 @@ export const createTransaction = async (
       throw new Error(`Stok tidak mencukupi untuk: ${item.productName}. Tersedia: ${stock?.stock_quantity ?? 0}`);
   }
 
-  // Insert transaksi
   const { data: trx, error: trxErr } = await supabaseAdmin
     .from('transactions')
     .insert([{
@@ -266,7 +300,6 @@ export const createTransaction = async (
 
   if (trxErr) throw new Error(trxErr.message);
 
-  // Insert detail transaksi
   await supabaseAdmin.from('transaction_details').insert(
     items.map((item) => ({
       transaction_id: trx.id,
@@ -277,7 +310,6 @@ export const createTransaction = async (
     }))
   );
 
-  // Kurangi stok & catat movement
   for (const item of items) {
     const { data: stock } = await supabaseAdmin
       .from('stocks')
@@ -350,12 +382,6 @@ export const createCustomer = async (customer: {
     .single();
 
   if (error) throw new Error(error.message);
-
-  await supabaseAdmin.from('activity_logs').insert([{
-    activity_type: 'create_customer',
-    description: `Pelanggan baru: ${customer.customer_name}`,
-  }]);
-
   return data;
 };
 
