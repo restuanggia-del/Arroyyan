@@ -41,6 +41,8 @@ import {
 import { supabase } from "../lib/supabase";
 import { supabaseAdmin } from "../lib/supabaseAdmin";
 
+// ─── HELPER ──────────────────────────────────────────────────────────────────
+
 const calcMA = (values: number[], n: number): number => {
   if (values.length < n) return 0;
   const slice = values.slice(-n);
@@ -54,6 +56,8 @@ const formatRp = (n: number): string => {
   return `Rp ${n.toLocaleString("id-ID")}`;
 };
 
+// ─── MAIN ────────────────────────────────────────────────────────────────────
+
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authView, setAuthView] = useState<"login" | "register">("login");
@@ -62,6 +66,7 @@ export default function App() {
   const [activeMenu, setActiveMenu] = useState("dashboard");
   const [pendingDistributorCount, setPendingDistributorCount] = useState(0);
 
+  // Dashboard real data
   const [dashStats, setDashStats] = useState<DashboardStats | null>(null);
   const [dashLoading, setDashLoading] = useState(false);
   const [prediction, setPrediction] = useState<{
@@ -69,6 +74,8 @@ export default function App() {
     months: { label: string; value: number }[];
     nextMonth: string;
   } | null>(null);
+
+  // ── Session check ─────────────────────────────────────────────────────────
 
   useEffect(() => {
     const checkSession = async () => {
@@ -89,16 +96,14 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (isAuthenticated && currentUser?.role === "admin") {
-      fetchPendingCount();
-    }
+    if (isAuthenticated && currentUser?.role === "admin") fetchPendingCount();
   }, [isAuthenticated, currentUser]);
 
   useEffect(() => {
-    if (isAuthenticated && activeMenu === "dashboard") {
-      fetchDashboardData();
-    }
+    if (isAuthenticated && activeMenu === "dashboard") fetchDashboardData();
   }, [isAuthenticated, activeMenu]);
+
+  // ── Fetchers ──────────────────────────────────────────────────────────────
 
   const fetchPendingCount = async () => {
     const { data } = await getPendingDistributors();
@@ -126,7 +131,6 @@ export default function App() {
       const values = monthly.map((m) => m.penjualan);
       const predicted = calcMA(values, 3);
       const lastThree = monthly.slice(-3);
-
       const now = new Date();
       now.setMonth(now.getMonth() + 1);
       const monthNames = [
@@ -143,18 +147,19 @@ export default function App() {
         "Nov",
         "Des",
       ];
-      const nextMonth = `${monthNames[now.getMonth()]} ${now.getFullYear()}`;
 
       setPrediction({
         value: predicted,
         months: lastThree.map((m) => ({ label: m.bulan, value: m.penjualan })),
-        nextMonth,
+        nextMonth: `${monthNames[now.getMonth()]} ${now.getFullYear()}`,
       });
     } catch (e) {
-      console.error("Gagal fetch dashboard data:", e);
+      console.error("Gagal fetch dashboard:", e);
     }
     setDashLoading(false);
   };
+
+  // ── Handlers ──────────────────────────────────────────────────────────────
 
   const handleLogin = async (email: string, password: string, _: boolean) => {
     const result = await loginUser(email, password);
@@ -207,6 +212,8 @@ export default function App() {
     setPrediction(null);
   };
 
+  // ── Auth screens ──────────────────────────────────────────────────────────
+
   if (!isAuthenticated) {
     return authView === "login" ? (
       <Login
@@ -222,6 +229,8 @@ export default function App() {
   }
 
   const userRole = currentUser?.role as "admin" | "distributor";
+
+  // ── Dashboard ─────────────────────────────────────────────────────────────
 
   const renderDashboard = () => (
     <div className="p-8">
@@ -245,6 +254,7 @@ export default function App() {
         </button>
       </div>
 
+      {/* Stat cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <StatCard
           title="Penjualan Hari Ini"
@@ -280,6 +290,7 @@ export default function App() {
         />
       </div>
 
+      {/* Grafik + Top Products */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         <div className="lg:col-span-2">
           <DashboardChart />
@@ -289,13 +300,13 @@ export default function App() {
         </div>
       </div>
 
+      {/* Prediksi + Stok Alert */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         <div className="lg:col-span-2">
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">
               Prediksi Penjualan (Moving Average 3 Bulan)
             </h3>
-
             {dashLoading ? (
               <div className="space-y-3">
                 <div className="h-24 bg-gray-100 animate-pulse rounded-lg" />
@@ -359,6 +370,7 @@ export default function App() {
         </div>
       </div>
 
+      {/* Kalender */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
           <Calendar />
@@ -366,6 +378,8 @@ export default function App() {
       </div>
     </div>
   );
+
+  // ── Router ────────────────────────────────────────────────────────────────
 
   const renderContent = () => {
     switch (activeMenu) {
@@ -413,7 +427,8 @@ export default function App() {
       <div className="flex-1 flex flex-col overflow-hidden">
         <header className="bg-white border-b border-gray-200 px-8 py-4">
           <div className="flex items-center gap-4">
-            <SearchBar />
+            {/* ↓ Pass onNavigate ke SearchBar */}
+            <SearchBar onNavigate={handleMenuChange} />
             <UserProfile
               name={currentUser?.name ?? "User"}
               role={userRole === "admin" ? "Admin" : "Distributor"}
