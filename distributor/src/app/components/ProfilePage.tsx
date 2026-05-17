@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 import {
   Box,
   Typography,
@@ -19,188 +19,336 @@ import {
   CircularProgress,
   Alert,
   Chip,
-} from '@mui/material';
+} from "@mui/material";
 import {
   Person,
   Logout,
   Assessment,
   Email,
-  TrendingUp,
+  Phone,
+  LocationOn,
   Star,
-} from '@mui/icons-material';
-import { toast } from 'sonner';
-import { apiCall } from '../../utils/supabaseClient';
+  TrendingUp,
+  Receipt,
+} from "@mui/icons-material";
+import {
+  getTransactionHistory,
+  getProductsWithDistributorStock,
+  DistributorUser,
+} from "../../utils/supabaseClient";
+import { supabaseAdmin } from "../../utils/supabaseClient";
 
 interface ProfilePageProps {
-  user: any;
+  user: DistributorUser;
   onLogout: () => void;
 }
 
+const formatRp = (n: number) =>
+  new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    minimumFractionDigits: 0,
+  }).format(n);
+
+const getInitials = (name: string) =>
+  (name ?? "D")
+    .split(" ")
+    .map((w) => w[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+
 export default function ProfilePage({ user, onLogout }: ProfilePageProps) {
   const [logoutDialog, setLogoutDialog] = useState(false);
-  const [reportTab, setReportTab] = useState(0);
-  const [dailyReport, setDailyReport] = useState<any>(null);
-  const [monthlyReport, setMonthlyReport] = useState<any>(null);
-  const [topProducts, setTopProducts] = useState<any[]>([]);
-  const [loadingReports, setLoadingReports] = useState(false);
+  const [activeTab, setActiveTab] = useState(0);
+
+  // Laporan states
+  const [loadingReport, setLoadingReport] = useState(false);
+  const [dailySales, setDailySales] = useState(0);
+  const [dailyTrx, setDailyTrx] = useState(0);
+  const [monthlySales, setMonthlySales] = useState(0);
+  const [monthlyTrx, setMonthlyTrx] = useState(0);
+  const [topProducts, setTopProducts] = useState<
+    { name: string; totalSold: number; revenue: number }[]
+  >([]);
+  const [reportError, setReportError] = useState("");
 
   useEffect(() => {
-    if (reportTab === 1) {
-      fetchReports();
-    }
-  }, [reportTab]);
+    if (activeTab === 1) fetchReports();
+  }, [activeTab]);
 
   const fetchReports = async () => {
-    setLoadingReports(true);
+    setLoadingReport(true);
+    setReportError("");
     try {
-      const [daily, monthly, top] = await Promise.all([
-        apiCall('/reports/daily'),
-        apiCall('/reports/monthly'),
-        apiCall('/reports/top-products'),
+      const todayStr = new Date().toISOString().split("T")[0];
+      const now = new Date();
+      const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
+
+      // Query paralel
+      const [todayRes, monthRes, detailRes] = await Promise.all([
+        // Transaksi hari ini
+        supabaseAdmin
+          .from("transactions")
+          .select("total_price")
+          .eq("distributor_id", user.distributor_id)
+          .gte("created_at", `${todayStr}T00:00:00`)
+          .lte("created_at", `${todayStr}T23:59:59`),
+
+        // Transaksi bulan ini
+        supabaseAdmin
+          .from("transactions")
+          .select("total_price")
+          .eq("distributor_id", user.distributor_id)
+          .gte("created_at", `${monthStart}T00:00:00`),
+
+        // Detail transaksi untuk top produk
+        supabaseAdmin
+          .from("transaction_details")
+          .select(
+            `
+            product_id, quantity, subtotal,
+            products ( product_name ),
+            transactions!inner ( distributor_id )
+          `,
+          )
+          .eq("transactions.distributor_id", user.distributor_id),
       ]);
 
-      setDailyReport(daily);
-      setMonthlyReport(monthly);
-      setTopProducts(top.topProducts);
-    } catch (error) {
-      console.error('Error fetching reports:', error);
-      toast.error('Gagal memuat laporan');
+      // Harian
+      const todayData = todayRes.data ?? [];
+      setDailySales(
+        todayData.reduce((s, t: any) => s + (t.total_price ?? 0), 0),
+      );
+      setDailyTrx(todayData.length);
+
+      // Bulanan
+      const monthData = monthRes.data ?? [];
+      setMonthlySales(
+        monthData.reduce((s, t: any) => s + (t.total_price ?? 0), 0),
+      );
+      setMonthlyTrx(monthData.length);
+
+      // Top produk
+      const map: Record<
+        string,
+        { name: string; totalSold: number; revenue: number }
+      > = {};
+      for (const row of (detailRes.data ?? []) as any[]) {
+        const pid = row.product_id;
+        if (!map[pid]) {
+          map[pid] = {
+            name: row.products?.product_name ?? "—",
+            totalSold: 0,
+            revenue: 0,
+          };
+        }
+        map[pid].totalSold += row.quantity ?? 0;
+        map[pid].revenue += row.subtotal ?? 0;
+      }
+      const sorted = Object.values(map)
+        .sort((a, b) => b.totalSold - a.totalSold)
+        .slice(0, 5);
+      setTopProducts(sorted);
+    } catch (err: any) {
+      setReportError(err.message ?? "Gagal memuat laporan.");
     } finally {
-      setLoadingReports(false);
+      setLoadingReport(false);
     }
-  };
-
-  const handleLogout = () => {
-    setLogoutDialog(false);
-    onLogout();
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0,
-    }).format(amount);
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('id-ID', {
-      dateStyle: 'long',
-    }).format(date);
-  };
-
-  const getInitials = (name: string) => {
-    if (!name) return '?';
-    return name
-      .split(' ')
-      .map((n) => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
   };
 
   return (
-    <Box sx={{ p: 2, pb: 10 }}>
-      {/* Header */}
-      <Typography variant="h5" fontWeight="bold" sx={{ mb: 3 }}>
-        Profil & Laporan
-      </Typography>
-
-      {/* Tabs */}
-      <Card sx={{ mb: 2 }}>
+    <Box sx={{ p: 2, pb: 4 }}>
+      {/* Tab selector */}
+      <Card
+        elevation={0}
+        sx={{
+          mb: 2,
+          borderRadius: 3,
+          border: "1px solid",
+          borderColor: "divider",
+        }}
+      >
         <Tabs
-          value={reportTab}
-          onChange={(e, newValue) => setReportTab(newValue)}
+          value={activeTab}
+          onChange={(_, v) => setActiveTab(v)}
           variant="fullWidth"
+          sx={{ "& .MuiTab-root": { fontWeight: 600, fontSize: "0.8rem" } }}
         >
-          <Tab icon={<Person />} label="Profil" />
-          <Tab icon={<Assessment />} label="Laporan" />
+          <Tab
+            icon={<Person fontSize="small" />}
+            label="Profil"
+            iconPosition="start"
+          />
+          <Tab
+            icon={<Assessment fontSize="small" />}
+            label="Laporan"
+            iconPosition="start"
+          />
         </Tabs>
       </Card>
 
-      {/* Profile Tab */}
-      {reportTab === 0 && (
+      {/* ── TAB PROFIL ── */}
+      {activeTab === 0 && (
         <Box>
-          {/* User Info Card */}
-          <Card sx={{ mb: 2 }}>
-            <CardContent>
-              <Box className="flex flex-col items-center">
-                <Avatar
-                  sx={{
-                    width: 80,
-                    height: 80,
-                    bgcolor: 'primary.main',
-                    fontSize: 32,
-                    mb: 2,
-                  }}
-                >
-                  {getInitials(user?.name || user?.email)}
-                </Avatar>
-
-                <Typography variant="h6" fontWeight="bold">
-                  {user?.name || 'Distributor'}
+          {/* Avatar card */}
+          <Card
+            elevation={0}
+            sx={{
+              mb: 2,
+              borderRadius: 3,
+              border: "1px solid",
+              borderColor: "divider",
+              background: "linear-gradient(135deg, #eff6ff 0%, #e0f2fe 100%)",
+            }}
+          >
+            <CardContent sx={{ textAlign: "center", py: 3 }}>
+              <Avatar
+                sx={{
+                  width: 72,
+                  height: 72,
+                  bgcolor: "#0891b2",
+                  fontSize: "1.6rem",
+                  fontWeight: "bold",
+                  mx: "auto",
+                  mb: 1.5,
+                  boxShadow: "0 4px 16px rgba(8,145,178,0.35)",
+                }}
+              >
+                {getInitials(user.distributor_name)}
+              </Avatar>
+              <Typography variant="h6" fontWeight="bold" color="text.primary">
+                {user.distributor_name}
+              </Typography>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 0.5,
+                  mt: 0.5,
+                }}
+              >
+                <Email sx={{ fontSize: 14, color: "text.secondary" }} />
+                <Typography variant="caption" color="text.secondary">
+                  {user.email}
                 </Typography>
-
-                <Box className="flex items-center gap-1 mt-1">
-                  <Email sx={{ fontSize: 16 }} color="action" />
-                  <Typography variant="body2" color="text.secondary">
-                    {user?.email}
-                  </Typography>
-                </Box>
-
+              </Box>
+              <Box
+                sx={{
+                  display: "flex",
+                  gap: 1,
+                  justifyContent: "center",
+                  mt: 1.5,
+                }}
+              >
                 <Chip
                   label="Distributor"
                   color="primary"
                   size="small"
-                  sx={{ mt: 2 }}
+                  sx={{ fontWeight: "bold" }}
                 />
-
-                {user?.approved && (
+                {user.is_approved && (
                   <Chip
-                    label="Approved"
+                    label="✓ Approved"
                     color="success"
                     size="small"
-                    sx={{ mt: 1 }}
+                    sx={{ fontWeight: "bold" }}
                   />
                 )}
               </Box>
             </CardContent>
           </Card>
 
-          {/* Info Card */}
-          <Card sx={{ mb: 2 }}>
-            <CardContent>
-              <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 2 }}>
-                Informasi Sistem
+          {/* Info detail */}
+          <Card
+            elevation={0}
+            sx={{
+              mb: 2,
+              borderRadius: 3,
+              border: "1px solid",
+              borderColor: "divider",
+            }}
+          >
+            <CardContent sx={{ p: 2 }}>
+              <Typography
+                variant="subtitle2"
+                fontWeight="bold"
+                color="text.secondary"
+                sx={{
+                  mb: 1.5,
+                  textTransform: "uppercase",
+                  fontSize: "0.7rem",
+                  letterSpacing: 1,
+                }}
+              >
+                Informasi Distributor
               </Typography>
-
-              <List dense>
-                <ListItem>
+              <List dense disablePadding>
+                {user.phone && (
+                  <>
+                    <ListItem disableGutters sx={{ py: 1 }}>
+                      <Phone sx={{ fontSize: 18, color: "#0891b2", mr: 1.5 }} />
+                      <ListItemText
+                        primary={
+                          <Typography variant="body2" fontWeight={600}>
+                            {user.phone}
+                          </Typography>
+                        }
+                        secondary="Nomor Telepon"
+                      />
+                    </ListItem>
+                    <Divider />
+                  </>
+                )}
+                {user.address && (
+                  <>
+                    <ListItem disableGutters sx={{ py: 1 }}>
+                      <LocationOn
+                        sx={{ fontSize: 18, color: "#0891b2", mr: 1.5 }}
+                      />
+                      <ListItemText
+                        primary={
+                          <Typography variant="body2" fontWeight={600}>
+                            {user.address}
+                          </Typography>
+                        }
+                        secondary="Alamat"
+                      />
+                    </ListItem>
+                    <Divider />
+                  </>
+                )}
+                <ListItem disableGutters sx={{ py: 1 }}>
+                  <Person sx={{ fontSize: 18, color: "#0891b2", mr: 1.5 }} />
                   <ListItemText
-                    primary="Perusahaan"
-                    secondary="AMDK Arroyyan99"
+                    primary={
+                      <Typography variant="body2" fontWeight={600}>
+                        AMDK Arroyyan99
+                      </Typography>
+                    }
+                    secondary="Perusahaan"
                   />
                 </ListItem>
                 <Divider />
-                <ListItem>
-                  <ListItemText
-                    primary="Lokasi"
-                    secondary="Bogatama, Tulang Bawang, Lampung"
+                <ListItem disableGutters sx={{ py: 1 }}>
+                  <LocationOn
+                    sx={{ fontSize: 18, color: "#0891b2", mr: 1.5 }}
                   />
-                </ListItem>
-                <Divider />
-                <ListItem>
                   <ListItemText
-                    primary="Role"
-                    secondary="Distributor"
+                    primary={
+                      <Typography variant="body2" fontWeight={600}>
+                        Bogatama, Tulang Bawang, Lampung
+                      </Typography>
+                    }
+                    secondary="Lokasi Pabrik"
                   />
                 </ListItem>
               </List>
             </CardContent>
           </Card>
 
-          {/* Logout Button */}
+          {/* Tombol Logout */}
           <Button
             variant="outlined"
             fullWidth
@@ -208,149 +356,262 @@ export default function ProfilePage({ user, onLogout }: ProfilePageProps) {
             color="error"
             startIcon={<Logout />}
             onClick={() => setLogoutDialog(true)}
+            sx={{ borderRadius: 2.5, fontWeight: "bold", py: 1.4 }}
           >
-            Logout
+            Keluar
           </Button>
         </Box>
       )}
 
-      {/* Reports Tab */}
-      {reportTab === 1 && (
+      {/* ── TAB LAPORAN ── */}
+      {activeTab === 1 && (
         <Box>
-          {loadingReports ? (
-            <Box className="flex justify-center p-4">
+          {loadingReport ? (
+            <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
               <CircularProgress />
             </Box>
+          ) : reportError ? (
+            <Alert
+              severity="error"
+              sx={{ borderRadius: 2 }}
+              onClose={() => setReportError("")}
+            >
+              {reportError}
+            </Alert>
           ) : (
             <>
-              {/* Daily Report */}
-              <Card sx={{ mb: 2 }}>
-                <CardContent>
-                  <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 2 }}>
-                    Laporan Harian
-                  </Typography>
-
-                  {dailyReport && (
-                    <>
-                      <Typography variant="caption" color="text.secondary">
-                        {formatDate(dailyReport.date)}
-                      </Typography>
-
-                      <Box sx={{ mt: 2 }}>
-                        <Box className="flex items-center justify-between mb-2">
-                          <Typography variant="body2" color="text.secondary">
-                            Total Penjualan
-                          </Typography>
-                          <Typography variant="h6" fontWeight="bold" color="primary">
-                            {formatCurrency(dailyReport.totalSales)}
-                          </Typography>
-                        </Box>
-
-                        <Box className="flex items-center justify-between">
-                          <Typography variant="body2" color="text.secondary">
-                            Jumlah Transaksi
-                          </Typography>
-                          <Typography variant="h6" fontWeight="bold">
-                            {dailyReport.totalTransactions}
-                          </Typography>
-                        </Box>
+              {/* Laporan Harian */}
+              <Card
+                elevation={0}
+                sx={{
+                  mb: 2,
+                  borderRadius: 3,
+                  border: "1px solid",
+                  borderColor: "divider",
+                }}
+              >
+                <CardContent sx={{ p: 2 }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                      mb: 2,
+                    }}
+                  >
+                    <Receipt sx={{ color: "#0891b2" }} />
+                    <Typography variant="subtitle2" fontWeight="bold">
+                      Laporan Hari Ini
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      color="text.disabled"
+                      sx={{ ml: "auto" }}
+                    >
+                      {new Date().toLocaleDateString("id-ID", {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                      })}
+                    </Typography>
+                  </Box>
+                  {dailyTrx === 0 ? (
+                    <Alert severity="info" sx={{ borderRadius: 2 }}>
+                      Belum ada transaksi hari ini
+                    </Alert>
+                  ) : (
+                    <Box sx={{ display: "flex", gap: 2 }}>
+                      <Box
+                        sx={{
+                          flex: 1,
+                          bgcolor: "#eff6ff",
+                          borderRadius: 2,
+                          p: 1.5,
+                          textAlign: "center",
+                        }}
+                      >
+                        <Typography
+                          variant="h6"
+                          fontWeight="bold"
+                          color="#0891b2"
+                        >
+                          {formatRp(dailySales)}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Total Penjualan
+                        </Typography>
                       </Box>
-                    </>
-                  )}
-
-                  {!dailyReport?.totalTransactions && (
-                    <Alert severity="info">Belum ada transaksi hari ini</Alert>
+                      <Box
+                        sx={{
+                          flex: 1,
+                          bgcolor: "#f5f3ff",
+                          borderRadius: 2,
+                          p: 1.5,
+                          textAlign: "center",
+                        }}
+                      >
+                        <Typography
+                          variant="h6"
+                          fontWeight="bold"
+                          color="#7c3aed"
+                        >
+                          {dailyTrx}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Transaksi
+                        </Typography>
+                      </Box>
+                    </Box>
                   )}
                 </CardContent>
               </Card>
 
-              {/* Monthly Report */}
-              <Card sx={{ mb: 2 }}>
-                <CardContent>
-                  <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 2 }}>
-                    Laporan Bulanan
-                  </Typography>
-
-                  {monthlyReport && (
-                    <>
-                      <Typography variant="caption" color="text.secondary">
-                        {new Date(monthlyReport.month + '-01').toLocaleDateString('id-ID', {
-                          year: 'numeric',
-                          month: 'long',
-                        })}
-                      </Typography>
-
-                      <Box sx={{ mt: 2 }}>
-                        <Box className="flex items-center justify-between mb-2">
-                          <Typography variant="body2" color="text.secondary">
-                            Total Penjualan
-                          </Typography>
-                          <Typography variant="h6" fontWeight="bold" color="primary">
-                            {formatCurrency(monthlyReport.totalSales)}
-                          </Typography>
-                        </Box>
-
-                        <Box className="flex items-center justify-between">
-                          <Typography variant="body2" color="text.secondary">
-                            Jumlah Transaksi
-                          </Typography>
-                          <Typography variant="h6" fontWeight="bold">
-                            {monthlyReport.totalTransactions}
-                          </Typography>
-                        </Box>
+              {/* Laporan Bulanan */}
+              <Card
+                elevation={0}
+                sx={{
+                  mb: 2,
+                  borderRadius: 3,
+                  border: "1px solid",
+                  borderColor: "divider",
+                }}
+              >
+                <CardContent sx={{ p: 2 }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                      mb: 2,
+                    }}
+                  >
+                    <TrendingUp sx={{ color: "#059669" }} />
+                    <Typography variant="subtitle2" fontWeight="bold">
+                      Laporan Bulan Ini
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      color="text.disabled"
+                      sx={{ ml: "auto" }}
+                    >
+                      {new Date().toLocaleDateString("id-ID", {
+                        month: "long",
+                        year: "numeric",
+                      })}
+                    </Typography>
+                  </Box>
+                  {monthlyTrx === 0 ? (
+                    <Alert severity="info" sx={{ borderRadius: 2 }}>
+                      Belum ada transaksi bulan ini
+                    </Alert>
+                  ) : (
+                    <Box sx={{ display: "flex", gap: 2 }}>
+                      <Box
+                        sx={{
+                          flex: 1,
+                          bgcolor: "#f0fdf4",
+                          borderRadius: 2,
+                          p: 1.5,
+                          textAlign: "center",
+                        }}
+                      >
+                        <Typography
+                          variant="h6"
+                          fontWeight="bold"
+                          color="#059669"
+                        >
+                          {formatRp(monthlySales)}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Total Penjualan
+                        </Typography>
                       </Box>
-                    </>
-                  )}
-
-                  {!monthlyReport?.totalTransactions && (
-                    <Alert severity="info">Belum ada transaksi bulan ini</Alert>
+                      <Box
+                        sx={{
+                          flex: 1,
+                          bgcolor: "#fef9c3",
+                          borderRadius: 2,
+                          p: 1.5,
+                          textAlign: "center",
+                        }}
+                      >
+                        <Typography
+                          variant="h6"
+                          fontWeight="bold"
+                          color="#d97706"
+                        >
+                          {monthlyTrx}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Transaksi
+                        </Typography>
+                      </Box>
+                    </Box>
                   )}
                 </CardContent>
               </Card>
 
-              {/* Top Products */}
-              <Card>
-                <CardContent>
-                  <Box className="flex items-center gap-2 mb-2">
-                    <Star color="warning" />
-                    <Typography variant="subtitle1" fontWeight="bold">
+              {/* Top Produk */}
+              <Card
+                elevation={0}
+                sx={{
+                  borderRadius: 3,
+                  border: "1px solid",
+                  borderColor: "divider",
+                }}
+              >
+                <CardContent sx={{ p: 2 }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                      mb: 2,
+                    }}
+                  >
+                    <Star sx={{ color: "#d97706" }} />
+                    <Typography variant="subtitle2" fontWeight="bold">
                       Produk Terlaris
                     </Typography>
                   </Box>
-
                   {topProducts.length === 0 ? (
-                    <Alert severity="info">Belum ada data penjualan</Alert>
+                    <Alert severity="info" sx={{ borderRadius: 2 }}>
+                      Belum ada data penjualan
+                    </Alert>
                   ) : (
-                    <List dense>
-                      {topProducts.map((product, index) => (
-                        <div key={product.productId}>
-                          {index > 0 && <Divider />}
-                          <ListItem sx={{ px: 0 }}>
+                    <List dense disablePadding>
+                      {topProducts.map((p, i) => (
+                        <Box key={i}>
+                          {i > 0 && <Divider sx={{ my: 0.5 }} />}
+                          <ListItem disableGutters sx={{ py: 0.75 }}>
                             <Box
                               sx={{
                                 width: 24,
                                 height: 24,
-                                borderRadius: '50%',
-                                bgcolor: index < 3 ? 'primary.main' : 'grey.300',
-                                color: 'white',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontSize: 12,
-                                fontWeight: 'bold',
-                                mr: 2,
+                                borderRadius: "50%",
+                                bgcolor: i < 3 ? "#0891b2" : "#e2e8f0",
+                                color: i < 3 ? "white" : "#64748b",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                fontSize: 11,
+                                fontWeight: "bold",
+                                mr: 1.5,
+                                flexShrink: 0,
                               }}
                             >
-                              {index + 1}
+                              {i + 1}
                             </Box>
                             <ListItemText
-                              primary={product.productName}
-                              secondary={`${product.totalQuantity} terjual • ${formatCurrency(
-                                product.totalRevenue
-                              )}`}
+                              primary={
+                                <Typography variant="body2" fontWeight={600}>
+                                  {p.name}
+                                </Typography>
+                              }
+                              secondary={`${p.totalSold} terjual · ${formatRp(p.revenue)}`}
                             />
                           </ListItem>
-                        </div>
+                        </Box>
                       ))}
                     </List>
                   )}
@@ -361,18 +622,43 @@ export default function ProfilePage({ user, onLogout }: ProfilePageProps) {
         </Box>
       )}
 
-      {/* Logout Confirmation Dialog */}
-      <Dialog open={logoutDialog} onClose={() => setLogoutDialog(false)}>
-        <DialogTitle>Konfirmasi Logout</DialogTitle>
+      {/* Dialog logout */}
+      <Dialog
+        open={logoutDialog}
+        onClose={() => setLogoutDialog(false)}
+        PaperProps={{ sx: { borderRadius: 3, mx: 2 } }}
+      >
+        <DialogTitle sx={{ pb: 1 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Logout color="error" />
+            <Typography variant="subtitle1" fontWeight="bold">
+              Keluar?
+            </Typography>
+          </Box>
+        </DialogTitle>
         <DialogContent>
-          <Typography variant="body2">
+          <Typography variant="body2" color="text.secondary">
             Apakah Anda yakin ingin keluar dari aplikasi?
           </Typography>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setLogoutDialog(false)}>Batal</Button>
-          <Button onClick={handleLogout} variant="contained" color="error">
-            Logout
+        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+          <Button
+            onClick={() => setLogoutDialog(false)}
+            variant="outlined"
+            sx={{ borderRadius: 2, flex: 1 }}
+          >
+            Batal
+          </Button>
+          <Button
+            onClick={() => {
+              setLogoutDialog(false);
+              onLogout();
+            }}
+            variant="contained"
+            color="error"
+            sx={{ borderRadius: 2, flex: 1, fontWeight: "bold" }}
+          >
+            Ya, Keluar
           </Button>
         </DialogActions>
       </Dialog>
