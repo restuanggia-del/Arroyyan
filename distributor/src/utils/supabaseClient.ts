@@ -26,7 +26,6 @@ export const loginDistributor = async (
   email: string,
   password: string
 ): Promise<{ user: DistributorUser; distributorId: string }> => {
-
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) throw new Error(error.message);
 
@@ -47,17 +46,15 @@ export const loginDistributor = async (
       .eq('auth_user_id', authUser.id)
       .single();
 
-    if (adminErr || !adminData) {
+    if (adminErr || !adminData)
       throw new Error('Gagal mendapatkan data user. Pastikan akun sudah terdaftar.');
-    }
     finalUserData = adminData;
   }
 
   if (!finalUserData) throw new Error('Data user tidak ditemukan.');
   if (finalUserData.role !== 'distributor') throw new Error('Akun ini bukan akun distributor.');
-  if (!finalUserData.is_approved) {
+  if (!finalUserData.is_approved)
     throw new Error('Akun belum disetujui admin. Silakan hubungi administrator.');
-  }
 
   const { data: distData, error: distError } = await supabase
     .from('distributors')
@@ -73,9 +70,8 @@ export const loginDistributor = async (
       .eq('user_id', finalUserData.id)
       .single();
 
-    if (adminDistErr || !adminDistData) {
+    if (adminDistErr || !adminDistData)
       throw new Error('Data distributor tidak ditemukan.');
-    }
     finalDistData = adminDistData;
   }
 
@@ -103,9 +99,7 @@ export const checkSession = async (): Promise<DistributorUser | null> => {
 
   const cached = localStorage.getItem('distributor_user');
   if (cached) {
-    try {
-      return JSON.parse(cached) as DistributorUser;
-    } catch { /* lanjut ambil dari DB */ }
+    try { return JSON.parse(cached) as DistributorUser; } catch { /* lanjut */ }
   }
 
   const { data: userData } = await supabase
@@ -156,11 +150,12 @@ export const logoutDistributor = async () => {
   localStorage.removeItem('distributor_id');
 };
 
+const MIN_STOCK = 50;
 
 export const getDashboardStats = async (distributorId: string) => {
   const todayStr = new Date().toISOString().split('T')[0];
 
-  const [todayTx, stockRes, topProductRes, lowStockRes] = await Promise.all([
+  const [todayTx, stockRes, topProductRes] = await Promise.all([
     supabaseAdmin
       .from('transactions')
       .select('total_price')
@@ -170,7 +165,7 @@ export const getDashboardStats = async (distributorId: string) => {
 
     supabaseAdmin
       .from('stocks')
-      .select('stock_quantity, products(product_name, category)')
+      .select('stock_quantity, products(product_name, unit, category)')
       .eq('distributor_id', distributorId),
 
     supabaseAdmin
@@ -181,19 +176,29 @@ export const getDashboardStats = async (distributorId: string) => {
         transactions!inner(distributor_id)
       `)
       .eq('transactions.distributor_id', distributorId),
-
-    supabaseAdmin
-      .from('stocks')
-      .select('stock_quantity, products(product_name, unit)')
-      .eq('distributor_id', distributorId)
-      .lt('stock_quantity', 50),
   ]);
 
   const todayData = todayTx.data ?? [];
-  const totalSalesToday = todayData.reduce((s: number, t: any) => s + (t.total_price ?? 0), 0);
+  const totalSalesToday = todayData.reduce(
+    (s: number, t: any) => s + (t.total_price ?? 0), 0
+  );
 
-  const stockData = stockRes.data ?? [];
-  const totalStock = stockData.reduce((s: number, item: any) => s + (item.stock_quantity ?? 0), 0);
+  const allStockRows = stockRes.data ?? [];
+
+  const hasStock = allStockRows.length > 0;
+
+  const totalStock = allStockRows.reduce(
+    (s: number, item: any) => s + (item.stock_quantity ?? 0), 0
+  );
+
+  const lowStockProducts = allStockRows
+    .filter((s: any) => s.stock_quantity < MIN_STOCK)
+    .map((s: any) => ({
+      name: s.products?.product_name ?? '—',
+      stock: s.stock_quantity,
+      unit: s.products?.unit ?? 'pcs',
+      minStock: MIN_STOCK,
+    }));
 
   const productMap: Record<string, { name: string; totalSold: number }> = {};
   for (const row of (topProductRes.data ?? []) as any[]) {
@@ -205,13 +210,6 @@ export const getDashboardStats = async (distributorId: string) => {
   const topProduct =
     Object.values(productMap).sort((a, b) => b.totalSold - a.totalSold)[0] ?? null;
 
-  const lowStockProducts = (lowStockRes.data ?? []).map((s: any) => ({
-    name: s.products?.product_name ?? '—',
-    stock: s.stock_quantity,
-    unit: s.products?.unit ?? 'unit',
-    minStock: 50,
-  }));
-
   return {
     totalSalesToday,
     totalTransactionsToday: todayData.length,
@@ -219,6 +217,8 @@ export const getDashboardStats = async (distributorId: string) => {
     lowStockCount: lowStockProducts.length,
     topProduct,
     lowStockProducts,
+    hasStock,
+    minStock: MIN_STOCK,
   };
 };
 
@@ -263,7 +263,9 @@ export const createTransaction = async (
       .maybeSingle();
 
     if (!stock || stock.stock_quantity < item.quantity)
-      throw new Error(`Stok tidak mencukupi untuk: ${item.productName}. Tersedia: ${stock?.stock_quantity ?? 0}`);
+      throw new Error(
+        `Stok tidak mencukupi untuk: ${item.productName}. Tersedia: ${stock?.stock_quantity ?? 0}`
+      );
   }
 
   const { data: trx, error: trxErr } = await supabaseAdmin
@@ -381,7 +383,7 @@ export const getDistributorStock = async (distributorId: string) => {
     size: s.products?.size ?? '',
     unit: s.products?.unit ?? 'pcs',
     stock: s.stock_quantity,
-    minStock: 50,
+    minStock: MIN_STOCK,
   }));
 };
 

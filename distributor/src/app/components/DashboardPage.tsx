@@ -6,7 +6,6 @@ import {
   CardContent,
   Grid,
   Alert,
-  CircularProgress,
   Chip,
   List,
   ListItem,
@@ -25,8 +24,7 @@ import {
   Refresh,
   CheckCircle,
   WaterDrop,
-  ArrowUpward,
-  ArrowDownward,
+  LocalShipping,
 } from "@mui/icons-material";
 import { getDashboardStats, DistributorUser } from "../../utils/supabaseClient";
 
@@ -107,8 +105,8 @@ function StatCard({
         <Typography
           variant="h6"
           fontWeight="bold"
-          color={warning ? "warning.dark" : "text.primary"}
           lineHeight={1.2}
+          color={warning ? "warning.dark" : "text.primary"}
         >
           {value}
         </Typography>
@@ -160,8 +158,147 @@ export default function DashboardPage({
           ? "Selamat sore"
           : "Selamat malam";
 
+  const hasStock = stats?.hasStock ?? false;
+  const hasLowStock = (stats?.lowStockProducts?.length ?? 0) > 0;
+
+  const renderStockStatus = () => {
+    if (loading) {
+      return (
+        <Skeleton variant="rounded" height={80} sx={{ borderRadius: 3 }} />
+      );
+    }
+
+    if (!hasStock) {
+      return (
+        <Card
+          elevation={0}
+          sx={{
+            borderRadius: 3,
+            border: "1px solid #bfdbfe",
+            bgcolor: "#eff6ff",
+          }}
+        >
+          <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <LocalShipping sx={{ color: "#2563eb", fontSize: 28 }} />
+              <Box>
+                <Typography variant="body2" fontWeight={600} color="#1d4ed8">
+                  Menunggu Kiriman Stok
+                </Typography>
+                <Typography variant="caption" color="#3b82f6">
+                  Belum ada stok yang dikirim dari pabrik. Hubungi admin.
+                </Typography>
+              </Box>
+            </Box>
+          </CardContent>
+        </Card>
+      );
+    }
+
+    if (hasLowStock) {
+      return (
+        <Card
+          elevation={0}
+          sx={{
+            borderRadius: 3,
+            border: "1px solid #fbbf24",
+            bgcolor: "#fffbeb",
+          }}
+        >
+          <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
+            <Box
+              sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}
+            >
+              <Warning sx={{ color: "#d97706", fontSize: 20 }} />
+              <Typography variant="subtitle2" fontWeight="bold" color="#92400e">
+                Peringatan Stok
+              </Typography>
+              <Chip
+                label={`${stats.lowStockProducts.length} produk`}
+                size="small"
+                sx={{
+                  bgcolor: "#d97706",
+                  color: "white",
+                  ml: "auto",
+                  fontWeight: "bold",
+                  fontSize: "0.65rem",
+                }}
+              />
+            </Box>
+            <List dense disablePadding>
+              {stats.lowStockProducts.map((product: any, index: number) => (
+                <Box key={index}>
+                  {index > 0 && <Divider sx={{ my: 0.5 }} />}
+                  <ListItem disableGutters sx={{ py: 0.5 }}>
+                    <ListItemIcon sx={{ minWidth: 28 }}>
+                      <Warning sx={{ fontSize: 14, color: "#d97706" }} />
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={
+                        <Typography
+                          variant="body2"
+                          fontWeight={600}
+                          color="#92400e"
+                        >
+                          {product.name}
+                        </Typography>
+                      }
+                      secondary={
+                        <Typography variant="caption" color="#b45309">
+                          Sisa {product.stock} {product.unit} · Min.{" "}
+                          {product.minStock}
+                        </Typography>
+                      }
+                    />
+                    <Chip
+                      label="LOW"
+                      size="small"
+                      sx={{
+                        bgcolor: "#fbbf24",
+                        color: "#78350f",
+                        fontWeight: "bold",
+                        fontSize: "0.6rem",
+                        height: 20,
+                      }}
+                    />
+                  </ListItem>
+                </Box>
+              ))}
+            </List>
+          </CardContent>
+        </Card>
+      );
+    }
+
+    return (
+      <Card
+        elevation={0}
+        sx={{
+          borderRadius: 3,
+          border: "1px solid #bbf7d0",
+          bgcolor: "#f0fdf4",
+        }}
+      >
+        <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <CheckCircle sx={{ color: "#16a34a", fontSize: 28 }} />
+            <Box>
+              <Typography variant="body2" fontWeight={600} color="#15803d">
+                Stok Aman
+              </Typography>
+              <Typography variant="caption" color="#16a34a">
+                Semua produk memiliki stok yang cukup ✓
+              </Typography>
+            </Box>
+          </Box>
+        </CardContent>
+      </Card>
+    );
+  };
+
   return (
     <Box sx={{ p: 2, pb: 3 }}>
+      {/* Header */}
       <Box
         sx={{
           background: "linear-gradient(135deg, #1e3a8a 0%, #0891b2 100%)",
@@ -237,6 +374,7 @@ export default function DashboardPage({
         </Box>
       </Box>
 
+      {/* Error */}
       {error && (
         <Alert
           severity="error"
@@ -247,6 +385,7 @@ export default function DashboardPage({
         </Alert>
       )}
 
+      {/* Stat cards */}
       <Grid container spacing={1.5} sx={{ mb: 2.5 }}>
         <Grid item xs={6}>
           {loading ? (
@@ -288,7 +427,11 @@ export default function DashboardPage({
               icon={<Inventory fontSize="small" />}
               label="Total Unit Stok"
               sublabel="Saat ini"
-              value={`${(stats?.totalStock ?? 0).toLocaleString("id-ID")} unit`}
+              value={
+                hasStock
+                  ? `${(stats?.totalStock ?? 0).toLocaleString("id-ID")} unit`
+                  : "—"
+              }
               color="#059669"
             />
           )}
@@ -302,14 +445,15 @@ export default function DashboardPage({
               icon={<Warning fontSize="small" />}
               label="Stok Menipis"
               sublabel="Perlu perhatian"
-              value={stats?.lowStockCount ?? 0}
+              value={hasStock ? (stats?.lowStockCount ?? 0) : "—"}
               color="#d97706"
-              warning={(stats?.lowStockCount ?? 0) > 0}
+              warning={hasStock && (stats?.lowStockCount ?? 0) > 0}
             />
           )}
         </Grid>
       </Grid>
 
+      {/* Top produk */}
       {loading ? (
         <Skeleton
           variant="rounded"
@@ -370,105 +514,14 @@ export default function DashboardPage({
         </Card>
       ) : null}
 
-      {loading ? (
-        <Skeleton variant="rounded" height={120} sx={{ borderRadius: 3 }} />
-      ) : (stats?.lowStockProducts?.length ?? 0) > 0 ? (
-        <Card
-          elevation={0}
-          sx={{
-            borderRadius: 3,
-            border: "1px solid #fbbf24",
-            bgcolor: "#fffbeb",
-          }}
-        >
-          <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
-            <Box
-              sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}
-            >
-              <Warning sx={{ color: "#d97706", fontSize: 20 }} />
-              <Typography variant="subtitle2" fontWeight="bold" color="#92400e">
-                Peringatan Stok
-              </Typography>
-              <Chip
-                label={`${stats.lowStockProducts.length} produk`}
-                size="small"
-                sx={{
-                  bgcolor: "#d97706",
-                  color: "white",
-                  ml: "auto",
-                  fontWeight: "bold",
-                  fontSize: "0.65rem",
-                }}
-              />
-            </Box>
-            <List dense disablePadding>
-              {stats.lowStockProducts.map((product: any, index: number) => (
-                <Box key={index}>
-                  {index > 0 && <Divider sx={{ my: 0.5 }} />}
-                  <ListItem disableGutters sx={{ py: 0.5 }}>
-                    <ListItemIcon sx={{ minWidth: 28 }}>
-                      <Warning sx={{ fontSize: 14, color: "#d97706" }} />
-                    </ListItemIcon>
-                    <ListItemText
-                      primary={
-                        <Typography
-                          variant="body2"
-                          fontWeight={600}
-                          color="#92400e"
-                        >
-                          {product.name}
-                        </Typography>
-                      }
-                      secondary={
-                        <Typography variant="caption" color="#b45309">
-                          Sisa {product.stock} {product.unit} · Min.{" "}
-                          {product.minStock}
-                        </Typography>
-                      }
-                    />
-                    <Chip
-                      label="LOW"
-                      size="small"
-                      sx={{
-                        bgcolor: "#fbbf24",
-                        color: "#78350f",
-                        fontWeight: "bold",
-                        fontSize: "0.6rem",
-                        height: 20,
-                      }}
-                    />
-                  </ListItem>
-                </Box>
-              ))}
-            </List>
-          </CardContent>
-        </Card>
-      ) : (
-        <Card
-          elevation={0}
-          sx={{
-            borderRadius: 3,
-            border: "1px solid #bbf7d0",
-            bgcolor: "#f0fdf4",
-          }}
-        >
-          <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-              <CheckCircle sx={{ color: "#16a34a", fontSize: 28 }} />
-              <Box>
-                <Typography variant="body2" fontWeight={600} color="#15803d">
-                  Stok Aman
-                </Typography>
-                <Typography variant="caption" color="#16a34a">
-                  Semua produk memiliki stok yang cukup ✓
-                </Typography>
-              </Box>
-            </Box>
-          </CardContent>
-        </Card>
-      )}
+      {renderStockStatus()}
 
-      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+      <style>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </Box>
   );
 }

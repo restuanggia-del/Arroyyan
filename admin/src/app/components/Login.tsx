@@ -97,7 +97,7 @@ export function Login({
 
             <div className="mt-12 p-4 bg-white/10 border border-white/20 rounded-2xl">
               <p className="text-xs text-cyan-100 font-medium mb-1">
-                🔐 Panel Admin
+                Panel Admin
               </p>
               <p className="text-xs text-cyan-200 leading-relaxed">
                 Halaman ini hanya untuk akun Admin pabrik. Distributor
@@ -280,7 +280,7 @@ export function Login({
 
             <div className="mt-6 p-3 bg-blue-50 border border-blue-100 rounded-xl text-center">
               <p className="text-xs text-blue-600">
-                🔐 Panel ini khusus untuk Admin Pabrik Arroyyan99
+                Panel ini khusus untuk Admin Pabrik Arroyyan99
               </p>
             </div>
           </div>
