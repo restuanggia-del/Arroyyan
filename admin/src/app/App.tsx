@@ -62,7 +62,9 @@ export default function App() {
   const [activeMenu, setActiveMenu] = useState("dashboard");
   const [pendingDistributorCount, setPendingDistributorCount] = useState(0);
 
-  // Dashboard real data
+  const [loginError, setLoginError] = useState<string | null>(null);
+
+  // Dashboard
   const [dashStats, setDashStats] = useState<DashboardStats | null>(null);
   const [dashLoading, setDashLoading] = useState(false);
   const [prediction, setPrediction] = useState<{
@@ -78,11 +80,11 @@ export default function App() {
       } = await supabase.auth.getSession();
       if (session) {
         const userData = await getCurrentUserRole();
-        if (userData) {
+        if (userData && userData.role === "admin") {
           setCurrentUser(userData);
           setIsAuthenticated(true);
-          if (userData.role === "distributor")
-            await fetchDistributorId(userData.id);
+        } else {
+          await supabase.auth.signOut();
         }
       }
     };
@@ -139,7 +141,6 @@ export default function App() {
         "Nov",
         "Des",
       ];
-
       setPrediction({
         value: predicted,
         months: lastThree.map((m) => ({ label: m.bulan, value: m.penjualan })),
@@ -152,27 +153,39 @@ export default function App() {
   };
 
   const handleLogin = async (email: string, password: string, _: boolean) => {
+    setLoginError(null);
+
     const result = await loginUser(email, password);
     if (result.error) {
-      alert("Login gagal: " + result.error.message);
+      setLoginError("Email atau password salah. Silakan coba lagi.");
       return;
     }
 
     const userData = await getCurrentUserRole();
     if (!userData) {
-      alert("Gagal mendapatkan data user");
+      await supabase.auth.signOut();
+      setLoginError("Gagal mendapatkan data akun. Hubungi administrator.");
       return;
     }
 
-    if (userData.role === "distributor" && !userData.is_approved) {
-      alert("Akun belum disetujui admin. Silakan hubungi admin.");
+    if (userData.role === "distributor") {
       await supabase.auth.signOut();
+      setLoginError(
+        "Akun distributor tidak dapat masuk ke panel admin. " +
+          "Silakan gunakan aplikasi mobile distributor.",
+      );
+      return;
+    }
+
+    if (userData.role !== "admin") {
+      await supabase.auth.signOut();
+      setLoginError("Akun Anda tidak memiliki akses ke panel admin ini.");
       return;
     }
 
     setCurrentUser(userData);
     setIsAuthenticated(true);
-    if (userData.role === "distributor") await fetchDistributorId(userData.id);
+    setLoginError(null);
   };
 
   const handleRegister = async (data: RegisterData) => {
@@ -181,7 +194,11 @@ export default function App() {
       alert("Register gagal: " + result.error.message);
       return;
     }
-    alert("Pendaftaran berhasil! Silakan tunggu persetujuan admin.");
+    alert(
+      "✅ Pendaftaran berhasil!\n\n" +
+        "Akun distributor telah didaftarkan dengan status NONAKTIF.\n" +
+        "Admin pabrik akan meninjau dan menyetujui akun Anda sebelum dapat digunakan di aplikasi mobile.",
+    );
     setAuthView("login");
   };
 
@@ -200,23 +217,29 @@ export default function App() {
     setPendingDistributorCount(0);
     setDashStats(null);
     setPrediction(null);
+    setLoginError(null);
   };
 
   if (!isAuthenticated) {
     return authView === "login" ? (
       <Login
         onLogin={handleLogin}
-        onSwitchToRegister={() => setAuthView("register")}
+        onSwitchToRegister={() => {
+          setAuthView("register");
+          setLoginError(null);
+        }}
+        externalError={loginError}
       />
     ) : (
       <Register
         onRegister={handleRegister}
-        onSwitchToLogin={() => setAuthView("login")}
+        onSwitchToLogin={() => {
+          setAuthView("login");
+          setLoginError(null);
+        }}
       />
     );
   }
-
-  const userRole = currentUser?.role as "admin" | "distributor";
 
   const renderDashboard = () => (
     <div className="p-8">
@@ -372,12 +395,7 @@ export default function App() {
       case "distribusi":
         return <DistributionManagement currentUserId={currentUser?.id ?? ""} />;
       case "transaksi":
-        return (
-          <SalesTransaction
-            role={userRole}
-            distributorId={distributorId || undefined}
-          />
-        );
+        return <SalesTransaction role="admin" distributorId={undefined} />;
       case "pelanggan":
         return <CustomerManagement />;
       case "laporan":
@@ -410,7 +428,7 @@ export default function App() {
             <SearchBar onNavigate={handleMenuChange} />
             <UserProfile
               name={currentUser?.name ?? "User"}
-              role={userRole === "admin" ? "Admin" : "Distributor"}
+              role="Admin"
               onSettings={() => setActiveMenu("pengaturan")}
               onLogout={handleLogout}
             />

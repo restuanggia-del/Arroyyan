@@ -10,15 +10,14 @@ interface RegisterDistributorInput {
 }
 
 export const registerDistributor = async (data: RegisterDistributorInput) => {
-  const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
-    email: data.email,
-    password: data.password,
-    email_confirm: true,
-  });
+  const { data: authData, error: authError } =
+    await supabaseAdmin.auth.admin.createUser({
+      email: data.email,
+      password: data.password,
+      email_confirm: true,
+    });
 
-  if (authError) {
-    return { error: authError };
-  }
+  if (authError) return { error: authError };
 
   const authUser = authData.user;
   if (!authUser) {
@@ -27,62 +26,55 @@ export const registerDistributor = async (data: RegisterDistributorInput) => {
 
   const { data: userData, error: userError } = await supabaseAdmin
     .from("users")
-    .insert([
-      {
-        auth_user_id: authUser.id,
-        name: data.name,
-        email: data.email,
-        role: "distributor",
-        is_approved: true,
-      },
-    ])
+    .insert([{
+      auth_user_id: authUser.id,
+      name: data.name,
+      email: data.email,
+      role: "distributor",
+      is_approved: false,
+    }])
     .select()
     .single();
 
   if (userError) {
+    await supabaseAdmin.auth.admin.deleteUser(authUser.id);
     return { error: userError };
   }
 
-  const { error: distributorError } = await supabaseAdmin.from("distributors").insert([
-    {
+  const { error: distributorError } = await supabaseAdmin
+    .from("distributors")
+    .insert([{
       user_id: userData.id,
       distributor_name: data.name,
       phone: data.phone,
       address: data.address,
-    },
-  ]);
+    }]);
 
   if (distributorError) {
+    await supabaseAdmin.from("users").delete().eq("id", userData.id);
+    await supabaseAdmin.auth.admin.deleteUser(authUser.id);
     return { error: distributorError };
   }
+
+  await supabaseAdmin.from("activity_logs").insert([{
+    activity_type: "register_distributor",
+    description: `Distributor baru: ${data.name} (${data.email}) — menunggu persetujuan admin`,
+  }]);
 
   return { data: { authUserId: authUser.id, userId: userData.id } };
 };
 
-export const loginUser = async (
-  email: string,
-  password: string
-) => {
-
-  const { data, error } =
-    await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-  if (error) {
-    return { error };
-  }
-
+export const loginUser = async (email: string, password: string) => {
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+  if (error) return { error };
   return { data };
 };
 
 export const getCurrentUserRole = async () => {
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
 
   const { data, error } = await supabase
@@ -91,9 +83,6 @@ export const getCurrentUserRole = async () => {
     .eq("auth_user_id", user.id)
     .single();
 
-  if (error) {
-    return null;
-  }
-
+  if (error) return null;
   return data;
 };
