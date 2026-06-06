@@ -50,6 +50,9 @@ const TABS: { key: TabKey; label: string; icon: JSX.Element }[] = [
   { key: "profile", label: "Profil", icon: <ProfileIcon /> },
 ];
 
+const APPBAR_HEIGHT = 56;
+const BOTTOMNAV_HEIGHT = 60;
+
 export default function MainApp({
   user,
   distributorId,
@@ -95,21 +98,28 @@ export default function MainApp({
   return (
     <Box
       sx={{
+        height: "100dvh",
+        "@supports not (height: 100dvh)": { height: "100vh" },
         display: "flex",
         flexDirection: "column",
-        height: "100vh",
         bgcolor: "#f5f7fa",
+        overflow: "hidden",
+        position: "relative",
       }}
     >
       <AppBar
-        position="static"
+        position="fixed"
         elevation={0}
         sx={{
+          top: 0,
+          left: 0,
+          right: 0,
+          zIndex: 1200,
           background: "linear-gradient(135deg, #1e3a8a 0%, #0891b2 100%)",
-          flexShrink: 0,
+          height: APPBAR_HEIGHT,
         }}
       >
-        <Toolbar sx={{ minHeight: 56 }}>
+        <Toolbar sx={{ minHeight: `${APPBAR_HEIGHT}px !important`, px: 2 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1, flex: 1 }}>
             <Box
               sx={{
@@ -200,21 +210,38 @@ export default function MainApp({
         </Toolbar>
       </AppBar>
 
-      <Box sx={{ flex: 1, overflow: "auto" }}>{renderPage()}</Box>
+      <Box
+        sx={{
+          marginTop: `${APPBAR_HEIGHT}px`,
+          marginBottom: `${BOTTOMNAV_HEIGHT}px`,
+          overflowY: "auto",
+          overflowX: "hidden",
+          flex: 1,
+          WebkitOverflowScrolling: "touch",
+          paddingBottom: "env(safe-area-inset-bottom)",
+        }}
+      >
+        {renderPage()}
+      </Box>
 
       <Paper
         elevation={8}
         sx={{
-          flexShrink: 0,
+          position: "fixed",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          zIndex: 1200,
           borderTop: "1px solid",
           borderColor: "divider",
           borderRadius: 0,
+          paddingBottom: "env(safe-area-inset-bottom)",
         }}
       >
         <BottomNavigation
           value={tabIndex}
           onChange={(_, newIndex) => setActiveTab(TABS[newIndex].key)}
-          sx={{ height: 60 }}
+          sx={{ height: BOTTOMNAV_HEIGHT }}
         >
           {TABS.map((tab) => (
             <BottomNavigationAction
@@ -223,7 +250,6 @@ export default function MainApp({
               icon={tab.icon}
               sx={{
                 minWidth: 0,
-                fontSize: "0.65rem",
                 "&.Mui-selected": { color: "#0891b2" },
                 "& .MuiBottomNavigationAction-label": {
                   fontSize: "0.65rem",
