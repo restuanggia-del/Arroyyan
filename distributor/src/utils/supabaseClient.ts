@@ -45,7 +45,6 @@ export const loginDistributor = async (
       .select('id, name, email, role, is_approved')
       .eq('auth_user_id', authUser.id)
       .single();
-
     if (adminErr || !adminData)
       throw new Error('Gagal mendapatkan data user. Pastikan akun sudah terdaftar.');
     finalUserData = adminData;
@@ -69,7 +68,6 @@ export const loginDistributor = async (
       .select('id, distributor_name, phone, address')
       .eq('user_id', finalUserData.id)
       .single();
-
     if (adminDistErr || !adminDistData)
       throw new Error('Data distributor tidak ditemukan.');
     finalDistData = adminDistData;
@@ -85,7 +83,6 @@ export const loginDistributor = async (
 
   localStorage.setItem('distributor_user', JSON.stringify(user));
   localStorage.setItem('distributor_id', finalDistData!.id);
-
   return { user, distributorId: finalDistData!.id };
 };
 
@@ -140,7 +137,6 @@ export const checkSession = async (): Promise<DistributorUser | null> => {
 
   localStorage.setItem('distributor_user', JSON.stringify(user));
   localStorage.setItem('distributor_id', finalDist.id);
-
   return user;
 };
 
@@ -162,35 +158,20 @@ export const getDashboardStats = async (distributorId: string) => {
       .eq('distributor_id', distributorId)
       .gte('created_at', `${todayStr}T00:00:00`)
       .lte('created_at', `${todayStr}T23:59:59`),
-
     supabaseAdmin
       .from('stocks')
       .select('stock_quantity, products(product_name, unit, category)')
       .eq('distributor_id', distributorId),
-
     supabaseAdmin
       .from('transaction_details')
-      .select(`
-        product_id, quantity,
-        products(product_name),
-        transactions!inner(distributor_id)
-      `)
+      .select(`product_id, quantity, products(product_name), transactions!inner(distributor_id)`)
       .eq('transactions.distributor_id', distributorId),
   ]);
 
   const todayData = todayTx.data ?? [];
-  const totalSalesToday = todayData.reduce(
-    (s: number, t: any) => s + (t.total_price ?? 0), 0
-  );
-
+  const totalSalesToday = todayData.reduce((s: number, t: any) => s + (t.total_price ?? 0), 0);
   const allStockRows = stockRes.data ?? [];
-
-  const hasStock = allStockRows.length > 0;
-
-  const totalStock = allStockRows.reduce(
-    (s: number, item: any) => s + (item.stock_quantity ?? 0), 0
-  );
-
+  const totalStock = allStockRows.reduce((s: number, item: any) => s + (item.stock_quantity ?? 0), 0);
   const lowStockProducts = allStockRows
     .filter((s: any) => s.stock_quantity < MIN_STOCK)
     .map((s: any) => ({
@@ -207,8 +188,7 @@ export const getDashboardStats = async (distributorId: string) => {
       productMap[pid] = { name: row.products?.product_name ?? '—', totalSold: 0 };
     productMap[pid].totalSold += row.quantity ?? 0;
   }
-  const topProduct =
-    Object.values(productMap).sort((a, b) => b.totalSold - a.totalSold)[0] ?? null;
+  const topProduct = Object.values(productMap).sort((a, b) => b.totalSold - a.totalSold)[0] ?? null;
 
   return {
     totalSalesToday,
@@ -217,7 +197,7 @@ export const getDashboardStats = async (distributorId: string) => {
     lowStockCount: lowStockProducts.length,
     topProduct,
     lowStockProducts,
-    hasStock,
+    hasStock: allStockRows.length > 0,
     minStock: MIN_STOCK,
   };
 };
@@ -225,14 +205,10 @@ export const getDashboardStats = async (distributorId: string) => {
 export const getProductsWithDistributorStock = async (distributorId: string) => {
   const { data, error } = await supabaseAdmin
     .from('stocks')
-    .select(`
-      product_id, stock_quantity,
-      products(id, product_name, category, size, price, unit, is_active)
-    `)
+    .select(`product_id, stock_quantity, products(id, product_name, category, size, price, unit, is_active)`)
     .eq('distributor_id', distributorId);
 
   if (error) throw new Error(error.message);
-
   return (data ?? [])
     .filter((s: any) => s.products?.is_active)
     .map((s: any) => ({
@@ -261,24 +237,15 @@ export const createTransaction = async (
       .eq('product_id', item.productId)
       .eq('distributor_id', distributorId)
       .maybeSingle();
-
     if (!stock || stock.stock_quantity < item.quantity)
-      throw new Error(
-        `Stok tidak mencukupi untuk: ${item.productName}. Tersedia: ${stock?.stock_quantity ?? 0}`
-      );
+      throw new Error(`Stok tidak mencukupi untuk: ${item.productName}. Tersedia: ${stock?.stock_quantity ?? 0}`);
   }
 
   const { data: trx, error: trxErr } = await supabaseAdmin
     .from('transactions')
-    .insert([{
-      distributor_id: distributorId,
-      customer_id: customerId,
-      total_price: totalPrice,
-      payment_method: paymentMethod,
-    }])
+    .insert([{ distributor_id: distributorId, customer_id: customerId, total_price: totalPrice, payment_method: paymentMethod }])
     .select()
     .single();
-
   if (trxErr) throw new Error(trxErr.message);
 
   await supabaseAdmin.from('transaction_details').insert(
@@ -293,24 +260,13 @@ export const createTransaction = async (
 
   for (const item of items) {
     const { data: stock } = await supabaseAdmin
-      .from('stocks')
-      .select('id, stock_quantity')
-      .eq('product_id', item.productId)
-      .eq('distributor_id', distributorId)
-      .single();
-
-    if (stock) {
-      await supabaseAdmin
-        .from('stocks')
-        .update({ stock_quantity: stock.stock_quantity - item.quantity })
-        .eq('id', stock.id);
-    }
-
+      .from('stocks').select('id, stock_quantity')
+      .eq('product_id', item.productId).eq('distributor_id', distributorId).single();
+    if (stock)
+      await supabaseAdmin.from('stocks').update({ stock_quantity: stock.stock_quantity - item.quantity }).eq('id', stock.id);
     await supabaseAdmin.from('stock_movements').insert([{
-      product_id: item.productId,
-      distributor_id: distributorId,
-      movement_type: 'sale_out',
-      quantity: item.quantity,
+      product_id: item.productId, distributor_id: distributorId,
+      movement_type: 'sale_out', quantity: item.quantity,
       note: `Penjualan #${trx.id.slice(0, 8)} (distributor)`,
     }]);
   }
@@ -326,15 +282,12 @@ export const createTransaction = async (
 export const getTransactionHistory = async (distributorId: string) => {
   const { data, error } = await supabaseAdmin
     .from('transactions')
-    .select(`
-      id, total_price, payment_method, created_at,
+    .select(`id, total_price, payment_method, created_at,
       customers(customer_name, phone),
-      transaction_details(quantity, price, subtotal, products(product_name))
-    `)
+      transaction_details(quantity, price, subtotal, products(product_name))`)
     .eq('distributor_id', distributorId)
     .order('created_at', { ascending: false })
     .limit(50);
-
   if (error) throw new Error(error.message);
   return data ?? [];
 };
@@ -344,22 +297,12 @@ export const getCustomers = async () => {
     .from('customers')
     .select('id, customer_name, phone, address, is_subscribed, created_at')
     .order('customer_name', { ascending: true });
-
   if (error) throw new Error(error.message);
   return data ?? [];
 };
 
-export const createCustomer = async (customer: {
-  customer_name: string;
-  phone: string;
-  address: string;
-}) => {
-  const { data, error } = await supabaseAdmin
-    .from('customers')
-    .insert([customer])
-    .select()
-    .single();
-
+export const createCustomer = async (customer: { customer_name: string; phone: string; address: string }) => {
+  const { data, error } = await supabaseAdmin.from('customers').insert([customer]).select().single();
   if (error) throw new Error(error.message);
   return data;
 };
@@ -367,14 +310,9 @@ export const createCustomer = async (customer: {
 export const getDistributorStock = async (distributorId: string) => {
   const { data, error } = await supabaseAdmin
     .from('stocks')
-    .select(`
-      id, stock_quantity,
-      products(id, product_name, category, size, unit)
-    `)
+    .select(`id, stock_quantity, products(id, product_name, category, size, unit)`)
     .eq('distributor_id', distributorId);
-
   if (error) throw new Error(error.message);
-
   return (data ?? []).map((s: any) => ({
     id: s.id,
     product_id: s.products?.id,
@@ -390,57 +328,109 @@ export const getDistributorStock = async (distributorId: string) => {
 export const getStockMovements = async (distributorId: string) => {
   const { data, error } = await supabaseAdmin
     .from('stock_movements')
-    .select(`
-      id, movement_type, quantity, note, created_at,
-      products(product_name)
-    `)
+    .select(`id, movement_type, quantity, note, created_at, products(product_name)`)
     .eq('distributor_id', distributorId)
     .order('created_at', { ascending: false })
     .limit(50);
-
   if (error) throw new Error(error.message);
   return data ?? [];
 };
 
 export const getDistributions = async (distributorId: string) => {
-  const { data, error } = await supabaseAdmin
+  const { data: dists, error } = await supabaseAdmin
     .from('distributions')
-    .select(`
-      id, distribution_date, status, created_at,
-      distribution_details(
-        id, quantity,
-        products(product_name, unit)
-      )
-    `)
+    .select('id, distribution_date, status, created_at')
     .eq('distributor_id', distributorId)
     .order('created_at', { ascending: false });
 
   if (error) throw new Error(error.message);
+  if (!dists || dists.length === 0) return [];
 
-  return (data ?? []).map((d: any) => ({
+  const distIds = dists.map((d: any) => d.id);
+  const { data: details } = await supabaseAdmin
+    .from('distribution_details')
+    .select('id, distribution_id, quantity, product_id, products(product_name, unit)')
+    .in('distribution_id', distIds);
+
+  const detailMap: Record<string, any[]> = {};
+  for (const det of details ?? []) {
+    if (!detailMap[det.distribution_id]) detailMap[det.distribution_id] = [];
+    detailMap[det.distribution_id].push({
+      id: det.id,
+      productName: (det.products as any)?.product_name ?? '—',
+      unit: (det.products as any)?.unit ?? 'pcs',
+      quantity: det.quantity,
+    });
+  }
+
+  return dists.map((d: any) => ({
     id: d.id,
     date: d.distribution_date,
     status: d.status,
     created_at: d.created_at,
-    items: (d.distribution_details ?? []).map((det: any) => ({
-      id: det.id,
-      productName: det.products?.product_name ?? '—',
-      unit: det.products?.unit ?? 'pcs',
-      quantity: det.quantity,
-    })),
+    items: detailMap[d.id] ?? [],
   }));
 };
 
 export const confirmDistributionReceived = async (distributionId: string) => {
-  const { error } = await supabaseAdmin
+  const { data: dist, error: fetchErr } = await supabaseAdmin
+    .from('distributions')
+    .select('id, distributor_id, status')
+    .eq('id', distributionId)
+    .single();
+
+  if (fetchErr) throw new Error(fetchErr.message);
+  if (!dist) throw new Error('Data distribusi tidak ditemukan.');
+  if (dist.status === 'received')
+    throw new Error('Distribusi ini sudah dikonfirmasi sebelumnya.');
+
+  const { data: details, error: detailErr } = await supabaseAdmin
+    .from('distribution_details')
+    .select('id, quantity, product_id')
+    .eq('distribution_id', distributionId);
+
+  if (detailErr) throw new Error(detailErr.message);
+
+  const { error: updateErr } = await supabaseAdmin
     .from('distributions')
     .update({ status: 'received' })
     .eq('id', distributionId);
 
-  if (error) throw new Error(error.message);
+  if (updateErr) throw new Error(updateErr.message);
+
+  for (const detail of details ?? []) {
+    const productId = detail.product_id;
+    if (!productId || !detail.quantity) continue;
+
+    const { data: stockRow } = await supabaseAdmin
+      .from('stocks')
+      .select('id, stock_quantity')
+      .eq('product_id', productId)
+      .eq('distributor_id', dist.distributor_id)
+      .maybeSingle();
+
+    if (stockRow) {
+      await supabaseAdmin
+        .from('stocks')
+        .update({ stock_quantity: stockRow.stock_quantity + detail.quantity })
+        .eq('id', stockRow.id);
+    } else {
+      await supabaseAdmin
+        .from('stocks')
+        .insert([{ product_id: productId, distributor_id: dist.distributor_id, stock_quantity: detail.quantity }]);
+    }
+
+    await supabaseAdmin.from('stock_movements').insert([{
+      product_id: productId,
+      distributor_id: dist.distributor_id,
+      movement_type: 'distribution_in',
+      quantity: detail.quantity,
+      note: `Konfirmasi penerimaan distribusi #${distributionId.slice(0, 8)}`,
+    }]);
+  }
 
   await supabaseAdmin.from('activity_logs').insert([{
     activity_type: 'confirm_distribution',
-    description: `Distributor mengkonfirmasi penerimaan distribusi #${distributionId.slice(0, 8)}`,
+    description: `Distributor mengkonfirmasi penerimaan distribusi #${distributionId.slice(0, 8)} — stok telah diperbarui`,
   }]);
 };
