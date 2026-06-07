@@ -64,6 +64,29 @@ const exportToPDF = async (
   }
 };
 
+function ProductCell({ items }: { items: string }) {
+  const parts = items
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const first = parts[0] ?? "—";
+  const rest = parts.length - 1;
+
+  return (
+    <div className="flex items-center gap-1.5 max-w-[220px]">
+      <span className="truncate text-sm text-gray-800">{first}</span>
+      {rest > 0 && (
+        <span
+          className="flex-shrink-0 px-1.5 py-0.5 bg-gray-100 text-gray-500 text-xs rounded-full cursor-default"
+          title={parts.slice(1).join(", ")}
+        >
+          +{rest}
+        </span>
+      )}
+    </div>
+  );
+}
+
 export function Reports() {
   const today = new Date().toISOString().split("T")[0];
   const firstOfMonth = today.slice(0, 8) + "01";
@@ -296,7 +319,7 @@ export function Reports() {
                   >
                     {row.items}
                   </td>
-                  <td className="py-3 px-3 font-semibold text-right whitespace-nowrap">
+                  <td className="py-3 px-3 font-semibold text-left whitespace-nowrap">
                     {formatRp(row.total)}
                   </td>
                   <td className="py-3 px-3">
@@ -364,13 +387,10 @@ export function Reports() {
                   <td className="py-3 px-3 whitespace-nowrap">{row.date}</td>
                   <td className="py-3 px-3 font-mono font-medium">#{row.id}</td>
                   <td className="py-3 px-3">{row.distributor}</td>
-                  <td
-                    className="py-3 px-3 max-w-[200px] truncate"
-                    title={row.items}
-                  >
-                    {row.items}
+                  <td className="py-3 px-3">
+                    <ProductCell items={row.items} />
                   </td>
-                  <td className="py-3 px-3 text-right font-semibold">
+                  <td className="py-3 px-3 text-left font-semibold">
                     {row.totalQty} unit
                   </td>
                   <td className="py-3 px-3">
@@ -525,14 +545,14 @@ export function Reports() {
                       {row.category === "cup" ? "Cup" : "Botol"}
                     </span>
                   </td>
-                  <td className="py-3 px-3 text-right">{row.stockPusat}</td>
-                  <td className="py-3 px-3 text-right">
+                  <td className="py-3 px-3 text-left">{row.stockPusat}</td>
+                  <td className="py-3 px-3 text-left">
                     {row.stockDistributor}
                   </td>
-                  <td className="py-3 px-3 text-right font-semibold">
+                  <td className="py-3 px-3 text-left font-semibold">
                     {row.total}
                   </td>
-                  <td className="py-3 px-3 text-right text-gray-500">
+                  <td className="py-3 px-3 text-left text-gray-500">
                     {row.minimum}
                   </td>
                   <td className="py-3 px-3">
