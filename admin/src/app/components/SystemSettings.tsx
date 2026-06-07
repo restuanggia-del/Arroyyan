@@ -8,77 +8,17 @@ import {
   RefreshCw,
   AlertCircle,
 } from "lucide-react";
-import { supabaseAdmin } from "../../lib/supabaseAdmin";
+import {
+  getSystemSettings,
+  saveSystemSettings,
+  DEFAULT_SYSTEM_SETTINGS,
+  SystemSettingsData,
+} from "../../services/systemSettingsService";
 
-interface CompanySettings {
-  id?: string;
-  company_name: string;
-  company_address: string;
-  receipt_footer: string;
-  // field tambahan yang disimpan di UI tapi belum di schema — kita extend pakai jsonb atau kolom terpisah
-  // untuk sementara phone & email & receipt_header kita simpan di receipt_footer sebagai metadata
-  // ATAU kita tambah kolom via SQL — solusi terbaik: tambah kolom di Supabase
-}
-
-interface UISettings {
-  company_name: string;
-  company_address: string;
-  phone: string;
-  email: string;
-  receipt_header: string;
-  receipt_footer: string;
-}
-
-const DEFAULT_SETTINGS: UISettings = {
-  company_name: "ARROYYAN99",
-  company_address: "Bogatama, Tulang Bawang, Lampung",
-  phone: "",
-  email: "",
-  receipt_header: "Air Minum Dalam Kemasan",
-  receipt_footer: "Terima kasih atas pembelian Anda!\nSemoga sehat selalu 💧",
-};
-
-// ─── HELPER: simpan field tambahan di receipt_footer sebagai JSON suffix ──────
-// Format: teks_footer|||{"phone":"...","email":"...","receipt_header":"..."}
-const encodeSettings = (ui: UISettings) => ({
-  company_name: ui.company_name,
-  company_address: ui.company_address,
-  receipt_footer:
-    ui.receipt_footer +
-    "|||" +
-    JSON.stringify({
-      phone: ui.phone,
-      email: ui.email,
-      receipt_header: ui.receipt_header,
-    }),
-});
-
-const decodeSettings = (raw: CompanySettings): UISettings => {
-  const parts = (raw.receipt_footer ?? "").split("|||");
-  let extra = {
-    phone: "",
-    email: "",
-    receipt_header: "Air Minum Dalam Kemasan",
-  };
-  if (parts[1]) {
-    try {
-      extra = JSON.parse(parts[1]);
-    } catch {
-      /* ignore */
-    }
-  }
-  return {
-    company_name: raw.company_name ?? DEFAULT_SETTINGS.company_name,
-    company_address: raw.company_address ?? DEFAULT_SETTINGS.company_address,
-    receipt_footer: parts[0] ?? DEFAULT_SETTINGS.receipt_footer,
-    phone: extra.phone ?? "",
-    email: extra.email ?? "",
-    receipt_header: extra.receipt_header ?? DEFAULT_SETTINGS.receipt_header,
-  };
-};
+type UISettings = Omit<SystemSettingsData, "id">;
 
 export function SystemSettings() {
-  const [settings, setSettings] = useState<UISettings>(DEFAULT_SETTINGS);
+  const [settings, setSettings] = useState<UISettings>(DEFAULT_SYSTEM_SETTINGS);
   const [settingsId, setSettingsId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -88,17 +28,13 @@ export function SystemSettings() {
   useEffect(() => {
     const fetchSettings = async () => {
       setLoading(true);
-      const { data, error } = await supabaseAdmin
-        .from("system_settings")
-        .select("*")
-        .limit(1)
-        .maybeSingle();
-
+      const { data, error } = await getSystemSettings();
       if (error) {
         setError("Gagal memuat pengaturan.");
       } else if (data) {
-        setSettingsId(data.id);
-        setSettings(decodeSettings(data as CompanySettings));
+        const { id, ...rest } = data;
+        setSettingsId(id || null);
+        setSettings(rest);
       }
       setLoading(false);
     };
@@ -108,28 +44,11 @@ export function SystemSettings() {
   const handleSave = async () => {
     setSaving(true);
     setError(null);
-
-    const payload = encodeSettings(settings);
-
-    let err;
-    if (settingsId) {
-      ({ error: err } = await supabaseAdmin
-        .from("system_settings")
-        .update(payload)
-        .eq("id", settingsId));
-    } else {
-      const { data, error: insertErr } = await supabaseAdmin
-        .from("system_settings")
-        .insert([payload])
-        .select()
-        .single();
-      err = insertErr;
-      if (data) setSettingsId(data.id);
-    }
-
+    const { id, error: err } = await saveSystemSettings(settingsId, settings);
     if (err) {
-      setError("Gagal menyimpan: " + err.message);
+      setError("Gagal menyimpan: " + (err as any).message);
     } else {
+      if (id && !settingsId) setSettingsId(id);
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     }
@@ -288,7 +207,8 @@ export function SystemSettings() {
                   className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                 />
                 <p className="text-xs text-gray-400 mt-1">
-                  Teks penutup di bagian bawah struk
+                  Teks penutup di bagian bawah struk. Tekan Enter untuk baris
+                  baru.
                 </p>
               </div>
             </div>
@@ -319,6 +239,7 @@ export function SystemSettings() {
         </div>
 
         <div className="space-y-6">
+          {/* Preview Struk */}
           <div className="bg-white rounded-xl border border-gray-200 p-6">
             <h3 className="font-semibold text-gray-900 mb-4">Preview Struk</h3>
             <div className="border-2 border-dashed border-gray-300 rounded-xl p-5 font-mono text-xs bg-gray-50">
@@ -326,10 +247,17 @@ export function SystemSettings() {
                 <p className="text-base font-bold">
                   {settings.company_name || "—"}
                 </p>
-                <p className="text-gray-500">{settings.receipt_header}</p>
-                <p className="text-gray-500">{settings.company_address}</p>
+                {settings.receipt_header && (
+                  <p className="text-gray-500">{settings.receipt_header}</p>
+                )}
+                {settings.company_address && (
+                  <p className="text-gray-500">{settings.company_address}</p>
+                )}
                 {settings.phone && (
-                  <p className="text-gray-500">Tel: {settings.phone}</p>
+                  <p className="text-gray-500">Telp: {settings.phone}</p>
+                )}
+                {settings.email && (
+                  <p className="text-gray-500">{settings.email}</p>
                 )}
               </div>
 
@@ -383,6 +311,7 @@ export function SystemSettings() {
                 </p>
                 <ul className="text-sm text-blue-700 space-y-1">
                   <li>• Perubahan diterapkan pada semua struk baru</li>
+                  <li>• Berlaku untuk struk admin & distributor</li>
                   <li>• Data disimpan langsung ke database</li>
                   <li>• Format thermal standar 58mm</li>
                 </ul>

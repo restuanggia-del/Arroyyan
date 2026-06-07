@@ -23,6 +23,11 @@ import {
   createTransaction,
   TransactionItem,
 } from "../../services/transactionService";
+import {
+  getSystemSettings,
+  DEFAULT_SYSTEM_SETTINGS,
+  SystemSettingsData,
+} from "../../services/systemSettingsService";
 
 interface CartItem {
   product: Product;
@@ -46,6 +51,11 @@ export function SalesTransaction({
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loadingData, setLoadingData] = useState(true);
 
+  // Settings struk dari DB
+  const [receiptSettings, setReceiptSettings] = useState<SystemSettingsData>(
+    DEFAULT_SYSTEM_SETTINGS,
+  );
+
   const [cart, setCart] = useState<CartItem[]>([]);
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "transfer">(
     "cash",
@@ -58,7 +68,8 @@ export function SalesTransaction({
 
   const loadData = useCallback(async () => {
     setLoadingData(true);
-    const [prodRes, custRes, stockRes] = await Promise.all([
+
+    const [prodRes, custRes, stockRes, settingsRes] = await Promise.all([
       getActiveProducts(),
       getAllCustomers(),
       role === "admin"
@@ -66,10 +77,12 @@ export function SalesTransaction({
         : distributorId
           ? getDistributorStock(distributorId)
           : Promise.resolve({ data: [] }),
+      getSystemSettings(),
     ]);
 
     setProducts(prodRes.data ?? []);
     setCustomers(custRes.data ?? []);
+    if (settingsRes.data) setReceiptSettings(settingsRes.data);
 
     const map: Record<string, number> = {};
     for (const s of (stockRes as any).data ?? []) {
@@ -86,7 +99,6 @@ export function SalesTransaction({
   const addToCart = (product: Product) => {
     const max = stockMap[product.id] ?? 0;
     if (max === 0) return;
-
     setCart((prev) => {
       const existing = prev.find((i) => i.product.id === product.id);
       if (existing) {
@@ -184,7 +196,9 @@ export function SalesTransaction({
         <h1 className="text-2xl font-bold text-gray-900 mb-1">
           Transaksi Penjualan
         </h1>
-        <p className="text-gray-600">Point of Sales — Arroyyan99</p>
+        <p className="text-gray-600">
+          Point of Sales — {receiptSettings.company_name}
+        </p>
       </div>
 
       <div
@@ -201,18 +215,14 @@ export function SalesTransaction({
         )}
         <div>
           <p
-            className={`text-sm font-semibold ${
-              role === "admin" ? "text-blue-800" : "text-green-800"
-            }`}
+            className={`text-sm font-semibold ${role === "admin" ? "text-blue-800" : "text-green-800"}`}
           >
             {role === "admin"
               ? "Mode Penjualan Pabrik"
               : "Mode Penjualan Distributor"}
           </p>
           <p
-            className={`text-xs ${
-              role === "admin" ? "text-blue-600" : "text-green-600"
-            }`}
+            className={`text-xs ${role === "admin" ? "text-blue-600" : "text-green-600"}`}
           >
             {role === "admin"
               ? "Stok yang berkurang: stok pusat"
@@ -450,11 +460,29 @@ export function SalesTransaction({
 
             <div id="receipt" className="p-6 font-mono text-sm">
               <div className="text-center mb-5">
-                <h1 className="text-xl font-bold">ARROYYAN99</h1>
-                <p className="text-xs text-gray-500">Air Minum Dalam Kemasan</p>
-                <p className="text-xs text-gray-500">
-                  Bogatama, Tulang Bawang, Lampung
-                </p>
+                <h1 className="text-xl font-bold">
+                  {receiptSettings.company_name}
+                </h1>
+                {receiptSettings.receipt_header && (
+                  <p className="text-xs text-gray-500">
+                    {receiptSettings.receipt_header}
+                  </p>
+                )}
+                {receiptSettings.company_address && (
+                  <p className="text-xs text-gray-500">
+                    {receiptSettings.company_address}
+                  </p>
+                )}
+                {receiptSettings.phone && (
+                  <p className="text-xs text-gray-500">
+                    Telp: {receiptSettings.phone}
+                  </p>
+                )}
+                {receiptSettings.email && (
+                  <p className="text-xs text-gray-500">
+                    {receiptSettings.email}
+                  </p>
+                )}
               </div>
 
               <div className="border-t border-b border-gray-300 py-3 mb-3 text-xs space-y-1">
@@ -534,9 +562,8 @@ export function SalesTransaction({
                 </div>
               </div>
 
-              <div className="text-center text-xs text-gray-500">
-                <p>Terima kasih atas pembelian Anda!</p>
-                <p>Semoga sehat selalu 💧</p>
+              <div className="text-center text-xs text-gray-500 whitespace-pre-line">
+                {receiptSettings.receipt_footer}
               </div>
             </div>
 
