@@ -13,14 +13,10 @@ export const getDashboardStats = async (): Promise<DashboardStats> => {
     const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
 
     const [todayRes, monthRes] = await Promise.all([
-        supabaseAdmin
-            .from("transactions")
-            .select("total_price")
+        supabaseAdmin.from("transactions").select("total_price")
             .gte("created_at", `${todayStr}T00:00:00`)
             .lte("created_at", `${todayStr}T23:59:59`),
-        supabaseAdmin
-            .from("transactions")
-            .select("total_price")
+        supabaseAdmin.from("transactions").select("total_price")
             .gte("created_at", `${monthStart}T00:00:00`),
     ]);
 
@@ -49,13 +45,9 @@ export const getDailySales = async (): Promise<DailySales[]> => {
         const d = new Date();
         d.setDate(d.getDate() - i);
         const dateStr = d.toISOString().split("T")[0];
-
-        const { data } = await supabaseAdmin
-            .from("transactions")
-            .select("total_price")
+        const { data } = await supabaseAdmin.from("transactions").select("total_price")
             .gte("created_at", `${dateStr}T00:00:00`)
             .lte("created_at", `${dateStr}T23:59:59`);
-
         days.push({
             hari: dayNames[d.getDay()],
             penjualan: (data ?? []).reduce((s, t) => s + (t.total_price ?? 0), 0),
@@ -74,27 +66,20 @@ export interface MonthlySales {
 
 export const getMonthlySales = async (): Promise<MonthlySales[]> => {
     const months: MonthlySales[] = [];
-    const monthNames = [
-        "Jan", "Feb", "Mar", "Apr", "Mei", "Jun",
-        "Jul", "Agu", "Sep", "Okt", "Nov", "Des",
-    ];
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
 
     for (let i = 5; i >= 0; i--) {
         const d = new Date();
         d.setDate(1);
         d.setMonth(d.getMonth() - i);
-
         const year = d.getFullYear();
         const month = d.getMonth() + 1;
         const monthStart = `${year}-${String(month).padStart(2, "0")}-01`;
-        const nextMonth =
-            month === 12
-                ? `${year + 1}-01-01`
-                : `${year}-${String(month + 1).padStart(2, "0")}-01`;
+        const nextMonth = month === 12
+            ? `${year + 1}-01-01`
+            : `${year}-${String(month + 1).padStart(2, "0")}-01`;
 
-        const { data } = await supabaseAdmin
-            .from("transactions")
-            .select("total_price")
+        const { data } = await supabaseAdmin.from("transactions").select("total_price")
             .gte("created_at", `${monthStart}T00:00:00`)
             .lt("created_at", `${nextMonth}T00:00:00`);
 
@@ -120,30 +105,14 @@ export interface TopProduct {
 export const getTopProducts = async (limit = 5): Promise<TopProduct[]> => {
     const { data, error } = await supabaseAdmin
         .from("transaction_details")
-        .select(`
-      product_id,
-      quantity,
-      subtotal,
-      products ( product_name, category )
-    `);
+        .select("product_id, quantity, subtotal, products ( product_name, category )");
 
     if (error || !data) return [];
 
-    const map: Record<
-        string,
-        { product_name: string; category: string; totalSold: number; revenue: number }
-    > = {};
-
+    const map: Record<string, { product_name: string; category: string; totalSold: number; revenue: number }> = {};
     for (const row of data as any[]) {
         const pid = row.product_id;
-        if (!map[pid]) {
-            map[pid] = {
-                product_name: row.products?.product_name ?? "—",
-                category: row.products?.category ?? "—",
-                totalSold: 0,
-                revenue: 0,
-            };
-        }
+        if (!map[pid]) map[pid] = { product_name: row.products?.product_name ?? "—", category: row.products?.category ?? "—", totalSold: 0, revenue: 0 };
         map[pid].totalSold += row.quantity ?? 0;
         map[pid].revenue += row.subtotal ?? 0;
     }
@@ -154,10 +123,7 @@ export const getTopProducts = async (limit = 5): Promise<TopProduct[]> => {
         .slice(0, limit);
 
     const maxSold = sorted[0]?.totalSold ?? 1;
-    return sorted.map((p) => ({
-        ...p,
-        percentage: Math.round((p.totalSold / maxSold) * 100),
-    }));
+    return sorted.map((p) => ({ ...p, percentage: Math.round((p.totalSold / maxSold) * 100) }));
 };
 
 export interface LowStockItem {
@@ -170,12 +136,11 @@ export interface LowStockItem {
 export const getLowStockItems = async (minimum = 100): Promise<LowStockItem[]> => {
     const { data, error } = await supabaseAdmin
         .from("stocks")
-        .select(`product_id, stock_quantity, products ( product_name )`)
+        .select("product_id, stock_quantity, products ( product_name )")
         .is("distributor_id", null)
         .lt("stock_quantity", minimum);
 
     if (error || !data) return [];
-
     return (data as any[]).map((s) => ({
         product_id: s.product_id,
         product_name: s.products?.product_name ?? "—",
@@ -198,28 +163,39 @@ export const getSalesReport = async (
     startDate: string,
     endDate: string
 ): Promise<SalesReportRow[]> => {
-    const { data, error } = await supabaseAdmin
+    const { data: txData, error } = await supabaseAdmin
         .from("transactions")
         .select(`
       id, created_at, total_price, payment_method,
-      customers ( customer_name ),
-      distributors ( distributor_name ),
-      transaction_details ( quantity, products ( product_name ) )
+      customers    ( customer_name ),
+      distributors ( distributor_name )
     `)
         .gte("created_at", `${startDate}T00:00:00`)
         .lte("created_at", `${endDate}T23:59:59`)
         .order("created_at", { ascending: false });
 
-    if (error || !data) return [];
+    if (error || !txData || txData.length === 0) return [];
 
-    return (data as any[]).map((trx) => ({
+    const txIds = txData.map((t: any) => t.id);
+    const { data: detailData } = await supabaseAdmin
+        .from("transaction_details")
+        .select("transaction_id, quantity, products ( product_name )")
+        .in("transaction_id", txIds);
+
+    const detailMap: Record<string, string[]> = {};
+    for (const d of (detailData ?? []) as any[]) {
+        const tid = d.transaction_id;
+        const name = d.products?.product_name ?? "?";
+        if (!detailMap[tid]) detailMap[tid] = [];
+        detailMap[tid].push(`${name} (${d.quantity})`);
+    }
+
+    return txData.map((trx: any) => ({
         id: trx.id.slice(0, 8).toUpperCase(),
         date: new Date(trx.created_at).toLocaleDateString("id-ID"),
         customer: trx.customers?.customer_name ?? "Umum",
         distributor: trx.distributors?.distributor_name ?? "Pabrik",
-        items: (trx.transaction_details ?? [])
-            .map((d: any) => `${d.products?.product_name ?? "?"} (${d.quantity})`)
-            .join(", "),
+        items: (detailMap[trx.id] ?? []).join(", "),
         total: trx.total_price,
         payment: trx.payment_method === "cash" ? "Cash" : "Transfer",
     }));
@@ -242,8 +218,8 @@ export const getDistributionReport = async (
         .from("distributions")
         .select(`
       id, distribution_date, status,
-      distributors ( distributor_name ),
-      distribution_details ( quantity, products ( product_name ) )
+      distributors        ( distributor_name ),
+      distribution_details( quantity, products ( product_name ) )
     `)
         .gte("distribution_date", startDate)
         .lte("distribution_date", endDate)
@@ -251,11 +227,7 @@ export const getDistributionReport = async (
 
     if (error || !data) return [];
 
-    const statusMap: Record<string, string> = {
-        pending: "Pending",
-        sent: "Dikirim",
-        received: "Diterima",
-    };
+    const statusMap: Record<string, string> = { pending: "Pending", sent: "Dikirim", received: "Diterima" };
 
     return (data as any[]).map((dist) => {
         const details = dist.distribution_details ?? [];
@@ -263,9 +235,7 @@ export const getDistributionReport = async (
             id: dist.id.slice(0, 8).toUpperCase(),
             date: new Date(dist.distribution_date).toLocaleDateString("id-ID"),
             distributor: dist.distributors?.distributor_name ?? "—",
-            items: details
-                .map((d: any) => `${d.products?.product_name ?? "?"} (${d.quantity})`)
-                .join(", "),
+            items: details.map((d: any) => `${d.products?.product_name ?? "?"} (${d.quantity})`).join(", "),
             totalQty: details.reduce((s: number, d: any) => s + (d.quantity ?? 0), 0),
             status: statusMap[dist.status] ?? dist.status,
         };
@@ -285,25 +255,14 @@ export interface StockReportRow {
 export const getStockReport = async (minimum = 100): Promise<StockReportRow[]> => {
     const { data, error } = await supabaseAdmin
         .from("stocks")
-        .select(`product_id, distributor_id, stock_quantity, products ( product_name, category )`);
+        .select("product_id, distributor_id, stock_quantity, products ( product_name, category )");
 
     if (error || !data) return [];
 
-    const map: Record<
-        string,
-        { product_name: string; category: string; pusat: number; distributor: number }
-    > = {};
-
+    const map: Record<string, { product_name: string; category: string; pusat: number; distributor: number }> = {};
     for (const s of data as any[]) {
         const pid = s.product_id;
-        if (!map[pid]) {
-            map[pid] = {
-                product_name: s.products?.product_name ?? "—",
-                category: s.products?.category ?? "—",
-                pusat: 0,
-                distributor: 0,
-            };
-        }
+        if (!map[pid]) map[pid] = { product_name: s.products?.product_name ?? "—", category: s.products?.category ?? "—", pusat: 0, distributor: 0 };
         if (s.distributor_id === null) map[pid].pusat += s.stock_quantity;
         else map[pid].distributor += s.stock_quantity;
     }
@@ -331,7 +290,7 @@ export interface AuditLogRow {
 export const getAuditLogs = async (dateFilter?: string): Promise<AuditLogRow[]> => {
     let query = supabaseAdmin
         .from("activity_logs")
-        .select(`id, created_at, activity_type, description, user_id, users ( name, role )`)
+        .select("id, created_at, activity_type, description, user_id, users ( name, role )")
         .order("created_at", { ascending: false })
         .limit(200);
 
