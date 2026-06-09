@@ -191,15 +191,9 @@ export default function App() {
   const handleRegister = async (data: RegisterData) => {
     const result = await registerDistributor(data);
     if (result.error) {
-      alert("Register gagal: " + result.error.message);
-      return;
+      return { error: result.error };
     }
-    alert(
-      "✅ Pendaftaran berhasil!\n\n" +
-        "Akun distributor telah didaftarkan dengan status NONAKTIF.\n" +
-        "Admin pabrik akan meninjau dan menyetujui akun Anda sebelum dapat digunakan di aplikasi mobile.",
-    );
-    setAuthView("login");
+    return;
   };
 
   const handleMenuChange = (menuId: string) => {
