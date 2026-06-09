@@ -96,7 +96,7 @@ export const checkSession = async (): Promise<DistributorUser | null> => {
 
   const cached = localStorage.getItem('distributor_user');
   if (cached) {
-    try { return JSON.parse(cached) as DistributorUser; } catch { /* lanjut */ }
+    try { return JSON.parse(cached) as DistributorUser; } catch { }
   }
 
   const { data: userData } = await supabase
@@ -336,11 +336,7 @@ export const getStockMovements = async (distributorId: string) => {
   return data ?? [];
 };
 
-// ─── getDistributions ─────────────────────────────────────────────────────────
-// Fix: query distribution_details secara terpisah untuk menghindari masalah
-// RLS pada nested join yang menyebabkan items selalu kosong ("0 jenis produk").
 export const getDistributions = async (distributorId: string) => {
-  // 1. Ambil header distribusi
   const { data: dists, error } = await supabaseAdmin
     .from('distributions')
     .select('id, distribution_date, status, created_at')
@@ -350,14 +346,12 @@ export const getDistributions = async (distributorId: string) => {
   if (error) throw new Error(error.message);
   if (!dists || dists.length === 0) return [];
 
-  // 2. Ambil semua detail sekaligus (1 query, bukan N query)
   const distIds = dists.map((d: any) => d.id);
   const { data: details } = await supabaseAdmin
     .from('distribution_details')
     .select('id, distribution_id, quantity, product_id, products(product_name, unit)')
     .in('distribution_id', distIds);
 
-  // 3. Group detail per distribution_id
   const detailMap: Record<string, any[]> = {};
   for (const det of details ?? []) {
     if (!detailMap[det.distribution_id]) detailMap[det.distribution_id] = [];
@@ -369,7 +363,6 @@ export const getDistributions = async (distributorId: string) => {
     });
   }
 
-  // 4. Gabungkan
   return dists.map((d: any) => ({
     id: d.id,
     date: d.distribution_date,
@@ -379,13 +372,7 @@ export const getDistributions = async (distributorId: string) => {
   }));
 };
 
-// ─── confirmDistributionReceived ─────────────────────────────────────────────
-// Dipanggil dari distributor. Logika identik dengan updateDistributionStatus
-// di admin (status → received + tambah stok distributor).
-// Karena keduanya update tabel `distributions` yang sama, status langsung
-// terefleksi di admin maupun distributor tanpa perlu sync tambahan.
 export const confirmDistributionReceived = async (distributionId: string) => {
-  // 1. Fetch header + detail produk (query terpisah untuk hindari RLS issue)
   const { data: dist, error: fetchErr } = await supabaseAdmin
     .from('distributions')
     .select('id, distributor_id, status')
@@ -397,7 +384,6 @@ export const confirmDistributionReceived = async (distributionId: string) => {
   if (dist.status === 'received')
     throw new Error('Distribusi ini sudah dikonfirmasi sebelumnya.');
 
-  // 2. Ambil detail produk secara terpisah
   const { data: details, error: detailErr } = await supabaseAdmin
     .from('distribution_details')
     .select('id, quantity, product_id')
@@ -405,7 +391,6 @@ export const confirmDistributionReceived = async (distributionId: string) => {
 
   if (detailErr) throw new Error(detailErr.message);
 
-  // 3. Update status → received
   const { error: updateErr } = await supabaseAdmin
     .from('distributions')
     .update({ status: 'received' })
@@ -413,7 +398,6 @@ export const confirmDistributionReceived = async (distributionId: string) => {
 
   if (updateErr) throw new Error(updateErr.message);
 
-  // 4. Tambah stok distributor + catat stock_movement per produk
   for (const detail of details ?? []) {
     const productId = detail.product_id;
     if (!productId || !detail.quantity) continue;
@@ -445,17 +429,12 @@ export const confirmDistributionReceived = async (distributionId: string) => {
     }]);
   }
 
-  // 5. Activity log
   await supabaseAdmin.from('activity_logs').insert([{
     activity_type: 'confirm_distribution',
     description: `Distributor mengkonfirmasi penerimaan distribusi #${distributionId.slice(0, 8)} — stok telah diperbarui`,
   }]);
 };
 
-// ─── updateDistributorProfile ─────────────────────────────────────────────────
-// Dipanggil dari ProfilePage distributor.
-// Update tabel distributors (nama, telepon, alamat) + tabel users (nama, email).
-// Catat activity_log dengan detail perubahan apa saja.
 export const updateDistributorProfile = async (
   distributorId: string,
   userId: string,
@@ -466,9 +445,8 @@ export const updateDistributorProfile = async (
     phone: string;
     address: string;
   },
-  oldName: string // untuk activity log
+  oldName: string
 ) => {
-  // 1. Update tabel distributors
   const { error: distErr } = await supabaseAdmin
     .from('distributors')
     .update({
@@ -480,7 +458,6 @@ export const updateDistributorProfile = async (
 
   if (distErr) throw new Error(distErr.message);
 
-  // 2. Update tabel users (nama & email)
   const { error: userErr } = await supabaseAdmin
     .from('users')
     .update({
@@ -491,7 +468,6 @@ export const updateDistributorProfile = async (
 
   if (userErr) throw new Error(userErr.message);
 
-  // 3. Update localStorage supaya UI langsung reflect
   const cached = localStorage.getItem('distributor_user');
   if (cached) {
     try {
@@ -505,10 +481,9 @@ export const updateDistributorProfile = async (
         address: data.address || null,
       };
       localStorage.setItem('distributor_user', JSON.stringify(updated));
-    } catch { /* ignore */ }
+    } catch { }
   }
 
-  // 4. Activity log dengan detail perubahan
   await supabaseAdmin.from('activity_logs').insert([{
     activity_type: 'update_distributor_profile',
     description: `Distributor ${oldName} memperbarui profil → Nama: ${data.distributor_name}, Telepon: ${data.phone || '—'}, Email: ${data.email || '—'}, Alamat: ${data.address || '—'}`,
