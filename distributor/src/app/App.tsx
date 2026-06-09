@@ -19,18 +19,10 @@ const theme = createTheme({
     background: { default: "#f5f7fa" },
   },
   shape: { borderRadius: 12 },
-  typography: {
-    fontFamily: '"Inter", "Segoe UI", sans-serif',
-  },
+  typography: { fontFamily: '"Inter", "Segoe UI", sans-serif' },
   components: {
-    MuiButton: {
-      styleOverrides: {
-        root: { textTransform: "none" },
-      },
-    },
-    MuiTextField: {
-      defaultProps: { variant: "outlined" },
-    },
+    MuiButton: { styleOverrides: { root: { textTransform: "none" } } },
+    MuiTextField: { defaultProps: { variant: "outlined" } },
   },
 });
 
@@ -72,6 +64,10 @@ export default function App() {
     toast.success("Logout berhasil");
   };
 
+  const handleProfileUpdated = (updated: Partial<DistributorUser>) => {
+    setUser((prev) => (prev ? { ...prev, ...updated } : prev));
+  };
+
   if (loading) {
     return (
       <ThemeProvider theme={theme}>
@@ -107,6 +103,7 @@ export default function App() {
           user={user!}
           distributorId={distributorId}
           onLogout={handleLogout}
+          onProfileUpdated={handleProfileUpdated}
         />
       )}
     </ThemeProvider>

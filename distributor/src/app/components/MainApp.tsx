@@ -33,6 +33,8 @@ interface MainAppProps {
   user: DistributorUser;
   distributorId: string;
   onLogout: () => void;
+  // ← tambahan: callback ke App.tsx supaya state user di root ikut update
+  onProfileUpdated?: (updated: Partial<DistributorUser>) => void;
 }
 
 type TabKey =
@@ -57,9 +59,11 @@ export default function MainApp({
   user,
   distributorId,
   onLogout,
+  onProfileUpdated,
 }: MainAppProps) {
   const [activeTab, setActiveTab] = useState<TabKey>("dashboard");
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
+  const [localUser, setLocalUser] = useState<DistributorUser>(user);
 
   const tabIndex = TABS.findIndex((t) => t.key === activeTab);
 
@@ -71,10 +75,22 @@ export default function MainApp({
     onLogout();
   };
 
+  const handleProfileUpdated = (updated: Partial<DistributorUser>) => {
+    setLocalUser((prev) => ({ ...prev, ...updated }));
+    onProfileUpdated?.(updated);
+  };
+
+  const initials = localUser.distributor_name
+    .split(" ")
+    .map((w) => w[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+
   const renderPage = () => {
     switch (activeTab) {
       case "dashboard":
-        return <DashboardPage user={user} distributorId={distributorId} />;
+        return <DashboardPage user={localUser} distributorId={distributorId} />;
       case "transaction":
         return <TransactionPage distributorId={distributorId} />;
       case "stock":
@@ -82,18 +98,17 @@ export default function MainApp({
       case "distribution":
         return <DistributionPage distributorId={distributorId} />;
       case "profile":
-        return <ProfilePage user={user} onLogout={onLogout} />;
+        return (
+          <ProfilePage
+            user={localUser}
+            onLogout={onLogout}
+            onProfileUpdated={handleProfileUpdated}
+          />
+        );
       default:
         return null;
     }
   };
-
-  const initials = user.distributor_name
-    .split(" ")
-    .map((w) => w[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
 
   return (
     <Box
@@ -147,7 +162,7 @@ export default function MainApp({
                 variant="caption"
                 sx={{ color: "rgba(255,255,255,0.75)", fontSize: "0.65rem" }}
               >
-                {user.distributor_name}
+                {localUser.distributor_name}
               </Typography>
             </Box>
           </Box>
@@ -177,10 +192,10 @@ export default function MainApp({
           >
             <Box sx={{ px: 2, py: 1.5 }}>
               <Typography variant="subtitle2" fontWeight="bold">
-                {user.distributor_name}
+                {localUser.distributor_name}
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                {user.email}
+                {localUser.email}
               </Typography>
             </Box>
             <Divider />

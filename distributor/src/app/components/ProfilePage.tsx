@@ -19,6 +19,8 @@ import {
   CircularProgress,
   Alert,
   Chip,
+  TextField,
+  IconButton,
 } from "@mui/material";
 import {
   Person,
@@ -30,17 +32,23 @@ import {
   Star,
   TrendingUp,
   Receipt,
+  Edit,
+  Save,
+  Close,
+  CheckCircle,
 } from "@mui/icons-material";
 import {
   getTransactionHistory,
   getProductsWithDistributorStock,
   DistributorUser,
+  supabaseAdmin,
+  updateDistributorProfile,
 } from "../../utils/supabaseClient";
-import { supabaseAdmin } from "../../utils/supabaseClient";
 
 interface ProfilePageProps {
   user: DistributorUser;
   onLogout: () => void;
+  onProfileUpdated?: (updated: Partial<DistributorUser>) => void;
 }
 
 const formatRp = (n: number) =>
@@ -58,9 +66,25 @@ const getInitials = (name: string) =>
     .join("")
     .toUpperCase();
 
-export default function ProfilePage({ user, onLogout }: ProfilePageProps) {
+export default function ProfilePage({
+  user,
+  onLogout,
+  onProfileUpdated,
+}: ProfilePageProps) {
   const [logoutDialog, setLogoutDialog] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
+
+  // ── Edit state ─────────────────────────────────────────────────────────────
+  const [editForm, setEditForm] = useState({
+    distributor_name: user.distributor_name ?? "",
+    name: user.name ?? "",
+    email: user.email ?? "",
+    phone: user.phone ?? "",
+    address: user.address ?? "",
+  });
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
   const [loadingReport, setLoadingReport] = useState(false);
   const [dailySales, setDailySales] = useState(0);
@@ -73,8 +97,18 @@ export default function ProfilePage({ user, onLogout }: ProfilePageProps) {
   const [reportError, setReportError] = useState("");
 
   useEffect(() => {
-    if (activeTab === 1) fetchReports();
+    if (activeTab === 2) fetchReports();
   }, [activeTab]);
+
+  useEffect(() => {
+    setEditForm({
+      distributor_name: user.distributor_name ?? "",
+      name: user.name ?? "",
+      email: user.email ?? "",
+      phone: user.phone ?? "",
+      address: user.address ?? "",
+    });
+  }, [user]);
 
   const fetchReports = async () => {
     setLoadingReport(true);
@@ -91,21 +125,15 @@ export default function ProfilePage({ user, onLogout }: ProfilePageProps) {
           .eq("distributor_id", user.distributor_id)
           .gte("created_at", `${todayStr}T00:00:00`)
           .lte("created_at", `${todayStr}T23:59:59`),
-
         supabaseAdmin
           .from("transactions")
           .select("total_price")
           .eq("distributor_id", user.distributor_id)
           .gte("created_at", `${monthStart}T00:00:00`),
-
         supabaseAdmin
           .from("transaction_details")
           .select(
-            `
-            product_id, quantity, subtotal,
-            products ( product_name ),
-            transactions!inner ( distributor_id )
-          `,
+            "product_id, quantity, subtotal, products(product_name), transactions!inner(distributor_id)",
           )
           .eq("transactions.distributor_id", user.distributor_id),
       ]);
@@ -128,26 +156,70 @@ export default function ProfilePage({ user, onLogout }: ProfilePageProps) {
       > = {};
       for (const row of (detailRes.data ?? []) as any[]) {
         const pid = row.product_id;
-        if (!map[pid]) {
+        if (!map[pid])
           map[pid] = {
             name: row.products?.product_name ?? "—",
             totalSold: 0,
             revenue: 0,
           };
-        }
         map[pid].totalSold += row.quantity ?? 0;
         map[pid].revenue += row.subtotal ?? 0;
       }
-      const sorted = Object.values(map)
-        .sort((a, b) => b.totalSold - a.totalSold)
-        .slice(0, 5);
-      setTopProducts(sorted);
+      setTopProducts(
+        Object.values(map)
+          .sort((a, b) => b.totalSold - a.totalSold)
+          .slice(0, 5),
+      );
     } catch (err: any) {
       setReportError(err.message ?? "Gagal memuat laporan.");
     } finally {
       setLoadingReport(false);
     }
   };
+
+  const handleSave = async () => {
+    setSaving(true);
+    setSaveError("");
+    setSaveSuccess(false);
+
+    const trimmed = {
+      distributor_name: editForm.distributor_name.trim(),
+      name: editForm.name.trim(),
+      email: editForm.email.trim(),
+      phone: editForm.phone.trim(),
+      address: editForm.address.trim(),
+    };
+
+    if (!trimmed.distributor_name) {
+      setSaveError("Nama distributor tidak boleh kosong.");
+      setSaving(false);
+      return;
+    }
+
+    try {
+      await updateDistributorProfile(
+        user.distributor_id,
+        user.id,
+        trimmed,
+        user.distributor_name,
+      );
+      setSaveSuccess(true);
+      onProfileUpdated?.({
+        distributor_name: trimmed.distributor_name,
+        name: trimmed.name,
+        email: trimmed.email,
+        phone: trimmed.phone,
+        address: trimmed.address,
+      });
+      setTimeout(() => setSaveSuccess(false), 3000);
+    } catch (err: any) {
+      setSaveError(err.message ?? "Gagal menyimpan perubahan.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const fieldSx = { mb: 2, "& .MuiOutlinedInput-root": { borderRadius: 2 } };
 
   return (
     <Box sx={{ p: 2, pb: 4 }}>
@@ -164,11 +236,16 @@ export default function ProfilePage({ user, onLogout }: ProfilePageProps) {
           value={activeTab}
           onChange={(_, v) => setActiveTab(v)}
           variant="fullWidth"
-          sx={{ "& .MuiTab-root": { fontWeight: 600, fontSize: "0.8rem" } }}
+          sx={{ "& .MuiTab-root": { fontWeight: 600, fontSize: "0.75rem" } }}
         >
           <Tab
             icon={<Person fontSize="small" />}
             label="Profil"
+            iconPosition="start"
+          />
+          <Tab
+            icon={<Edit fontSize="small" />}
+            label="Edit Profil"
             iconPosition="start"
           />
           <Tab
@@ -206,7 +283,7 @@ export default function ProfilePage({ user, onLogout }: ProfilePageProps) {
               >
                 {getInitials(user.distributor_name)}
               </Avatar>
-              <Typography variant="h6" fontWeight="bold" color="text.primary">
+              <Typography variant="h6" fontWeight="bold">
                 {user.distributor_name}
               </Typography>
               <Box
@@ -351,6 +428,141 @@ export default function ProfilePage({ user, onLogout }: ProfilePageProps) {
       )}
 
       {activeTab === 1 && (
+        <Box>
+          <Card
+            elevation={0}
+            sx={{
+              mb: 2,
+              borderRadius: 3,
+              border: "1px solid",
+              borderColor: "divider",
+            }}
+          >
+            <CardContent sx={{ p: 2.5 }}>
+              <Box
+                sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2.5 }}
+              >
+                <Edit sx={{ color: "#0891b2" }} />
+                <Typography variant="subtitle1" fontWeight="bold">
+                  Edit Profil
+                </Typography>
+              </Box>
+
+              {saveError && (
+                <Alert
+                  severity="error"
+                  sx={{ mb: 2, borderRadius: 2 }}
+                  onClose={() => setSaveError("")}
+                >
+                  {saveError}
+                </Alert>
+              )}
+              {saveSuccess && (
+                <Alert
+                  severity="success"
+                  icon={<CheckCircle />}
+                  sx={{ mb: 2, borderRadius: 2 }}
+                >
+                  Profil berhasil diperbarui! Perubahan sudah masuk ke sistem
+                  admin.
+                </Alert>
+              )}
+
+              <TextField
+                fullWidth
+                label="Nama Distributor"
+                value={editForm.distributor_name}
+                onChange={(e) =>
+                  setEditForm((p) => ({
+                    ...p,
+                    distributor_name: e.target.value,
+                  }))
+                }
+                sx={fieldSx}
+                size="small"
+                required
+              />
+
+              <TextField
+                fullWidth
+                label="Nama Lengkap (Pemilik)"
+                value={editForm.name}
+                onChange={(e) =>
+                  setEditForm((p) => ({ ...p, name: e.target.value }))
+                }
+                sx={fieldSx}
+                size="small"
+              />
+
+              <TextField
+                fullWidth
+                label="Email"
+                type="email"
+                value={editForm.email}
+                onChange={(e) =>
+                  setEditForm((p) => ({ ...p, email: e.target.value }))
+                }
+                sx={fieldSx}
+                size="small"
+                helperText="Perubahan email hanya memperbarui data profil, bukan akun login"
+              />
+
+              <TextField
+                fullWidth
+                label="Nomor Telepon"
+                value={editForm.phone}
+                onChange={(e) =>
+                  setEditForm((p) => ({ ...p, phone: e.target.value }))
+                }
+                sx={fieldSx}
+                size="small"
+                placeholder="08xxxxxxxxxx"
+              />
+
+              <TextField
+                fullWidth
+                label="Alamat"
+                value={editForm.address}
+                onChange={(e) =>
+                  setEditForm((p) => ({ ...p, address: e.target.value }))
+                }
+                sx={{ ...fieldSx, mb: 0 }}
+                size="small"
+                multiline
+                rows={2}
+              />
+            </CardContent>
+          </Card>
+
+          <Alert severity="info" sx={{ mb: 2, borderRadius: 2 }}>
+            <Typography variant="caption">
+              <strong>Catatan:</strong> Nama perusahaan dan lokasi pabrik tidak
+              dapat diubah. Hubungi admin jika diperlukan.
+            </Typography>
+          </Alert>
+
+          <Button
+            fullWidth
+            variant="contained"
+            size="large"
+            startIcon={
+              saving ? <CircularProgress size={16} color="inherit" /> : <Save />
+            }
+            onClick={handleSave}
+            disabled={saving}
+            sx={{
+              borderRadius: 2.5,
+              fontWeight: "bold",
+              py: 1.4,
+              background: "linear-gradient(135deg, #1e3a8a, #0891b2)",
+            }}
+          >
+            {saving ? "Menyimpan..." : "Simpan Perubahan"}
+          </Button>
+        </Box>
+      )}
+
+      {activeTab === 2 && (
         <Box>
           {loadingReport ? (
             <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
