@@ -75,7 +75,6 @@ const formatDate = (d: string) =>
 interface ReceiptDialogProps {
   open: boolean;
   transaction: any;
-  // Terima snapshot cart saat transaksi selesai — bukan live cart
   cartSnapshot: CartItem[];
   paymentMethod: "cash" | "transfer";
   customerName: string;
@@ -111,7 +110,6 @@ function ReceiptDialog({
 
       <DialogContent dividers>
         <Box sx={{ fontFamily: "monospace", fontSize: 12 }}>
-          {/* Header struk */}
           <Box sx={{ textAlign: "center", mb: 2 }}>
             <Box
               sx={{
@@ -137,7 +135,6 @@ function ReceiptDialog({
 
           <Divider sx={{ borderStyle: "dashed", my: 1.5 }} />
 
-          {/* Info transaksi */}
           {[
             {
               label: "No",
@@ -162,7 +159,6 @@ function ReceiptDialog({
 
           <Divider sx={{ borderStyle: "dashed", my: 1.5 }} />
 
-          {/* Item */}
           {cartSnapshot.map((item) => (
             <Box key={item.productId} sx={{ mb: 1 }}>
               <Typography fontSize={11} fontWeight={600}>
@@ -181,7 +177,6 @@ function ReceiptDialog({
 
           <Divider sx={{ borderStyle: "dashed", my: 1.5 }} />
 
-          {/* Total */}
           <Box
             sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}
           >
@@ -251,7 +246,6 @@ function TransactionHistory({
 
   return (
     <Box sx={{ p: 2, pb: 3 }}>
-      {/* Header */}
       <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 3 }}>
         <IconButton onClick={onBack} size="small" sx={{ bgcolor: "grey.100" }}>
           <ArrowBack fontSize="small" />
@@ -294,7 +288,6 @@ function TransactionHistory({
             }}
           >
             <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
-              {/* Header baris */}
               <Box
                 sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}
               >
@@ -353,7 +346,6 @@ function TransactionHistory({
 
               <Divider sx={{ my: 1 }} />
 
-              {/* Detail item */}
               {(trx.transaction_details ?? []).map((d: any, i: number) => (
                 <Box
                   key={i}
@@ -435,7 +427,6 @@ function ProductPickerDialog({
                       transition: "background 0.15s",
                     }}
                   >
-                    {/* Ikon produk */}
                     <Box
                       sx={{
                         width: 40,
@@ -543,6 +534,9 @@ export default function TransactionPage({
   const [receiptOpen, setReceiptOpen] = useState(false);
   const [completedTrx, setCompletedTrx] = useState<any>(null);
   const [completedCustomerName, setCompletedCustomerName] = useState("");
+  const [completedPaymentMethod, setCompletedPaymentMethod] = useState<
+    "cash" | "transfer"
+  >("cash");
   const [submitting, setSubmitting] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
 
@@ -641,7 +635,7 @@ export default function TransactionPage({
       setCartSnapshot(snapshot);
       setCompletedTrx(trx);
       setCompletedCustomerName(custName);
-
+      setCompletedPaymentMethod(paymentMethod);
       setCart([]);
       setSelectedCustomerId("");
       setPaymentMethod("cash");
@@ -689,7 +683,6 @@ export default function TransactionPage({
 
   return (
     <Box sx={{ p: 2, pb: 4 }}>
-      {/* ── Header ── */}
       <Box
         sx={{
           display: "flex",
@@ -717,7 +710,6 @@ export default function TransactionPage({
         </Button>
       </Box>
 
-      {/* ── Pilih Pelanggan ── */}
       <Card
         elevation={0}
         sx={{
@@ -767,7 +759,6 @@ export default function TransactionPage({
         </CardContent>
       </Card>
 
-      {/* ── Keranjang ── */}
       <Card
         elevation={0}
         sx={{
@@ -867,7 +858,6 @@ export default function TransactionPage({
                       }
                     />
 
-                    {/* Qty controls */}
                     <Box
                       sx={{
                         display: "flex",
@@ -930,7 +920,6 @@ export default function TransactionPage({
             </List>
           )}
 
-          {/* Tambah produk */}
           {cart.length > 0 && (
             <Button
               variant="outlined"
@@ -946,7 +935,6 @@ export default function TransactionPage({
         </CardContent>
       </Card>
 
-      {/* ── Metode Pembayaran & Total ── */}
       {cart.length > 0 && (
         <Card
           elevation={0}
@@ -1037,7 +1025,6 @@ export default function TransactionPage({
         </Card>
       )}
 
-      {/* ── Product Picker Dialog ── */}
       <ProductPickerDialog
         open={openProductDialog}
         products={products}
@@ -1046,12 +1033,11 @@ export default function TransactionPage({
         onClose={() => setOpenProductDialog(false)}
       />
 
-      {/* ── Struk Dialog ── */}
       <ReceiptDialog
         open={receiptOpen}
         transaction={completedTrx}
         cartSnapshot={cartSnapshot}
-        paymentMethod={paymentMethod}
+        paymentMethod={completedPaymentMethod}
         customerName={completedCustomerName}
         onNewTransaction={handleNewTransaction}
       />

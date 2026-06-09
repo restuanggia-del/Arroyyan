@@ -10,9 +10,9 @@ import {
   List,
   ListItem,
   ListItemText,
-} from '@mui/material';
-import { Receipt, Share } from '@mui/icons-material';
-import { toast } from 'sonner';
+} from "@mui/material";
+import { Receipt, Share } from "@mui/icons-material";
+import { toast } from "sonner";
 
 interface ReceiptDialogProps {
   open: boolean;
@@ -26,18 +26,18 @@ export default function ReceiptDialog({
   transaction,
 }: ReceiptDialogProps) {
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
       minimumFractionDigits: 0,
     }).format(amount);
   };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return new Intl.DateTimeFormat('id-ID', {
-      dateStyle: 'long',
-      timeStyle: 'short',
+    return new Intl.DateTimeFormat("id-ID", {
+      dateStyle: "long",
+      timeStyle: "short",
     }).format(date);
   };
 
@@ -47,42 +47,41 @@ export default function ReceiptDialog({
     if (navigator.share) {
       navigator
         .share({
-          title: 'Struk Transaksi',
+          title: "Struk Transaksi",
           text: receiptText,
         })
         .then(() => {
-          toast.success('Struk berhasil dibagikan');
+          toast.success("Struk berhasil dibagikan");
         })
         .catch((error) => {
-          console.error('Error sharing:', error);
+          console.error("Error sharing:", error);
         });
     } else {
-      // Fallback: Copy to clipboard
       navigator.clipboard.writeText(receiptText).then(() => {
-        toast.success('Struk disalin ke clipboard');
+        toast.success("Struk disalin ke clipboard");
       });
     }
   };
 
   const generateReceiptText = () => {
-    let text = '========================================\n';
-    text += '        ARROYYAN99 AMDK\n';
-    text += '     Bogatama, Tulang Bawang\n';
-    text += '========================================\n\n';
+    let text = "========================================\n";
+    text += "        ARROYYAN99 AMDK\n";
+    text += "     Bogatama, Tulang Bawang\n";
+    text += "========================================\n\n";
     text += `No. Transaksi: ${transaction.id}\n`;
     text += `Tanggal: ${formatDate(transaction.date)}\n`;
     text += `Pembayaran: ${transaction.paymentMethod.toUpperCase()}\n\n`;
-    text += '----------------------------------------\n';
+    text += "----------------------------------------\n";
 
     transaction.items.forEach((item: any) => {
       text += `${item.productName}\n`;
       text += `  ${item.quantity} x ${formatCurrency(item.price)} = ${formatCurrency(item.subtotal)}\n`;
     });
 
-    text += '----------------------------------------\n';
+    text += "----------------------------------------\n";
     text += `TOTAL: ${formatCurrency(transaction.total)}\n`;
-    text += '========================================\n';
-    text += '\n      Terima Kasih!\n';
+    text += "========================================\n";
+    text += "\n      Terima Kasih!\n";
 
     return text;
   };
@@ -99,7 +98,7 @@ export default function ReceiptDialog({
       </DialogTitle>
 
       <DialogContent>
-        <Box sx={{ textAlign: 'center', mb: 3 }}>
+        <Box sx={{ textAlign: "center", mb: 3 }}>
           <Typography variant="h6" fontWeight="bold">
             ARROYYAN99 AMDK
           </Typography>
@@ -168,7 +167,7 @@ export default function ReceiptDialog({
           </Typography>
         </Box>
 
-        <Box sx={{ textAlign: 'center', mt: 3 }}>
+        <Box sx={{ textAlign: "center", mt: 3 }}>
           <Typography variant="body2" color="text.secondary">
             Terima kasih atas pembelian Anda!
           </Typography>
