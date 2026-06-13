@@ -203,18 +203,22 @@ export function ProductModal({
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
               Harga <span className="text-red-500">*</span>
             </label>
+
             <div className="relative">
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-sm">
                 Rp
               </span>
+
               <input
-                type="number"
+                type="text"
+                inputMode="numeric"
                 required
-                min="0"
-                value={formData.price}
-                onChange={(e) =>
-                  handleChange("price", parseInt(e.target.value) || 0)
-                }
+                value={formData.price === 0 ? "" : formData.price}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, "");
+
+                  handleChange("price", value === "" ? 0 : parseInt(value, 10));
+                }}
                 placeholder="0"
                 className="w-full pl-12 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />

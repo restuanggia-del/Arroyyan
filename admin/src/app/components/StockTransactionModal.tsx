@@ -199,14 +199,19 @@ export function StockTransactionModal({
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
               Jumlah <span className="text-red-500">*</span>
             </label>
+
             <input
-              type="number"
+              type="text"
               required
               min="1"
-              value={formData.quantity}
+              value={formData.quantity === 1 ? "" : formData.quantity}
               onChange={(e) =>
-                handleChange("quantity", parseInt(e.target.value) || 1)
+                handleChange(
+                  "quantity",
+                  e.target.value === "" ? 1 : parseInt(e.target.value, 10),
+                )
               }
+              placeholder="0"
               className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
