@@ -10,16 +10,19 @@ import {
   RefreshCw,
   Package,
   Truck,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { getAuditLogs, AuditLogRow } from "../../services/reportService";
 
 type FilterType = "all" | "login" | "transaction" | "product" | "stock";
 
+const ITEMS_PER_PAGE = 10;
+
 const categorize = (type: string): FilterType => {
   if (type.includes("login")) return "login";
   if (type.includes("transaction")) return "transaction";
   if (type.includes("product")) return "product";
-  if (type.includes("stock") || type.includes("distribution")) return "stock";
   return "stock";
 };
 
@@ -29,8 +32,7 @@ const getIcon = (type: string) => {
   if (cat === "transaction")
     return <ShoppingCart className="w-5 h-5 text-blue-600" />;
   if (cat === "product") return <Package className="w-5 h-5 text-purple-600" />;
-  if (cat === "stock") return <Truck className="w-5 h-5 text-orange-600" />;
-  return <Edit className="w-5 h-5 text-gray-600" />;
+  return <Truck className="w-5 h-5 text-orange-600" />;
 };
 
 const getBg = (type: string) => {
@@ -49,7 +51,7 @@ const getBadge = (type: string) => {
     return { label: "Transaksi", cls: "bg-blue-100 text-blue-700" };
   if (cat === "product")
     return { label: "Produk", cls: "bg-purple-100 text-purple-700" };
-  return { label: "Stok/Distribusi", cls: "bg-orange-100 text-orange-700" };
+  return { label: "Distribusi & Stok", cls: "bg-orange-100 text-orange-700" };
 };
 
 const formatDate = (d: string) =>
@@ -70,17 +72,23 @@ export function AuditLog() {
   const [dateFilter, setDateFilter] = useState(
     new Date().toISOString().split("T")[0],
   );
+  const [page, setPage] = useState(1);
 
   const fetchLogs = useCallback(async () => {
     setLoading(true);
     const data = await getAuditLogs(dateFilter || undefined);
     setLogs(data);
+    setPage(1);
     setLoading(false);
   }, [dateFilter]);
 
   useEffect(() => {
     fetchLogs();
   }, [fetchLogs]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [filterType, searchQuery]);
 
   const filtered = logs.filter((log) => {
     const matchType =
@@ -92,6 +100,13 @@ export function AuditLog() {
       log.activity_type.toLowerCase().includes(searchQuery.toLowerCase());
     return matchType && matchSearch;
   });
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE));
+  const safePage = Math.min(page, totalPages);
+  const paginated = filtered.slice(
+    (safePage - 1) * ITEMS_PER_PAGE,
+    safePage * ITEMS_PER_PAGE,
+  );
 
   const countByType = (t: FilterType) =>
     logs.filter((l) => categorize(l.activity_type) === t).length;
@@ -111,7 +126,7 @@ export function AuditLog() {
     },
     {
       id: "stock",
-      label: "Stok/Distribusi",
+      label: "Distribusi & Stok",
       activeCls: "bg-orange-100 text-orange-700",
     },
   ];
@@ -138,10 +153,27 @@ export function AuditLog() {
     {
       icon: <Edit className="w-6 h-6 text-orange-600" />,
       bg: "bg-orange-100",
-      label: "Stok/Distribusi",
+      label: "Distribusi & Stok",
       value: countByType("stock"),
     },
   ];
+
+  const pageNumbers = () => {
+    const delta = 2;
+    const range: (number | "...")[] = [];
+    for (let i = 1; i <= totalPages; i++) {
+      if (
+        i === 1 ||
+        i === totalPages ||
+        (i >= safePage - delta && i <= safePage + delta)
+      ) {
+        range.push(i);
+      } else if (range[range.length - 1] !== "...") {
+        range.push("...");
+      }
+    }
+    return range;
+  };
 
   return (
     <div className="p-8">
@@ -214,7 +246,6 @@ export function AuditLog() {
               )}
             </div>
           </div>
-
           <div className="flex gap-2 flex-wrap">
             {filterBtns.map((f) => (
               <button
@@ -254,55 +285,115 @@ export function AuditLog() {
               )}
             </div>
           ) : (
-            <div className="space-y-3">
-              {filtered.map((log) => {
-                const badge = getBadge(log.activity_type);
-                return (
-                  <div
-                    key={log.id}
-                    className="border border-gray-200 rounded-xl p-4 hover:bg-gray-50 transition-colors"
-                  >
-                    <div className="flex items-start gap-4">
-                      <div
-                        className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${getBg(log.activity_type)}`}
-                      >
-                        {getIcon(log.activity_type)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-2 mb-1">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span
-                              className={`px-2 py-0.5 rounded-full text-xs font-medium ${badge.cls}`}
-                            >
-                              {badge.label}
-                            </span>
-                            <code className="text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">
-                              {log.activity_type}
-                            </code>
-                          </div>
-                          <span className="text-xs text-gray-400 whitespace-nowrap flex-shrink-0">
-                            {formatDate(log.created_at)}
-                          </span>
+            <>
+              <div className="space-y-3 mb-6">
+                {paginated.map((log) => {
+                  const badge = getBadge(log.activity_type);
+                  return (
+                    <div
+                      key={log.id}
+                      className="border border-gray-200 rounded-xl p-4 hover:bg-gray-50 transition-colors"
+                    >
+                      <div className="flex items-start gap-4">
+                        <div
+                          className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${getBg(log.activity_type)}`}
+                        >
+                          {getIcon(log.activity_type)}
                         </div>
-                        <p className="text-sm text-gray-800 mb-1.5">
-                          {log.description}
-                        </p>
-                        <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                          <User className="w-3 h-3" />
-                          <span>{log.user_name ?? "Sistem"}</span>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-2 mb-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span
+                                className={`px-2 py-0.5 rounded-full text-xs font-medium ${badge.cls}`}
+                              >
+                                {badge.label}
+                              </span>
+                              <code className="text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">
+                                {log.activity_type}
+                              </code>
+                            </div>
+                            <span className="text-xs text-gray-400 whitespace-nowrap flex-shrink-0">
+                              {formatDate(log.created_at)}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-800 mb-1.5">
+                            {log.description}
+                          </p>
+                          <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                            <User className="w-3 h-3" />
+                            <span>{log.user_name ?? "Sistem"}</span>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+                  );
+                })}
+              </div>
 
-          {!loading && filtered.length > 0 && (
-            <p className="text-xs text-gray-400 text-center mt-4">
-              Menampilkan {filtered.length} dari {logs.length} log
-            </p>
+              <div className="flex items-center justify-between border-t border-gray-100 pt-4">
+                <p className="text-xs text-gray-400">
+                  Menampilkan{" "}
+                  <span className="font-medium text-gray-600">
+                    {(safePage - 1) * ITEMS_PER_PAGE + 1}–
+                    {Math.min(safePage * ITEMS_PER_PAGE, filtered.length)}
+                  </span>{" "}
+                  dari{" "}
+                  <span className="font-medium text-gray-600">
+                    {filtered.length}
+                  </span>{" "}
+                  log
+                </p>
+
+                {totalPages > 1 && (
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                      disabled={safePage === 1}
+                      className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                    >
+                      <ChevronLeft className="w-3.5 h-3.5" />
+                      Sebelumnya
+                    </button>
+
+                    <div className="flex items-center gap-1 mx-1">
+                      {pageNumbers().map((p, i) =>
+                        p === "..." ? (
+                          <span
+                            key={`ellipsis-${i}`}
+                            className="px-2 text-xs text-gray-400"
+                          >
+                            …
+                          </span>
+                        ) : (
+                          <button
+                            key={p}
+                            onClick={() => setPage(p as number)}
+                            className={`w-8 h-8 rounded-lg text-xs font-medium cursor-pointer transition-colors ${
+                              safePage === p
+                                ? "bg-blue-600 text-white"
+                                : "text-gray-600 hover:bg-gray-100"
+                            }`}
+                          >
+                            {p}
+                          </button>
+                        ),
+                      )}
+                    </div>
+
+                    <button
+                      onClick={() =>
+                        setPage((p) => Math.min(totalPages, p + 1))
+                      }
+                      disabled={safePage === totalPages}
+                      className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                    >
+                      Selanjutnya
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            </>
           )}
         </div>
       </div>
