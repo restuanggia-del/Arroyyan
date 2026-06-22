@@ -489,25 +489,27 @@ function ReturnFormDialog({
 
   if (!distribution) return null;
 
-  const toggleItem = (itemId: string, maxQty: number) => {
+  const toggleItem = (itemId: string) => {
     setSelectedQty((prev) => {
       const next = { ...prev };
       if (next[itemId] !== undefined) delete next[itemId];
-      else next[itemId] = maxQty;
+      else next[itemId] = 0; // ← mulai dari 0, bukan maxQty
       return next;
     });
   };
 
-  const updateQty = (itemId: string, qty: number, maxQty: number) => {
-    setSelectedQty((prev) => ({
-      ...prev,
-      [itemId]: Math.max(1, Math.min(qty, maxQty)),
-    }));
+  const updateQty = (itemId: string, rawValue: string, maxQty: number) => {
+    const cleaned = rawValue.replace(/\D/g, "");
+    const num = cleaned === "" ? 0 : parseInt(cleaned, 10);
+    setSelectedQty((prev) => ({ ...prev, [itemId]: Math.min(num, maxQty) }));
   };
 
   const handleSubmit = () => {
     const items: ReturnItem[] = distribution.items
-      .filter((item) => selectedQty[item.id] !== undefined)
+      .filter(
+        (item) =>
+          selectedQty[item.id] !== undefined && selectedQty[item.id] > 0,
+      )
       .map((item) => ({
         productId: item.productId ?? item.id,
         productName: item.productName,
@@ -563,7 +565,7 @@ function ReturnFormDialog({
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                     <Checkbox
                       checked={checked}
-                      onChange={() => toggleItem(item.id, item.quantity)}
+                      onChange={() => toggleItem(item.id)}
                       size="small"
                       sx={{ p: 0.5 }}
                     />
@@ -577,19 +579,17 @@ function ReturnFormDialog({
                     </Box>
                     {checked && (
                       <TextField
-                        type="number"
+                        type="text"
                         size="small"
-                        value={selectedQty[item.id]}
+                        value={
+                          selectedQty[item.id] === 0 ? "" : selectedQty[item.id]
+                        }
+                        placeholder="0"
                         onChange={(e) =>
-                          updateQty(
-                            item.id,
-                            Number(e.target.value),
-                            item.quantity,
-                          )
+                          updateQty(item.id, e.target.value, item.quantity)
                         }
                         inputProps={{
-                          min: 1,
-                          max: item.quantity,
+                          inputMode: "numeric",
                           style: { textAlign: "center", width: 50 },
                         }}
                         sx={{
@@ -661,7 +661,6 @@ export default function DistributionPage({
   const [confirmDialog, setConfirmDialog] = useState<string | null>(null);
   const [tab, setTab] = useState<TabKey>("all");
 
-  // Return form state
   const [returnDialogDist, setReturnDialogDist] = useState<Distribution | null>(
     null,
   );
@@ -909,7 +908,6 @@ export default function DistributionPage({
         ))
       )}
 
-      {/* Dialog konfirmasi terima */}
       <Dialog
         open={Boolean(confirmDialog)}
         onClose={() => setConfirmDialog(null)}
@@ -950,7 +948,6 @@ export default function DistributionPage({
         </DialogActions>
       </Dialog>
 
-      {/* Dialog ajukan return */}
       <ReturnFormDialog
         open={Boolean(returnDialogDist)}
         distribution={returnDialogDist}
