@@ -660,6 +660,7 @@ export default function DistributionPage({
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const [confirmDialog, setConfirmDialog] = useState<string | null>(null);
   const [tab, setTab] = useState<TabKey>("all");
+  const [successMsg, setSuccessMsg] = useState("");
 
   const [returnDialogDist, setReturnDialogDist] = useState<Distribution | null>(
     null,
@@ -713,6 +714,9 @@ export default function DistributionPage({
       await createReturn(distributorId, returnDialogDist.id, items, reason);
       setReturnDialogDist(null);
       setTab("return");
+      setSuccessMsg(
+        "Pengajuan return berhasil dikirim! Menunggu persetujuan admin.",
+      ); // ← tambah ini
       fetchAll();
     } catch (err: any) {
       setError(err.message ?? "Gagal mengajukan return.");
@@ -816,6 +820,16 @@ export default function DistributionPage({
           onClose={() => setError("")}
         >
           {error}
+        </Alert>
+      )}
+      
+      {successMsg && (
+        <Alert
+          severity="success"
+          sx={{ mb: 2, borderRadius: 2 }}
+          onClose={() => setSuccessMsg("")}
+        >
+          {successMsg}
         </Alert>
       )}
 

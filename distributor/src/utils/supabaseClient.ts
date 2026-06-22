@@ -356,6 +356,7 @@ export const getDistributions = async (distributorId: string) => {
   for (const det of details ?? []) {
     if (!detailMap[det.distribution_id]) detailMap[det.distribution_id] = [];
     detailMap[det.distribution_id].push({
+      productId: det.product_id,
       id: det.id,
       productName: (det.products as any)?.product_name ?? '—',
       unit: (det.products as any)?.unit ?? 'pcs',
