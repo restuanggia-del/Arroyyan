@@ -18,6 +18,8 @@ import {
   ListItemText,
   IconButton,
   Skeleton,
+  TextField,
+  Checkbox,
 } from "@mui/material";
 import {
   LocalShipping,
@@ -28,10 +30,19 @@ import {
   ExpandLess,
   Inventory,
   CalendarToday,
+  AssignmentReturn,
+  Cancel,
+  HourglassEmpty,
 } from "@mui/icons-material";
 import {
   getDistributions,
   confirmDistributionReceived,
+} from "../../utils/supabaseClient";
+import {
+  getReturns,
+  createReturn,
+  ReturnRow,
+  ReturnItem,
 } from "../../utils/supabaseClient";
 
 interface DistributionItem {
@@ -39,6 +50,7 @@ interface DistributionItem {
   productName: string;
   unit: string;
   quantity: number;
+  productId?: string;
 }
 
 interface Distribution {
@@ -52,6 +64,8 @@ interface Distribution {
 interface DistributionPageProps {
   distributorId: string;
 }
+
+type TabKey = "all" | "pending" | "sent" | "received" | "return";
 
 const statusConfig = {
   pending: {
@@ -77,16 +91,41 @@ const statusConfig = {
   },
 };
 
+const returnStatusConfig = {
+  pending: {
+    label: "Menunggu Persetujuan",
+    color: "warning" as const,
+    icon: <HourglassEmpty sx={{ fontSize: 16 }} />,
+    bgColor: "#fffbeb",
+    borderColor: "#fbbf24",
+  },
+  approved: {
+    label: "Disetujui",
+    color: "success" as const,
+    icon: <CheckCircle sx={{ fontSize: 16 }} />,
+    bgColor: "#f0fdf4",
+    borderColor: "#86efac",
+  },
+  rejected: {
+    label: "Ditolak",
+    color: "error" as const,
+    icon: <Cancel sx={{ fontSize: 16 }} />,
+    bgColor: "#fef2f2",
+    borderColor: "#fca5a5",
+  },
+};
+
 function DistributionCard({
   distribution,
   onConfirm,
+  onReturn,
 }: {
   distribution: Distribution;
   onConfirm: (id: string) => void;
+  onReturn: (dist: Distribution) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const cfg = statusConfig[distribution.status];
-
   const totalQty = distribution.items.reduce((s, i) => s + i.quantity, 0);
 
   const formatDate = (d: string) =>
@@ -150,7 +189,6 @@ function DistributionCard({
               </Box>
             </Box>
           </Box>
-
           <Chip
             icon={cfg.icon}
             label={cfg.label}
@@ -208,7 +246,7 @@ function DistributionCard({
           <Box sx={{ mt: 1.5 }}>
             <Divider sx={{ mb: 1 }} />
             <List dense disablePadding>
-              {distribution.items.map((item, i) => (
+              {distribution.items.map((item) => (
                 <ListItem key={item.id} disableGutters sx={{ py: 0.5 }}>
                   <ListItemText
                     primary={
@@ -254,8 +292,361 @@ function DistributionCard({
             Konfirmasi Diterima
           </Button>
         )}
+
+        {distribution.status === "received" && (
+          <Button
+            fullWidth
+            variant="outlined"
+            size="small"
+            startIcon={<AssignmentReturn />}
+            onClick={() => onReturn(distribution)}
+            sx={{
+              mt: 2,
+              borderRadius: 2,
+              fontWeight: "bold",
+              borderColor: "#dc2626",
+              color: "#dc2626",
+              "&:hover": { bgcolor: "#fef2f2", borderColor: "#dc2626" },
+            }}
+          >
+            Ajukan Return
+          </Button>
+        )}
       </CardContent>
     </Card>
+  );
+}
+
+function ReturnCard({ ret }: { ret: ReturnRow }) {
+  const [expanded, setExpanded] = useState(false);
+  const cfg = returnStatusConfig[ret.status];
+  const totalQty = ret.items.reduce((s, i) => s + i.quantity, 0);
+
+  const formatDate = (d: string) =>
+    new Date(d).toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+
+  return (
+    <Card
+      elevation={0}
+      sx={{
+        borderRadius: 3,
+        border: "1px solid",
+        borderColor: cfg.borderColor,
+        bgcolor: cfg.bgColor,
+        mb: 2,
+      }}
+    >
+      <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+            mb: 1.5,
+          }}
+        >
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Box
+              sx={{
+                width: 36,
+                height: 36,
+                borderRadius: 2,
+                bgcolor: "white",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                border: "1px solid",
+                borderColor: cfg.borderColor,
+              }}
+            >
+              <AssignmentReturn sx={{ fontSize: 20, color: "#dc2626" }} />
+            </Box>
+            <Box>
+              <Typography
+                variant="caption"
+                color="text.disabled"
+                fontFamily="monospace"
+              >
+                #{ret.id.slice(0, 8).toUpperCase()}
+              </Typography>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                <CalendarToday sx={{ fontSize: 11, color: "text.secondary" }} />
+                <Typography variant="caption" color="text.secondary">
+                  {formatDate(ret.created_at)}
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
+          <Chip
+            icon={cfg.icon}
+            label={cfg.label}
+            color={cfg.color}
+            size="small"
+            sx={{ fontWeight: "bold", fontSize: "0.7rem" }}
+          />
+        </Box>
+
+        {ret.reason && (
+          <Box
+            sx={{
+              bgcolor: "rgba(255,255,255,0.7)",
+              borderRadius: 2,
+              p: 1.5,
+              mb: 1.5,
+            }}
+          >
+            <Typography variant="caption" color="text.secondary">
+              Alasan:{" "}
+            </Typography>
+            <Typography variant="body2" fontWeight={500} component="span">
+              {ret.reason}
+            </Typography>
+          </Box>
+        )}
+
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            cursor: "pointer",
+          }}
+          onClick={() => setExpanded(!expanded)}
+        >
+          <Typography variant="caption" color="#dc2626" fontWeight={600}>
+            {ret.items.length} jenis produk · {totalQty} unit —{" "}
+            {expanded ? "Sembunyikan" : "Lihat detail"}
+          </Typography>
+          <IconButton size="small" sx={{ color: "#dc2626", p: 0 }}>
+            {expanded ? (
+              <ExpandLess fontSize="small" />
+            ) : (
+              <ExpandMore fontSize="small" />
+            )}
+          </IconButton>
+        </Box>
+
+        {expanded && (
+          <Box sx={{ mt: 1.5 }}>
+            <Divider sx={{ mb: 1 }} />
+            <List dense disablePadding>
+              {ret.items.map((item) => (
+                <ListItem key={item.id} disableGutters sx={{ py: 0.5 }}>
+                  <ListItemText
+                    primary={
+                      <Typography variant="body2" fontWeight={500}>
+                        {item.productName}
+                      </Typography>
+                    }
+                  />
+                  <Chip
+                    label={`${item.quantity} ${item.unit}`}
+                    size="small"
+                    sx={{
+                      bgcolor: "#fee2e2",
+                      color: "#991b1b",
+                      fontWeight: "bold",
+                      fontSize: "0.7rem",
+                    }}
+                  />
+                </ListItem>
+              ))}
+            </List>
+          </Box>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ─── Dialog form ajukan return ────────────────────────────────────────────────
+function ReturnFormDialog({
+  open,
+  distribution,
+  onClose,
+  onSubmit,
+  submitting,
+}: {
+  open: boolean;
+  distribution: Distribution | null;
+  onClose: () => void;
+  onSubmit: (items: ReturnItem[], reason: string) => void;
+  submitting: boolean;
+}) {
+  const [selectedQty, setSelectedQty] = useState<Record<string, number>>({});
+  const [reason, setReason] = useState("");
+
+  useEffect(() => {
+    if (distribution) {
+      setSelectedQty({});
+      setReason("");
+    }
+  }, [distribution]);
+
+  if (!distribution) return null;
+
+  const toggleItem = (itemId: string, maxQty: number) => {
+    setSelectedQty((prev) => {
+      const next = { ...prev };
+      if (next[itemId] !== undefined) delete next[itemId];
+      else next[itemId] = maxQty;
+      return next;
+    });
+  };
+
+  const updateQty = (itemId: string, qty: number, maxQty: number) => {
+    setSelectedQty((prev) => ({
+      ...prev,
+      [itemId]: Math.max(1, Math.min(qty, maxQty)),
+    }));
+  };
+
+  const handleSubmit = () => {
+    const items: ReturnItem[] = distribution.items
+      .filter((item) => selectedQty[item.id] !== undefined)
+      .map((item) => ({
+        productId: item.productId ?? item.id,
+        productName: item.productName,
+        quantity: selectedQty[item.id],
+      }));
+    onSubmit(items, reason);
+  };
+
+  const hasSelection = Object.keys(selectedQty).length > 0;
+
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      fullWidth
+      maxWidth="sm"
+      PaperProps={{ sx: { borderRadius: 3 } }}
+    >
+      <DialogTitle sx={{ pb: 1 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <AssignmentReturn sx={{ color: "#dc2626" }} />
+          <Typography variant="subtitle1" fontWeight="bold">
+            Ajukan Return Barang
+          </Typography>
+        </Box>
+        <Typography variant="caption" color="text.secondary">
+          Distribusi #{distribution.id.slice(0, 8).toUpperCase()}
+        </Typography>
+      </DialogTitle>
+
+      <DialogContent dividers>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          Pilih produk yang rusak/cacat dan tentukan jumlahnya. Pengajuan akan
+          ditinjau oleh admin.
+        </Typography>
+
+        <List dense disablePadding sx={{ mb: 2 }}>
+          {distribution.items.map((item) => {
+            const checked = selectedQty[item.id] !== undefined;
+            return (
+              <Card
+                key={item.id}
+                elevation={0}
+                sx={{
+                  mb: 1,
+                  borderRadius: 2,
+                  border: "1px solid",
+                  borderColor: checked ? "#fca5a5" : "divider",
+                  bgcolor: checked ? "#fef2f2" : "white",
+                }}
+              >
+                <CardContent sx={{ p: 1.5, "&:last-child": { pb: 1.5 } }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Checkbox
+                      checked={checked}
+                      onChange={() => toggleItem(item.id, item.quantity)}
+                      size="small"
+                      sx={{ p: 0.5 }}
+                    />
+                    <Box sx={{ flex: 1 }}>
+                      <Typography variant="body2" fontWeight={600}>
+                        {item.productName}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Tersedia: {item.quantity} {item.unit}
+                      </Typography>
+                    </Box>
+                    {checked && (
+                      <TextField
+                        type="number"
+                        size="small"
+                        value={selectedQty[item.id]}
+                        onChange={(e) =>
+                          updateQty(
+                            item.id,
+                            Number(e.target.value),
+                            item.quantity,
+                          )
+                        }
+                        inputProps={{
+                          min: 1,
+                          max: item.quantity,
+                          style: { textAlign: "center", width: 50 },
+                        }}
+                        sx={{
+                          "& .MuiOutlinedInput-root": { borderRadius: 1.5 },
+                        }}
+                      />
+                    )}
+                  </Box>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </List>
+
+        <TextField
+          fullWidth
+          label="Alasan Return (opsional)"
+          placeholder="Contoh: kemasan bocor, segel rusak, dll"
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          multiline
+          rows={2}
+          size="small"
+          sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
+        />
+      </DialogContent>
+
+      <DialogActions sx={{ p: 2, gap: 1 }}>
+        <Button
+          onClick={onClose}
+          variant="outlined"
+          fullWidth
+          sx={{ borderRadius: 2 }}
+          disabled={submitting}
+        >
+          Batal
+        </Button>
+        <Button
+          onClick={handleSubmit}
+          variant="contained"
+          fullWidth
+          disabled={!hasSelection || submitting}
+          sx={{
+            borderRadius: 2,
+            fontWeight: "bold",
+            bgcolor: "#dc2626",
+            "&:hover": { bgcolor: "#b91c1c" },
+          }}
+        >
+          {submitting ? (
+            <CircularProgress size={18} color="inherit" />
+          ) : (
+            "Ajukan Return"
+          )}
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 }
 
@@ -263,31 +654,40 @@ export default function DistributionPage({
   distributorId,
 }: DistributionPageProps) {
   const [distributions, setDistributions] = useState<Distribution[]>([]);
+  const [returns, setReturns] = useState<ReturnRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const [confirmDialog, setConfirmDialog] = useState<string | null>(null);
-  const [filterStatus, setFilterStatus] = useState<
-    "all" | "pending" | "sent" | "received"
-  >("all");
+  const [tab, setTab] = useState<TabKey>("all");
 
-  const fetchDistributions = useCallback(async () => {
+  // Return form state
+  const [returnDialogDist, setReturnDialogDist] = useState<Distribution | null>(
+    null,
+  );
+  const [submittingReturn, setSubmittingReturn] = useState(false);
+
+  const fetchAll = useCallback(async () => {
     if (!distributorId) return;
     setLoading(true);
     setError("");
     try {
-      const data = await getDistributions(distributorId);
-      setDistributions(data as Distribution[]);
+      const [distData, returnData] = await Promise.all([
+        getDistributions(distributorId),
+        getReturns(distributorId),
+      ]);
+      setDistributions(distData as Distribution[]);
+      setReturns(returnData);
     } catch (err: any) {
-      setError(err.message ?? "Gagal memuat data distribusi.");
+      setError(err.message ?? "Gagal memuat data.");
     } finally {
       setLoading(false);
     }
   }, [distributorId]);
 
   useEffect(() => {
-    fetchDistributions();
-  }, [fetchDistributions]);
+    fetchAll();
+  }, [fetchAll]);
 
   const handleConfirm = async (id: string) => {
     setConfirmDialog(null);
@@ -306,19 +706,38 @@ export default function DistributionPage({
     }
   };
 
-  const filtered =
-    filterStatus === "all"
+  const handleSubmitReturn = async (items: ReturnItem[], reason: string) => {
+    if (!returnDialogDist) return;
+    setSubmittingReturn(true);
+    setError("");
+    try {
+      await createReturn(distributorId, returnDialogDist.id, items, reason);
+      setReturnDialogDist(null);
+      setTab("return");
+      fetchAll();
+    } catch (err: any) {
+      setError(err.message ?? "Gagal mengajukan return.");
+    } finally {
+      setSubmittingReturn(false);
+    }
+  };
+
+  const filteredDist =
+    tab === "all" || tab === "return"
       ? distributions
-      : distributions.filter((d) => d.status === filterStatus);
+      : distributions.filter((d) => d.status === tab);
 
   const countByStatus = (s: string) =>
     distributions.filter((d) => d.status === s).length;
+  const countByReturnStatus = (s: string) =>
+    returns.filter((r) => r.status === s).length;
 
-  const filterBtns: { key: typeof filterStatus; label: string }[] = [
+  const tabBtns: { key: TabKey; label: string }[] = [
     { key: "all", label: `Semua (${distributions.length})` },
     { key: "sent", label: `Dikirim (${countByStatus("sent")})` },
     { key: "pending", label: `Pending (${countByStatus("pending")})` },
     { key: "received", label: `Diterima (${countByStatus("received")})` },
+    { key: "return", label: `Return (${returns.length})` },
   ];
 
   return (
@@ -347,7 +766,7 @@ export default function DistributionPage({
           </Typography>
         </Box>
         <IconButton
-          onClick={fetchDistributions}
+          onClick={fetchAll}
           disabled={loading}
           size="small"
           sx={{
@@ -363,7 +782,7 @@ export default function DistributionPage({
         </IconButton>
       </Box>
 
-      {!loading && countByStatus("sent") > 0 && (
+      {!loading && tab !== "return" && countByStatus("sent") > 0 && (
         <Alert
           severity="info"
           sx={{ mb: 2, borderRadius: 2 }}
@@ -374,6 +793,19 @@ export default function DistributionPage({
           </Typography>
           <Typography variant="caption">
             Tekan "Konfirmasi Diterima" setelah barang tiba
+          </Typography>
+        </Alert>
+      )}
+
+      {!loading && tab === "return" && countByReturnStatus("pending") > 0 && (
+        <Alert
+          severity="warning"
+          sx={{ mb: 2, borderRadius: 2 }}
+          icon={<HourglassEmpty />}
+        >
+          <Typography variant="body2" fontWeight={600}>
+            {countByReturnStatus("pending")} pengajuan return menunggu
+            persetujuan admin
           </Typography>
         </Alert>
       )}
@@ -389,16 +821,22 @@ export default function DistributionPage({
       )}
 
       <Box sx={{ display: "flex", gap: 1, mb: 2, overflowX: "auto", pb: 0.5 }}>
-        {filterBtns.map((btn) => (
+        {tabBtns.map((btn) => (
           <Chip
             key={btn.key}
             label={btn.label}
-            onClick={() => setFilterStatus(btn.key)}
-            variant={filterStatus === btn.key ? "filled" : "outlined"}
-            color={filterStatus === btn.key ? "primary" : "default"}
+            onClick={() => setTab(btn.key)}
+            variant={tab === btn.key ? "filled" : "outlined"}
+            color={
+              tab === btn.key
+                ? btn.key === "return"
+                  ? "error"
+                  : "primary"
+                : "default"
+            }
             size="small"
             sx={{
-              fontWeight: filterStatus === btn.key ? "bold" : "normal",
+              fontWeight: tab === btn.key ? "bold" : "normal",
               whiteSpace: "nowrap",
               cursor: "pointer",
             }}
@@ -407,7 +845,7 @@ export default function DistributionPage({
       </Box>
 
       {loading ? (
-        <Box sx={{ space: 2 }}>
+        <Box>
           {[1, 2, 3].map((i) => (
             <Skeleton
               key={i}
@@ -417,20 +855,34 @@ export default function DistributionPage({
             />
           ))}
         </Box>
-      ) : filtered.length === 0 ? (
+      ) : tab === "return" ? (
+        returns.length === 0 ? (
+          <Box sx={{ textAlign: "center", py: 8 }}>
+            <AssignmentReturn sx={{ fontSize: 56, color: "#cbd5e1", mb: 2 }} />
+            <Typography variant="body1" color="text.secondary" fontWeight={600}>
+              Belum ada pengajuan return
+            </Typography>
+            <Typography variant="caption" color="text.disabled">
+              Ajukan return dari distribusi yang sudah diterima
+            </Typography>
+          </Box>
+        ) : (
+          returns.map((ret) => <ReturnCard key={ret.id} ret={ret} />)
+        )
+      ) : filteredDist.length === 0 ? (
         <Box sx={{ textAlign: "center", py: 8 }}>
           <LocalShipping sx={{ fontSize: 56, color: "#cbd5e1", mb: 2 }} />
           <Typography variant="body1" color="text.secondary" fontWeight={600}>
-            {filterStatus === "all"
+            {tab === "all"
               ? "Belum ada kiriman distribusi"
-              : `Tidak ada distribusi berstatus "${statusConfig[filterStatus as keyof typeof statusConfig]?.label}"`}
+              : `Tidak ada distribusi berstatus "${statusConfig[tab as keyof typeof statusConfig]?.label}"`}
           </Typography>
           <Typography variant="caption" color="text.disabled">
             Distribusi dari pabrik akan muncul di sini
           </Typography>
         </Box>
       ) : (
-        filtered.map((dist) => (
+        filteredDist.map((dist) => (
           <Box key={dist.id} sx={{ position: "relative" }}>
             {confirmingId === dist.id && (
               <Box
@@ -451,11 +903,13 @@ export default function DistributionPage({
             <DistributionCard
               distribution={dist}
               onConfirm={(id) => setConfirmDialog(id)}
+              onReturn={(d) => setReturnDialogDist(d)}
             />
           </Box>
         ))
       )}
 
+      {/* Dialog konfirmasi terima */}
       <Dialog
         open={Boolean(confirmDialog)}
         onClose={() => setConfirmDialog(null)}
@@ -472,7 +926,9 @@ export default function DistributionPage({
         <DialogContent>
           <Typography variant="body2" color="text.secondary">
             Pastikan semua barang sudah diterima dengan lengkap dan sesuai.
-            Setelah dikonfirmasi, status tidak dapat diubah kembali.
+            Setelah dikonfirmasi, status tidak dapat diubah kembali. Jika ada
+            barang rusak, gunakan fitur <strong>Ajukan Return</strong> setelah
+            konfirmasi.
           </Typography>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
@@ -493,6 +949,15 @@ export default function DistributionPage({
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Dialog ajukan return */}
+      <ReturnFormDialog
+        open={Boolean(returnDialogDist)}
+        distribution={returnDialogDist}
+        onClose={() => setReturnDialogDist(null)}
+        onSubmit={handleSubmitReturn}
+        submitting={submittingReturn}
+      />
 
       <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
     </Box>

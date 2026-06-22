@@ -489,3 +489,112 @@ export const updateDistributorProfile = async (
     description: `Distributor ${oldName} memperbarui profil → Nama: ${data.distributor_name}, Telepon: ${data.phone || '—'}, Email: ${data.email || '—'}, Alamat: ${data.address || '—'}`,
   }]);
 };
+
+export interface ReturnItem {
+  productId: string;
+  productName?: string;
+  quantity: number;
+}
+
+export interface ReturnDetail {
+  id: string;
+  productName: string;
+  unit: string;
+  quantity: number;
+}
+
+export interface ReturnRow {
+  id: string;
+  distributionId: string;
+  status: "pending" | "approved" | "rejected";
+  reason: string | null;
+  created_at: string;
+  reviewed_at: string | null;
+  items: ReturnDetail[];
+}
+
+export const getReturns = async (distributorId: string): Promise<ReturnRow[]> => {
+  const { data: returnsData, error } = await supabaseAdmin
+    .from("returns")
+    .select("id, distribution_id, status, reason, created_at, reviewed_at")
+    .eq("distributor_id", distributorId)
+    .order("created_at", { ascending: false });
+
+  if (error) throw new Error(error.message);
+  if (!returnsData || returnsData.length === 0) return [];
+
+  const returnIds = returnsData.map((r: any) => r.id);
+  const { data: details } = await supabaseAdmin
+    .from("return_details")
+    .select("id, return_id, quantity, product_id, products(product_name, unit)")
+    .in("return_id", returnIds);
+
+  const detailMap: Record<string, ReturnDetail[]> = {};
+  for (const det of details ?? []) {
+    if (!detailMap[det.return_id]) detailMap[det.return_id] = [];
+    detailMap[det.return_id].push({
+      id: det.id,
+      productName: (det.products as any)?.product_name ?? "—",
+      unit: (det.products as any)?.unit ?? "pcs",
+      quantity: det.quantity,
+    });
+  }
+
+  return returnsData.map((r: any) => ({
+    id: r.id,
+    distributionId: r.distribution_id,
+    status: r.status,
+    reason: r.reason,
+    created_at: r.created_at,
+    reviewed_at: r.reviewed_at,
+    items: detailMap[r.id] ?? [],
+  }));
+};
+export const createReturn = async (
+  distributorId: string,
+  distributionId: string,
+  items: ReturnItem[],
+  reason: string
+) => {
+  if (items.length === 0) throw new Error("Pilih minimal 1 produk untuk di-return.");
+
+  const { data: dist, error: distErr } = await supabaseAdmin
+    .from("distributions")
+    .select("id, distributor_id, status")
+    .eq("id", distributionId)
+    .single();
+
+  if (distErr || !dist) throw new Error("Distribusi tidak ditemukan.");
+  if (dist.distributor_id !== distributorId) throw new Error("Distribusi ini bukan milik Anda.");
+  if (dist.status !== "received") throw new Error("Hanya distribusi yang sudah diterima yang bisa di-return.");
+
+  const { data: ret, error: retErr } = await supabaseAdmin
+    .from("returns")
+    .insert([{
+      distribution_id: distributionId,
+      distributor_id: distributorId,
+      status: "pending",
+      reason: reason || null,
+    }])
+    .select()
+    .single();
+
+  if (retErr) throw new Error(retErr.message);
+
+  const { error: detailErr } = await supabaseAdmin
+    .from("return_details")
+    .insert(items.map((item) => ({
+      return_id: ret.id,
+      product_id: item.productId,
+      quantity: item.quantity,
+    })));
+
+  if (detailErr) throw new Error(detailErr.message);
+
+  await supabaseAdmin.from("activity_logs").insert([{
+    activity_type: "create_return",
+    description: `Distributor mengajukan return #${ret.id.slice(0, 8)} untuk distribusi #${distributionId.slice(0, 8)} — ${items.length} jenis produk${reason ? ` (Alasan: ${reason})` : ""}`,
+  }]);
+
+  return ret;
+};
