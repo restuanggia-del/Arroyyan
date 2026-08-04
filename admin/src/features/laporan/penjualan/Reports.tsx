@@ -19,7 +19,7 @@ import {
   DistributionReportRow,
   TopProduct,
   StockReportRow,
-} from "../../services/reportService";
+} from "../../../services/reportService";
 
 type ReportType = "sales" | "distribution" | "topProducts" | "stock";
 

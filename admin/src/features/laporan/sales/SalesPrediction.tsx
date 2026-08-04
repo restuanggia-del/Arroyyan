@@ -17,7 +17,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { getMonthlySales, MonthlySales } from "../../services/reportService";
+import { getMonthlySales, MonthlySales } from "../../../services/reportService";
 
 export function SalesPrediction() {
   const [historicalData, setHistoricalData] = useState<MonthlySales[]>([]);

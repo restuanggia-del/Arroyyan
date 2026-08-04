@@ -1,15 +1,15 @@
 import { useState, useEffect } from "react";
-import { Logo } from "./components/Logo";
-import { SearchBar } from "./components/SearchBar";
-import { UserProfile } from "./components/UserProfile";
-import { Sidebar } from "./components/Sidebar";
-import { StatCard } from "./components/StatCard";
-import { DashboardChart } from "./components/DashboardChart";
-import { TopProducts } from "./components/TopProducts";
-import { StockAlert } from "./components/StockAlert";
-import { Calendar } from "./components/Calendar";
-import { ProductManagement } from "./components/ProductManagement";
-import { StockManagement } from "./components/StockManagement";
+import { Logo } from "../components/shared/Logo";
+import { SearchBar } from "../components/shared/SearchBar";
+import { UserProfile } from "../features/pengaturan/UserProfile";
+import { Sidebar } from "./layouts/Sidebar";
+import { StatCard } from "../components/shared/StatCard";
+import { DashboardChart } from "../components/shared/DashboardChart";
+import { TopProducts } from "../components/shared/TopProducts";
+import { StockAlert } from "../components/shared/StockAlert";
+import { Calendar } from "../components/shared/Calendar";
+import { ProductManagement } from "../features/produk/ProductManagement";
+import { StockManagement } from "../features/stok/StockManagement";
 import {
   DollarSign,
   TrendingUp,
@@ -17,16 +17,16 @@ import {
   Package,
   RefreshCw,
 } from "lucide-react";
-import { DistributionManagement } from "./components/DistributionManagement";
-import { DistributorManagement } from "./components/DistributorManagement";
-import { SalesTransaction } from "./components/SalesTransaction";
-import { CustomerManagement } from "./components/CustomerManagement";
-import { Reports } from "./components/Reports";
-import { SalesPrediction } from "./components/SalesPrediction";
-import { AuditLog } from "./components/AuditLog";
-import { SystemSettings } from "./components/SystemSettings";
-import { Register, RegisterData } from "./components/Register";
-import { Login } from "./components/Login";
+import { DistributionManagement } from "../features/distribusi/DistributionManagement";
+import { DistributorManagement } from "../features/distributor-karyawan/DistributorManagement";
+import { SalesTransaction } from "../features/transaksi-penjualan/SalesTransaction";
+import { CustomerManagement } from "../features/customer/CustomerManagement";
+import { Reports } from "../features/laporan/penjualan/Reports";
+import { SalesPrediction } from "../features/laporan/sales/SalesPrediction";
+import { AuditLog } from "../features/pengaturan/AuditLog";
+import { SystemSettings } from "../features/pengaturan/SystemSettings";
+import { Register, RegisterData } from "../features/auth/Register";
+import { Login } from "../features/auth/Login";
 import {
   loginUser,
   getCurrentUserRole,
