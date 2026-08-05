@@ -7,6 +7,8 @@ ALTER TABLE distributors ENABLE ROW LEVEL SECURITY;
 
 ALTER TABLE products ENABLE ROW LEVEL SECURITY;
 
+ALTER TABLE product_prices ENABLE ROW LEVEL SECURITY;
+
 ALTER TABLE stocks ENABLE ROW LEVEL SECURITY;
 
 ALTER TABLE stock_movements ENABLE ROW LEVEL SECURITY;
@@ -36,6 +38,13 @@ SELECT
 -- PRODUCTS POLICY
 -- =====================================================
 CREATE POLICY "Everyone can view products" ON products FOR
+SELECT
+    USING (true);
+
+-- =====================================================
+-- PRODUCT PRICE POLICY
+-- =====================================================
+CREATE POLICY "Everyone can view product prices" ON product_prices FOR
 SELECT
     USING (true);
 

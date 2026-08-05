@@ -47,6 +47,19 @@ CREATE TABLE
     );
 
 -- =====================================================
+-- PRODUCT PRICE VARIANTS
+-- =====================================================
+CREATE TABLE
+    product_prices (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4 (),
+        product_id UUID NOT NULL REFERENCES products (id) ON DELETE CASCADE,
+        price NUMERIC(12, 2) NOT NULL,
+        label VARCHAR(100),
+        is_active BOOLEAN DEFAULT TRUE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+-- =====================================================
 -- STOCKS
 -- =====================================================
 CREATE TABLE

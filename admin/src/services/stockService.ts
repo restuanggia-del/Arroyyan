@@ -18,7 +18,7 @@ export interface StockMovement {
     id: string;
     product_id: string;
     karyawan_id: string | null;
-    movement_type: "stock_in" | "distribution_out" | "distribution_in" | "sale_out";
+    movement_type: "stock_in" | "stok_awal" | "distribution_out" | "distribution_in" | "sale_out";
     quantity: number;
     note: string | null;
     created_at: string;
@@ -116,7 +116,7 @@ export const getStockMovements = async (limit = 50) => {
 export const addCentralStock = async (
     productId: string,
     quantity: number,
-    movementType: "stock_in",
+    movementType: "stock_in" | "stok_awal",
     note: string
 ) => {
     const { data: existing, error: fetchErr } = await supabaseAdmin
