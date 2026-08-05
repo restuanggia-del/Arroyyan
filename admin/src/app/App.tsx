@@ -22,6 +22,7 @@ import { DistributionManagement } from "../features/distribusi/DistributionManag
 import { KaryawanManagement } from "../features/distributor-karyawan/KaryawanManagement";
 import { SalesTransaction } from "../features/transaksi-penjualan/SalesTransaction";
 import { TransaksiTitipan } from "../features/transaksi-titipan/TransaksiTitipan";
+import { PotonganSetoranManagement } from "../features/potongan-setoran/PotonganSetoranManagement";
 import { CustomerManagement } from "../features/customer/CustomerManagement";
 import { Reports } from "../features/laporan/penjualan/Reports";
 import { SalesPrediction } from "../features/laporan/sales/SalesPrediction";
@@ -350,6 +351,10 @@ export default function App() {
         return <SalesTransaction role="admin" karyawanId={undefined} />;
       case "titipan":
         return <TransaksiTitipan />;
+      case "potongan-setoran":
+        return (
+          <PotonganSetoranManagement currentUserId={currentUser?.id ?? ""} />
+        );
       case "pelanggan":
         return <CustomerManagement />;
       case "laporan":
