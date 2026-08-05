@@ -26,6 +26,7 @@ import { SalesPrediction } from "../features/laporan/sales/SalesPrediction";
 import { AuditLog } from "../features/pengaturan/AuditLog";
 import { SystemSettings } from "../features/pengaturan/SystemSettings";
 import { Login } from "../features/auth/Login";
+import { toast } from "sonner";
 import {
   loginUser,
   getCurrentUserRole,
@@ -132,35 +133,45 @@ export default function App() {
 
     const result = await loginUser(email, password);
     if (result.error) {
-      setLoginError("Email atau password salah. Silakan coba lagi.");
+      const message = "Email atau password salah. Silakan coba lagi.";
+      setLoginError(message);
+      toast.error("Login Gagal", { description: message });
       return;
     }
 
     const userData = await getCurrentUserRole();
     if (!userData) {
       await supabase.auth.signOut();
-      setLoginError("Gagal mendapatkan data akun. Hubungi administrator.");
+      const message = "Gagal mendapatkan data akun. Hubungi administrator.";
+      setLoginError(message);
+      toast.error("Login Gagal", { description: message });
       return;
     }
 
     if (userData.role === "distributor") {
       await supabase.auth.signOut();
-      setLoginError(
+      const message =
         "Akun distributor tidak dapat masuk ke panel admin. " +
-          "Silakan gunakan aplikasi mobile distributor.",
-      );
+        "Silakan gunakan aplikasi mobile distributor.";
+      setLoginError(message);
+      toast.error("Akses Ditolak", { description: message });
       return;
     }
 
     if (userData.role !== "admin") {
       await supabase.auth.signOut();
-      setLoginError("Akun Anda tidak memiliki akses ke panel admin ini.");
+      const message = "Akun Anda tidak memiliki akses ke panel admin ini.";
+      setLoginError(message);
+      toast.error("Akses Ditolak", { description: message });
       return;
     }
 
     setCurrentUser(userData);
     setIsAuthenticated(true);
     setLoginError(null);
+    toast.success("Login Berhasil", {
+      description: `Selamat datang kembali, ${userData.name}!`,
+    });
   };
 
   const handleMenuChange = (menuId: string) => {

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { toast } from "sonner";
 import {
   ShoppingCart,
   Truck,
@@ -25,15 +26,30 @@ type ReportType = "sales" | "distribution" | "topProducts" | "stock";
 
 const formatRp = (n: number) => "Rp " + n.toLocaleString("id-ID");
 
-const exportToExcel = async (data: any[], fileName: string) => {
+// `headers` menjamin baris judul kolom (template) selalu ditulis ke sheet,
+// walau `data` kosong. Tanpa opsi `header` eksplisit, XLSX.utils.json_to_sheet([])
+// menghasilkan sheet yang benar-benar kosong (tanpa header sama sekali).
+const exportToExcel = async (
+  data: Record<string, any>[],
+  headers: string[],
+  fileName: string,
+) => {
   try {
     const XLSX = await import("xlsx");
-    const ws = XLSX.utils.json_to_sheet(data);
+    const ws = XLSX.utils.json_to_sheet(data, { header: headers });
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Laporan");
     XLSX.writeFile(wb, `${fileName}.xlsx`);
+
+    if (data.length === 0) {
+      toast.info("File Excel diunduh dengan template kosong", {
+        description: "Tidak ada data pada periode/filter yang dipilih.",
+      });
+    }
   } catch {
-    alert("Gagal export Excel.\nJalankan: npm install xlsx");
+    toast.error("Gagal export Excel", {
+      description: "Jalankan: npm install xlsx",
+    });
   }
 };
 
@@ -59,8 +75,16 @@ const exportToPDF = async (
       headStyles: { fillColor: [37, 99, 235] },
     });
     doc.save(`${fileName}.pdf`);
+
+    if (rows.length === 0) {
+      toast.info("File PDF diunduh dengan template kosong", {
+        description: "Tidak ada data pada periode/filter yang dipilih.",
+      });
+    }
   } catch {
-    alert("Gagal export PDF.\nJalankan: npm install jspdf jspdf-autotable");
+    toast.error("Gagal export PDF", {
+      description: "Jalankan: npm install jspdf jspdf-autotable",
+    });
   }
 };
 
@@ -137,6 +161,7 @@ export function Reports() {
           Total: r.total,
           Pembayaran: r.payment,
         })),
+        ["Tanggal", "No.", "Pelanggan", "Karyawan", "Produk", "Total", "Pembayaran"],
         `laporan-penjualan-${startDate}-${endDate}`,
       );
     } else if (activeReport === "distribution") {
@@ -149,6 +174,7 @@ export function Reports() {
           "Total Qty": r.totalQty,
           Status: r.status,
         })),
+        ["Tanggal", "No.", "Karyawan", "Produk", "Total Qty", "Status"],
         `laporan-distribusi-${startDate}-${endDate}`,
       );
     } else if (activeReport === "topProducts") {
@@ -160,6 +186,7 @@ export function Reports() {
           "Total Terjual": r.totalSold,
           Pendapatan: r.revenue,
         })),
+        ["Peringkat", "Produk", "Kategori", "Total Terjual", "Pendapatan"],
         "laporan-produk-terlaris",
       );
     } else {
@@ -173,6 +200,7 @@ export function Reports() {
           Minimum: r.minimum,
           Status: r.status,
         })),
+        ["Produk", "Kategori", "Stok Pusat", "Stok Karyawan", "Total", "Minimum", "Status"],
         `laporan-stok-${today}`,
       );
     }
