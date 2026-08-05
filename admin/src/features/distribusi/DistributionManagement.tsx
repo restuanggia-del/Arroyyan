@@ -152,7 +152,7 @@ export function DistributionManagement({
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-3 mb-1 flex-wrap">
               <h3 className="font-semibold text-gray-900">
-                {dist.distributors?.distributor_name ?? "—"}
+                {dist.karyawan?.nama ?? "—"}
               </h3>
               <span
                 className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${statusBadge[dist.status]}`}
@@ -162,10 +162,10 @@ export function DistributionManagement({
               </span>
             </div>
 
-            {dist.distributors?.address && (
+            {dist.karyawan?.address && (
               <div className="flex items-center gap-1.5 text-sm text-gray-500 mb-3">
                 <MapPin className="w-3.5 h-3.5" />
-                <span>{dist.distributors.address}</span>
+                <span>{dist.karyawan.address}</span>
               </div>
             )}
 
@@ -235,7 +235,7 @@ export function DistributionManagement({
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-3 mb-1 flex-wrap">
               <h3 className="font-semibold text-gray-900">
-                {ret.distributors?.distributor_name ?? "—"}
+                {ret.karyawan?.nama ?? "—"}
               </h3>
               <span
                 className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${returnStatusBadge[ret.status]}`}
@@ -310,10 +310,10 @@ export function DistributionManagement({
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 mb-1">
-            Distribusi ke Distributor
+            Distribusi ke Karyawan
           </h1>
           <p className="text-gray-600">
-            Kelola pengiriman barang dari pabrik ke distributor
+            Kelola pengiriman barang dari pabrik ke karyawan
           </p>
         </div>
         <button
@@ -569,7 +569,7 @@ export function DistributionManagement({
               Tolak Pengajuan Return?
             </h3>
             <p className="text-sm text-gray-600 text-center mb-6">
-              Stok distributor tidak akan berubah. Pastikan keputusan ini sudah
+              Stok karyawan tidak akan berubah. Pastikan keputusan ini sudah
               tepat.
             </p>
             <div className="flex gap-3">

@@ -16,7 +16,7 @@ import { supabaseAdmin } from "../../lib/supabaseAdmin";
 
 interface UserProfileProps {
   name: string;
-  role: "Admin" | "Distributor";
+  role: "Admin" | "Karyawan";
   onSettings: () => void;
   onLogout: () => void;
   userId?: string;

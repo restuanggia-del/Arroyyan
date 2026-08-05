@@ -137,7 +137,7 @@ export const getLowStockItems = async (minimum = 100): Promise<LowStockItem[]> =
     const { data, error } = await supabaseAdmin
         .from("stocks")
         .select("product_id, stock_quantity, products ( product_name )")
-        .is("distributor_id", null)
+        .is("karyawan_id", null)
         .lt("stock_quantity", minimum);
 
     if (error || !data) return [];
@@ -153,7 +153,7 @@ export interface SalesReportRow {
     id: string;
     date: string;
     customer: string;
-    distributor: string;
+    karyawan: string;
     items: string;
     total: number;
     payment: string;
@@ -168,7 +168,7 @@ export const getSalesReport = async (
         .select(`
       id, created_at, total_price, payment_method,
       customers    ( customer_name ),
-      distributors ( distributor_name )
+      karyawan ( nama )
     `)
         .gte("created_at", `${startDate}T00:00:00`)
         .lte("created_at", `${endDate}T23:59:59`)
@@ -194,7 +194,7 @@ export const getSalesReport = async (
         id: trx.id.slice(0, 8).toUpperCase(),
         date: new Date(trx.created_at).toLocaleDateString("id-ID"),
         customer: trx.customers?.customer_name ?? "Umum",
-        distributor: trx.distributors?.distributor_name ?? "Pabrik",
+        karyawan: trx.karyawan?.nama ?? "Pabrik",
         items: (detailMap[trx.id] ?? []).join(", "),
         total: trx.total_price,
         payment: trx.payment_method === "cash" ? "Cash" : "Transfer",
@@ -204,7 +204,7 @@ export const getSalesReport = async (
 export interface DistributionReportRow {
     id: string;
     date: string;
-    distributor: string;
+    karyawan: string;
     items: string;
     totalQty: number;
     status: string;
@@ -218,7 +218,7 @@ export const getDistributionReport = async (
         .from("distributions")
         .select(`
       id, distribution_date, status,
-      distributors        ( distributor_name ),
+      karyawan        ( nama ),
       distribution_details( quantity, products ( product_name ) )
     `)
         .gte("distribution_date", startDate)
@@ -234,7 +234,7 @@ export const getDistributionReport = async (
         return {
             id: dist.id.slice(0, 8).toUpperCase(),
             date: new Date(dist.distribution_date).toLocaleDateString("id-ID"),
-            distributor: dist.distributors?.distributor_name ?? "—",
+            karyawan: dist.karyawan?.nama ?? "—",
             items: details.map((d: any) => `${d.products?.product_name ?? "?"} (${d.quantity})`).join(", "),
             totalQty: details.reduce((s: number, d: any) => s + (d.quantity ?? 0), 0),
             status: statusMap[dist.status] ?? dist.status,
@@ -246,7 +246,7 @@ export interface StockReportRow {
     product_name: string;
     category: string;
     stockPusat: number;
-    stockDistributor: number;
+    stockKaryawan: number;
     total: number;
     minimum: number;
     status: string;
@@ -255,24 +255,24 @@ export interface StockReportRow {
 export const getStockReport = async (minimum = 100): Promise<StockReportRow[]> => {
     const { data, error } = await supabaseAdmin
         .from("stocks")
-        .select("product_id, distributor_id, stock_quantity, products ( product_name, category )");
+        .select("product_id, karyawan_id, stock_quantity, products ( product_name, category )");
 
     if (error || !data) return [];
 
-    const map: Record<string, { product_name: string; category: string; pusat: number; distributor: number }> = {};
+    const map: Record<string, { product_name: string; category: string; pusat: number; karyawan: number }> = {};
     for (const s of data as any[]) {
         const pid = s.product_id;
-        if (!map[pid]) map[pid] = { product_name: s.products?.product_name ?? "—", category: s.products?.category ?? "—", pusat: 0, distributor: 0 };
-        if (s.distributor_id === null) map[pid].pusat += s.stock_quantity;
-        else map[pid].distributor += s.stock_quantity;
+        if (!map[pid]) map[pid] = { product_name: s.products?.product_name ?? "—", category: s.products?.category ?? "—", pusat: 0, karyawan: 0 };
+        if (s.karyawan_id === null) map[pid].pusat += s.stock_quantity;
+        else map[pid].karyawan += s.stock_quantity;
     }
 
     return Object.values(map).map((p) => ({
         product_name: p.product_name,
         category: p.category,
         stockPusat: p.pusat,
-        stockDistributor: p.distributor,
-        total: p.pusat + p.distributor,
+        stockKaryawan: p.karyawan,
+        total: p.pusat + p.karyawan,
         minimum,
         status: p.pusat < minimum ? "Kritis" : "Aman",
     }));

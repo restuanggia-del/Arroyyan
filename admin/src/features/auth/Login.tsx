@@ -13,7 +13,6 @@ import { supabase } from "../../lib/supabase";
 
 interface LoginProps {
   onLogin: (email: string, password: string, rememberMe: boolean) => void;
-  onSwitchToRegister: () => void;
   externalError?: string | null;
 }
 
@@ -61,7 +60,6 @@ function BrandingPanel() {
 
 export function Login({
   onLogin,
-  onSwitchToRegister,
   externalError,
 }: LoginProps) {
   const [view, setView] = useState<View>("login");
@@ -309,18 +307,6 @@ export function Login({
           )}
         </button>
       </form>
-
-      <div className="mt-8 text-center">
-        <p className="text-sm text-gray-500">
-          Daftarkan akun distributor baru?{" "}
-          <button
-            onClick={onSwitchToRegister}
-            className="text-blue-600 hover:text-blue-700 font-semibold cursor-pointer"
-          >
-            Daftar Sekarang
-          </button>
-        </p>
-      </div>
 
       <div className="mt-6 p-3 bg-blue-50 border border-blue-100 rounded-xl text-center">
         <p className="text-xs text-blue-600">

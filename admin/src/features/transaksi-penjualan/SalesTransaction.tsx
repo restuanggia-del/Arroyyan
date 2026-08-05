@@ -16,7 +16,7 @@ import {
 import { getActiveProducts, Product } from "../../services/productService";
 import {
   getCentralStock,
-  getDistributorStock,
+  getKaryawanStock,
 } from "../../services/stockService";
 import { getAllCustomers, Customer } from "../../services/customerService";
 import {
@@ -36,15 +36,15 @@ interface CartItem {
 }
 
 interface SalesTransactionProps {
-  role: "admin" | "distributor";
-  distributorId?: string;
+  role: "admin" | "karyawan";
+  karyawanId?: string;
 }
 
 const formatRp = (n: number) => "Rp " + n.toLocaleString("id-ID");
 
 export function SalesTransaction({
   role,
-  distributorId,
+  karyawanId,
 }: SalesTransactionProps) {
   const [products, setProducts] = useState<Product[]>([]);
   const [stockMap, setStockMap] = useState<Record<string, number>>({});
@@ -74,8 +74,8 @@ export function SalesTransaction({
       getAllCustomers(),
       role === "admin"
         ? getCentralStock()
-        : distributorId
-          ? getDistributorStock(distributorId)
+        : karyawanId
+          ? getKaryawanStock(karyawanId)
           : Promise.resolve({ data: [] }),
       getSystemSettings(),
     ]);
@@ -90,7 +90,7 @@ export function SalesTransaction({
     }
     setStockMap(map);
     setLoadingData(false);
-  }, [role, distributorId]);
+  }, [role, karyawanId]);
 
   useEffect(() => {
     loadData();
@@ -148,7 +148,7 @@ export function SalesTransaction({
     const txOptions =
       role === "admin"
         ? { mode: "admin" as const }
-        : { mode: "distributor" as const, distributorId: distributorId! };
+        : { mode: "karyawan" as const, karyawanId: karyawanId! };
 
     const { data, error } = await createTransaction(
       items,
@@ -167,7 +167,7 @@ export function SalesTransaction({
     setLastTransaction({
       id: data.id.slice(0, 8).toUpperCase(),
       date: new Date().toLocaleString("id-ID"),
-      sumber: role === "admin" ? "Penjualan Pabrik" : "Penjualan Distributor",
+      sumber: role === "admin" ? "Penjualan Pabrik" : "Penjualan Karyawan",
       customer: customer?.customer_name ?? "Umum",
       phone: customer?.phone ?? "",
       items: [...cart],
@@ -219,14 +219,14 @@ export function SalesTransaction({
           >
             {role === "admin"
               ? "Mode Penjualan Pabrik"
-              : "Mode Penjualan Distributor"}
+              : "Mode Penjualan Karyawan"}
           </p>
           <p
             className={`text-xs ${role === "admin" ? "text-blue-600" : "text-green-600"}`}
           >
             {role === "admin"
               ? "Stok yang berkurang: stok pusat"
-              : "Stok yang berkurang: stok distributor Anda"}
+              : "Stok yang berkurang: stok karyawan Anda"}
           </p>
         </div>
       </div>

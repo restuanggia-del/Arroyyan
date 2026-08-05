@@ -18,28 +18,24 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { DistributionManagement } from "../features/distribusi/DistributionManagement";
-import { DistributorManagement } from "../features/distributor-karyawan/DistributorManagement";
+import { KaryawanManagement } from "../features/distributor-karyawan/KaryawanManagement";
 import { SalesTransaction } from "../features/transaksi-penjualan/SalesTransaction";
 import { CustomerManagement } from "../features/customer/CustomerManagement";
 import { Reports } from "../features/laporan/penjualan/Reports";
 import { SalesPrediction } from "../features/laporan/sales/SalesPrediction";
 import { AuditLog } from "../features/pengaturan/AuditLog";
 import { SystemSettings } from "../features/pengaturan/SystemSettings";
-import { Register, RegisterData } from "../features/auth/Register";
 import { Login } from "../features/auth/Login";
 import {
   loginUser,
   getCurrentUserRole,
-  registerDistributor,
 } from "../services/authService";
-import { getPendingDistributors } from "../services/distributorService";
 import {
   getDashboardStats,
   getMonthlySales,
   DashboardStats,
 } from "../services/reportService";
 import { supabase } from "../lib/supabase";
-import { supabaseAdmin } from "../lib/supabaseAdmin";
 
 const calcMA = (values: number[], n: number): number => {
   if (values.length < n) return 0;
@@ -56,11 +52,8 @@ const formatRp = (n: number): string => {
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [authView, setAuthView] = useState<"login" | "register">("login");
   const [currentUser, setCurrentUser] = useState<any>(null);
-  const [distributorId, setDistributorId] = useState<string>("");
   const [activeMenu, setActiveMenu] = useState("dashboard");
-  const [pendingDistributorCount, setPendingDistributorCount] = useState(0);
 
   const [loginError, setLoginError] = useState<string | null>(null);
 
@@ -92,26 +85,8 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (isAuthenticated && currentUser?.role === "admin") fetchPendingCount();
-  }, [isAuthenticated, currentUser]);
-
-  useEffect(() => {
     if (isAuthenticated && activeMenu === "dashboard") fetchDashboardData();
   }, [isAuthenticated, activeMenu]);
-
-  const fetchPendingCount = async () => {
-    const { data } = await getPendingDistributors();
-    if (data) setPendingDistributorCount(data.length);
-  };
-
-  const fetchDistributorId = async (userId: string) => {
-    const { data } = await supabaseAdmin
-      .from("distributors")
-      .select("id")
-      .eq("user_id", userId)
-      .single();
-    if (data) setDistributorId(data.id);
-  };
 
   const fetchDashboardData = async () => {
     setDashLoading(true);
@@ -188,49 +163,25 @@ export default function App() {
     setLoginError(null);
   };
 
-  const handleRegister = async (data: RegisterData) => {
-    const result = await registerDistributor(data);
-    if (result.error) {
-      return { error: result.error };
-    }
-    return;
-  };
-
   const handleMenuChange = (menuId: string) => {
     setActiveMenu(menuId);
-    if (menuId === "distributor") fetchPendingCount();
   };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setIsAuthenticated(false);
     setCurrentUser(null);
-    setDistributorId("");
-    setAuthView("login");
     setActiveMenu("dashboard");
-    setPendingDistributorCount(0);
     setDashStats(null);
     setPrediction(null);
     setLoginError(null);
   };
 
   if (!isAuthenticated) {
-    return authView === "login" ? (
+    return (
       <Login
         onLogin={handleLogin}
-        onSwitchToRegister={() => {
-          setAuthView("register");
-          setLoginError(null);
-        }}
         externalError={loginError}
-      />
-    ) : (
-      <Register
-        onRegister={handleRegister}
-        onSwitchToLogin={() => {
-          setAuthView("login");
-          setLoginError(null);
-        }}
       />
     );
   }
@@ -380,8 +331,8 @@ export default function App() {
 
   const renderContent = () => {
     switch (activeMenu) {
-      case "distributor":
-        return <DistributorManagement />;
+      case "karyawan":
+        return <KaryawanManagement />;
       case "produk":
         return <ProductManagement />;
       case "stok":
@@ -389,7 +340,7 @@ export default function App() {
       case "distribusi":
         return <DistributionManagement currentUserId={currentUser?.id ?? ""} />;
       case "transaksi":
-        return <SalesTransaction role="admin" distributorId={undefined} />;
+        return <SalesTransaction role="admin" karyawanId={undefined} />;
       case "pelanggan":
         return <CustomerManagement />;
       case "laporan":
@@ -413,7 +364,6 @@ export default function App() {
         <Sidebar
           activeMenu={activeMenu}
           onMenuChange={handleMenuChange}
-          pendingDistributorCount={pendingDistributorCount}
         />
       </div>
       <div className="flex-1 flex flex-col overflow-hidden">

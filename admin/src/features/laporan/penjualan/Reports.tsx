@@ -132,7 +132,7 @@ export function Reports() {
           Tanggal: r.date,
           "No.": r.id,
           Pelanggan: r.customer,
-          Distributor: r.distributor,
+          Karyawan: r.karyawan,
           Produk: r.items,
           Total: r.total,
           Pembayaran: r.payment,
@@ -144,7 +144,7 @@ export function Reports() {
         distData.map((r) => ({
           Tanggal: r.date,
           "No.": r.id,
-          Distributor: r.distributor,
+          Karyawan: r.karyawan,
           Produk: r.items,
           "Total Qty": r.totalQty,
           Status: r.status,
@@ -168,7 +168,7 @@ export function Reports() {
           Produk: r.product_name,
           Kategori: r.category,
           "Stok Pusat": r.stockPusat,
-          "Stok Distributor": r.stockDistributor,
+          "Stok Karyawan": r.stockKaryawan,
           Total: r.total,
           Minimum: r.minimum,
           Status: r.status,
@@ -188,7 +188,7 @@ export function Reports() {
           "Tanggal",
           "No.",
           "Pelanggan",
-          "Distributor",
+          "Karyawan",
           "Produk",
           "Total",
           "Bayar",
@@ -197,7 +197,7 @@ export function Reports() {
           r.date,
           r.id,
           r.customer,
-          r.distributor,
+          r.karyawan,
           r.items,
           formatRp(r.total),
           r.payment,
@@ -207,11 +207,11 @@ export function Reports() {
     } else if (activeReport === "distribution") {
       await exportToPDF(
         `Laporan Distribusi (${startDate} s/d ${endDate})`,
-        ["Tanggal", "No.", "Distributor", "Produk", "Qty", "Status"],
+        ["Tanggal", "No.", "Karyawan", "Produk", "Qty", "Status"],
         distData.map((r) => [
           r.date,
           r.id,
-          r.distributor,
+          r.karyawan,
           r.items,
           r.totalQty,
           r.status,
@@ -238,7 +238,7 @@ export function Reports() {
           "Produk",
           "Kategori",
           "Pusat",
-          "Distributor",
+          "Karyawan",
           "Total",
           "Min",
           "Status",
@@ -247,7 +247,7 @@ export function Reports() {
           r.product_name,
           r.category,
           r.stockPusat,
-          r.stockDistributor,
+          r.stockKaryawan,
           r.total,
           r.minimum,
           r.status,
@@ -289,7 +289,7 @@ export function Reports() {
                   "Tanggal",
                   "No. Transaksi",
                   "Pelanggan",
-                  "Distributor",
+                  "Karyawan",
                   "Produk",
                   "Total",
                   "Bayar",
@@ -312,7 +312,7 @@ export function Reports() {
                   <td className="py-3 px-3 whitespace-nowrap">{row.date}</td>
                   <td className="py-3 px-3 font-mono font-medium">#{row.id}</td>
                   <td className="py-3 px-3">{row.customer}</td>
-                  <td className="py-3 px-3 text-gray-500">{row.distributor}</td>
+                  <td className="py-3 px-3 text-gray-500">{row.karyawan}</td>
                   <td
                     className="py-3 px-3 max-w-[200px] truncate"
                     title={row.items}
@@ -364,7 +364,7 @@ export function Reports() {
                 {[
                   "Tanggal",
                   "No. Distribusi",
-                  "Distributor",
+                  "Karyawan",
                   "Produk",
                   "Total Qty",
                   "Status",
@@ -386,7 +386,7 @@ export function Reports() {
                 >
                   <td className="py-3 px-3 whitespace-nowrap">{row.date}</td>
                   <td className="py-3 px-3 font-mono font-medium">#{row.id}</td>
-                  <td className="py-3 px-3">{row.distributor}</td>
+                  <td className="py-3 px-3">{row.karyawan}</td>
                   <td className="py-3 px-3">
                     <ProductCell items={row.items} />
                   </td>
@@ -513,7 +513,7 @@ export function Reports() {
                   "Produk",
                   "Kategori",
                   "Stok Pusat",
-                  "Stok Distributor",
+                  "Stok Karyawan",
                   "Total",
                   "Min. Stok",
                   "Status",
@@ -547,7 +547,7 @@ export function Reports() {
                   </td>
                   <td className="py-3 px-3 text-left">{row.stockPusat}</td>
                   <td className="py-3 px-3 text-left">
-                    {row.stockDistributor}
+                    {row.stockKaryawan}
                   </td>
                   <td className="py-3 px-3 text-left font-semibold">
                     {row.total}

@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { supabaseAdmin } from "../../lib/supabaseAdmin";
 
-type ResultCategory = "produk" | "distributor" | "pelanggan" | "transaksi";
+type ResultCategory = "produk" | "karyawan" | "pelanggan" | "transaksi";
 
 interface SearchResult {
   id: string;
@@ -35,11 +35,11 @@ const categoryConfig: Record<
     color: "text-blue-600 bg-blue-50",
     menu: "produk",
   },
-  distributor: {
-    label: "Distributor",
+  karyawan: {
+    label: "Karyawan",
     icon: <Users className="w-4 h-4" />,
     color: "text-purple-600 bg-purple-50",
-    menu: "distributor",
+    menu: "karyawan",
   },
   pelanggan: {
     label: "Pelanggan",
@@ -61,7 +61,7 @@ const searchAll = async (query: string): Promise<SearchResult[]> => {
 
   const results: SearchResult[] = [];
 
-  const [prodRes, distRes, custRes, trxRes] = await Promise.all([
+  const [prodRes, karyawanRes, custRes, trxRes] = await Promise.all([
     // Produk
     supabaseAdmin
       .from("products")
@@ -70,9 +70,9 @@ const searchAll = async (query: string): Promise<SearchResult[]> => {
       .limit(3),
 
     supabaseAdmin
-      .from("distributors")
-      .select("id, distributor_name, phone, address, users(is_approved)")
-      .ilike("distributor_name", `%${q}%`)
+      .from("karyawan")
+      .select("id, nama, phone, address, is_active")
+      .ilike("nama", `%${q}%`)
       .limit(3),
 
     supabaseAdmin
@@ -101,14 +101,13 @@ const searchAll = async (query: string): Promise<SearchResult[]> => {
     });
   }
 
-  for (const d of (distRes.data ?? []) as any[]) {
-    const approved = (d.users as any)?.is_approved;
+  for (const d of (karyawanRes.data ?? []) as any[]) {
     results.push({
       id: d.id,
-      category: "distributor",
-      title: d.distributor_name,
+      category: "karyawan",
+      title: d.nama,
       subtitle: d.phone ?? d.address ?? "—",
-      meta: approved ? "Disetujui" : "Pending",
+      meta: d.is_active ? "Aktif" : "Nonaktif",
     });
   }
 
@@ -241,7 +240,7 @@ export function SearchBar({ onNavigate }: SearchBarProps) {
             if (results.length > 0) setIsOpen(true);
           }}
           onKeyDown={handleKeyDown}
-          placeholder="Cari produk, transaksi, distributor, pelanggan..."
+          placeholder="Cari produk, transaksi, karyawan, pelanggan..."
           className="w-full pl-10 pr-10 py-2.5 bg-gray-100 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all text-sm"
         />
 

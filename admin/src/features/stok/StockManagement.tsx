@@ -22,7 +22,7 @@ interface ProductStockSummary {
   product_name: string;
   category: "cup" | "botol";
   stokPusat: number;
-  stokDistributor: number;
+  stokKaryawan: number;
   minimumStok: number;
 }
 
@@ -37,14 +37,14 @@ function buildSummary(items: StockItem[]): ProductStockSummary[] {
         product_name: item.products?.product_name ?? "—",
         category: (item.products?.category ?? "cup") as "cup" | "botol",
         stokPusat: 0,
-        stokDistributor: 0,
+        stokKaryawan: 0,
         minimumStok: MINIMUM_STOCK,
       };
     }
-    if (item.distributor_id === null) {
+    if (item.karyawan_id === null) {
       map[pid].stokPusat += item.stock_quantity;
     } else {
-      map[pid].stokDistributor += item.stock_quantity;
+      map[pid].stokKaryawan += item.stock_quantity;
     }
   }
 
@@ -53,8 +53,8 @@ function buildSummary(items: StockItem[]): ProductStockSummary[] {
 
 const movementLabel: Record<string, string> = {
   stock_in: "Produksi / Restok",
-  distribution_out: "Kirim ke Distributor",
-  distribution_in: "Diterima Distributor",
+  distribution_out: "Kirim ke Karyawan",
+  distribution_in: "Diterima Karyawan",
   sale_out: "Penjualan",
 };
 
@@ -119,7 +119,7 @@ export function StockManagement() {
   );
 
   const totalPusat = stockSummary.reduce((s, i) => s + i.stokPusat, 0);
-  const totalDist = stockSummary.reduce((s, i) => s + i.stokDistributor, 0);
+  const totalDist = stockSummary.reduce((s, i) => s + i.stokKaryawan, 0);
 
   const formatDate = (d: string) =>
     new Date(d).toLocaleString("id-ID", {
@@ -137,7 +137,7 @@ export function StockManagement() {
           <h1 className="text-2xl font-bold text-gray-900 mb-1">
             Manajemen Stok
           </h1>
-          <p className="text-gray-600">Kelola stok pusat dan distributor</p>
+          <p className="text-gray-600">Kelola stok pusat dan karyawan</p>
         </div>
         <button
           onClick={fetchAll}
@@ -185,7 +185,7 @@ export function StockManagement() {
           <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
             <TrendingUp className="w-6 h-6 text-green-600" />
           </div>
-          <h3 className="text-sm text-gray-600 mb-1">Total Stok Distributor</h3>
+          <h3 className="text-sm text-gray-600 mb-1">Total Stok Karyawan</h3>
           <p className="text-2xl font-bold text-gray-900">
             {loading ? "—" : `${totalDist} Unit`}
           </p>
@@ -265,7 +265,7 @@ export function StockManagement() {
                       "Produk",
                       "Kategori",
                       "Stok Pusat",
-                      "Stok Distributor",
+                      "Stok Karyawan",
                       "Total",
                       "Min. Stok",
                       "Status",
@@ -292,7 +292,7 @@ export function StockManagement() {
                   ) : (
                     stockSummary.map((item) => {
                       const isLow = item.stokPusat < item.minimumStok;
-                      const total = item.stokPusat + item.stokDistributor;
+                      const total = item.stokPusat + item.stokKaryawan;
                       return (
                         <tr
                           key={item.product_id}
@@ -316,7 +316,7 @@ export function StockManagement() {
                             {item.stokPusat}
                           </td>
                           <td className="py-3 px-4 text-sm text-gray-900">
-                            {item.stokDistributor}
+                            {item.stokKaryawan}
                           </td>
                           <td className="py-3 px-4 text-sm font-semibold text-gray-900">
                             {total}
@@ -378,7 +378,7 @@ export function StockManagement() {
                             </p>
                             <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1.5">
                               <span>
-                                {mov.distributors?.distributor_name ??
+                                {mov.karyawan?.nama ??
                                   "Stok Pusat"}
                               </span>
                               <ArrowRight className="w-3 h-3" />

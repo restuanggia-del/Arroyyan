@@ -4,7 +4,7 @@ import { supabaseAdmin } from "../lib/supabaseAdmin";
 export interface StockItem {
     id: string;
     product_id: string;
-    distributor_id: string | null;
+    karyawan_id: string | null;
     stock_quantity: number;
     created_at: string;
     products: {
@@ -17,13 +17,13 @@ export interface StockItem {
 export interface StockMovement {
     id: string;
     product_id: string;
-    distributor_id: string | null;
+    karyawan_id: string | null;
     movement_type: "stock_in" | "distribution_out" | "distribution_in" | "sale_out";
     quantity: number;
     note: string | null;
     created_at: string;
     products: { product_name: string; category: string } | null;
-    distributors: { distributor_name: string } | null;
+    karyawan: { nama: string } | null;
 }
 
 export const getCentralStock = async () => {
@@ -32,12 +32,12 @@ export const getCentralStock = async () => {
         .select(`
       id,
       product_id,
-      distributor_id,
+      karyawan_id,
       stock_quantity,
       created_at,
       products ( id, product_name, category )
     `)
-        .is("distributor_id", null);
+        .is("karyawan_id", null);
 
     if (error) {
         console.error("[stockService] getCentralStock error:", error);
@@ -46,21 +46,21 @@ export const getCentralStock = async () => {
     return { data: (data as unknown) as StockItem[], error: null };
 };
 
-export const getDistributorStock = async (distributorId: string) => {
+export const getKaryawanStock = async (karyawanId: string) => {
     const { data, error } = await supabaseAdmin
         .from("stocks")
         .select(`
       id,
       product_id,
-      distributor_id,
+      karyawan_id,
       stock_quantity,
       created_at,
       products ( id, product_name, category )
     `)
-        .eq("distributor_id", distributorId);
+        .eq("karyawan_id", karyawanId);
 
     if (error) {
-        console.error("[stockService] getDistributorStock error:", error);
+        console.error("[stockService] getKaryawanStock error:", error);
         return { data: null, error };
     }
     return { data: (data as unknown) as StockItem[], error: null };
@@ -72,7 +72,7 @@ export const getAllStockSummary = async () => {
         .select(`
       id,
       product_id,
-      distributor_id,
+      karyawan_id,
       stock_quantity,
       created_at,
       products ( id, product_name, category )
@@ -93,13 +93,13 @@ export const getStockMovements = async (limit = 50) => {
         .select(`
       id,
       product_id,
-      distributor_id,
+      karyawan_id,
       movement_type,
       quantity,
       note,
       created_at,
       products ( product_name, category ),
-      distributors ( distributor_name )
+      karyawan ( nama )
     `)
         .order("created_at", { ascending: false })
         .limit(limit);
@@ -123,7 +123,7 @@ export const addCentralStock = async (
         .from("stocks")
         .select("id, stock_quantity")
         .eq("product_id", productId)
-        .is("distributor_id", null)
+        .is("karyawan_id", null)
         .maybeSingle();
 
     if (fetchErr) {
@@ -140,7 +140,7 @@ export const addCentralStock = async (
     } else {
         const { error } = await supabaseAdmin
             .from("stocks")
-            .insert([{ product_id: productId, distributor_id: null, stock_quantity: quantity }]);
+            .insert([{ product_id: productId, karyawan_id: null, stock_quantity: quantity }]);
         if (error) return { error };
     }
 
@@ -148,7 +148,7 @@ export const addCentralStock = async (
         .from("stock_movements")
         .insert([{
             product_id: productId,
-            distributor_id: null,
+            karyawan_id: null,
             movement_type: movementType,
             quantity,
             note: note || null,
@@ -168,7 +168,7 @@ export const reduceCentralStock = async (
         .from("stocks")
         .select("id, stock_quantity")
         .eq("product_id", productId)
-        .is("distributor_id", null)
+        .is("karyawan_id", null)
         .maybeSingle();
 
     if (fetchErr) return { error: fetchErr };
@@ -188,7 +188,7 @@ export const reduceCentralStock = async (
         .from("stock_movements")
         .insert([{
             product_id: productId,
-            distributor_id: null,
+            karyawan_id: null,
             movement_type: movementType,
             quantity,
             note: note || null,

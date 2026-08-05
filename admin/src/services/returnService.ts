@@ -10,13 +10,13 @@ export interface ReturnDetail {
 export interface ReturnRow {
     id: string;
     distribution_id: string;
-    distributor_id: string;
+    karyawan_id: string;
     status: "pending" | "approved" | "rejected";
     reason: string | null;
     reviewed_by: string | null;
     reviewed_at: string | null;
     created_at: string;
-    distributors?: { distributor_name: string; address: string } | null;
+    karyawan?: { nama: string; address: string } | null;
     return_details?: ReturnDetail[];
 }
 
@@ -24,8 +24,8 @@ export const getAllReturns = async () => {
     const { data: returnsData, error } = await supabaseAdmin
         .from("returns")
         .select(`
-      id, distribution_id, distributor_id, status, reason, reviewed_by, reviewed_at, created_at,
-      distributors ( distributor_name, address )
+      id, distribution_id, karyawan_id, status, reason, reviewed_by, reviewed_at, created_at,
+      karyawan ( nama, address )
     `)
         .order("created_at", { ascending: false });
 
@@ -64,7 +64,7 @@ export const reviewReturn = async (
 ) => {
     const { data: ret, error: fetchErr } = await supabaseAdmin
         .from("returns")
-        .select("id, distributor_id, status")
+        .select("id, karyawan_id, status")
         .eq("id", returnId)
         .single();
 
@@ -97,7 +97,7 @@ export const reviewReturn = async (
                 .from("stocks")
                 .select("id, stock_quantity")
                 .eq("product_id", detail.product_id)
-                .eq("distributor_id", ret.distributor_id)
+                .eq("karyawan_id", ret.karyawan_id)
                 .maybeSingle();
 
             if (stockRow) {
@@ -110,7 +110,7 @@ export const reviewReturn = async (
 
             await supabaseAdmin.from("stock_movements").insert([{
                 product_id: detail.product_id,
-                distributor_id: ret.distributor_id,
+                karyawan_id: ret.karyawan_id,
                 movement_type: "return_out",
                 quantity: detail.quantity,
                 note: `Return disetujui #${returnId.slice(0, 8)} — barang rusak dikembalikan`,
@@ -120,7 +120,7 @@ export const reviewReturn = async (
 
     await supabaseAdmin.from("activity_logs").insert([{
         activity_type: "review_return",
-        description: `Admin ${decision === "approved" ? "menyetujui" : "menolak"} return #${returnId.slice(0, 8)}${decision === "approved" ? " — stok distributor diperbarui" : ""
+        description: `Admin ${decision === "approved" ? "menyetujui" : "menolak"} return #${returnId.slice(0, 8)}${decision === "approved" ? " — stok karyawan diperbarui" : ""
             }`,
     }]);
 

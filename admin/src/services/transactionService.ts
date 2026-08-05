@@ -13,7 +13,7 @@ export interface TransactionItem {
 
 export interface Transaction {
     id: string;
-    distributor_id: string | null;
+    karyawan_id: string | null;
     customer_id: string | null;
     total_price: number;
     payment_method: "cash" | "transfer";
@@ -27,7 +27,7 @@ export interface Transaction {
         subtotal: number;
         products?: { product_name: string; category: string } | null;
     }[];
-    distributors?: { distributor_name: string } | null;
+    karyawan?: { nama: string } | null;
 }
 
 export const getAllTransactions = async () => {
@@ -35,13 +35,13 @@ export const getAllTransactions = async () => {
         .from("transactions")
         .select(`
       id,
-      distributor_id,
+      karyawan_id,
       customer_id,
       total_price,
       payment_method,
       created_at,
       customers ( customer_name, phone ),
-      distributors ( distributor_name ),
+      karyawan ( nama ),
       transaction_details (
         id,
         product_id,
@@ -63,7 +63,7 @@ export const createTransaction = async (
     customerId: string | null,
     options:
         | { mode: "admin" }
-        | { mode: "distributor"; distributorId: string }
+        | { mode: "karyawan"; karyawanId: string }
 ) => {
     const totalPrice = items.reduce(
         (sum, item) => sum + item.price * item.quantity,
@@ -77,9 +77,9 @@ export const createTransaction = async (
             .eq("product_id", item.product_id);
 
         if (options.mode === "admin") {
-            query.is("distributor_id", null);
+            query.is("karyawan_id", null);
         } else {
-            query.eq("distributor_id", options.distributorId);
+            query.eq("karyawan_id", options.karyawanId);
         }
 
         const { data: stock, error: stockErr } = await query.maybeSingle();
@@ -98,7 +98,7 @@ export const createTransaction = async (
     const { data: trx, error: trxErr } = await supabaseAdmin
         .from("transactions")
         .insert([{
-            distributor_id: options.mode === "distributor" ? options.distributorId : null,
+            karyawan_id: options.mode === "karyawan" ? options.karyawanId : null,
             customer_id: customerId,
             total_price: totalPrice,
             payment_method: paymentMethod,
@@ -129,9 +129,9 @@ export const createTransaction = async (
             .eq("product_id", item.product_id);
 
         if (options.mode === "admin") {
-            query.is("distributor_id", null);
+            query.is("karyawan_id", null);
         } else {
-            query.eq("distributor_id", options.distributorId);
+            query.eq("karyawan_id", options.karyawanId);
         }
 
         const { data: stock } = await query.single();
@@ -145,11 +145,11 @@ export const createTransaction = async (
 
         await supabaseAdmin.from("stock_movements").insert([{
             product_id: item.product_id,
-            distributor_id:
-                options.mode === "distributor" ? options.distributorId : null,
+            karyawan_id:
+                options.mode === "karyawan" ? options.karyawanId : null,
             movement_type: "sale_out",
             quantity: item.quantity,
-            note: `Penjualan #${trx.id.slice(0, 8)} (${options.mode === "admin" ? "pabrik" : "distributor"
+            note: `Penjualan #${trx.id.slice(0, 8)} (${options.mode === "admin" ? "pabrik" : "karyawan"
                 })`,
         }]);
     }

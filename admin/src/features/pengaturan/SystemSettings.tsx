@@ -311,7 +311,7 @@ export function SystemSettings() {
                 </p>
                 <ul className="text-sm text-blue-700 space-y-1">
                   <li>• Perubahan diterapkan pada semua struk baru</li>
-                  <li>• Berlaku untuk struk admin & distributor</li>
+                  <li>• Berlaku untuk struk admin & karyawan</li>
                   <li>• Data disimpan langsung ke database</li>
                   <li>• Format thermal standar 58mm</li>
                 </ul>

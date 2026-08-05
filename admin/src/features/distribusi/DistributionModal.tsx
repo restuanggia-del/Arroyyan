@@ -9,9 +9,9 @@ import {
   RefreshCw,
 } from "lucide-react";
 import {
-  getAllDistributors,
-  DistributorWithUser,
-} from "../../services/distributorService";
+  getActiveKaryawan,
+  Karyawan,
+} from "../../services/karyawanService";
 import { getActiveProducts, Product } from "../../services/productService";
 import { getCentralStock } from "../../services/stockService";
 import {
@@ -35,7 +35,7 @@ export function DistributionModal({
   onClose,
   onSaveSuccess,
 }: DistributionModalProps) {
-  const [distributors, setDistributors] = useState<DistributorWithUser[]>([]);
+  const [karyawanList, setKaryawanList] = useState<Karyawan[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [centralStockMap, setCentralStockMap] = useState<
     Record<string, number>
@@ -44,7 +44,7 @@ export function DistributionModal({
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
-  const [distributorId, setDistributorId] = useState("");
+  const [karyawanId, setKaryawanId] = useState("");
   const [items, setItems] = useState<ItemRow[]>([
     { product_id: "", quantity: 1 },
   ]);
@@ -52,13 +52,13 @@ export function DistributionModal({
   useEffect(() => {
     const load = async () => {
       setLoadingData(true);
-      const [distRes, prodRes, stockRes] = await Promise.all([
-        getAllDistributors(),
+      const [karyawanRes, prodRes, stockRes] = await Promise.all([
+        getActiveKaryawan("jual_antar"),
         getActiveProducts(),
         getCentralStock(),
       ]);
 
-      setDistributors((distRes.data ?? []).filter((d) => d.users.is_approved));
+      setKaryawanList(karyawanRes.data ?? []);
       setProducts(prodRes.data ?? []);
 
       const map: Record<string, number> = {};
@@ -96,8 +96,8 @@ export function DistributionModal({
     e.preventDefault();
     setFormError(null);
 
-    if (!distributorId) {
-      setFormError("Pilih distributor terlebih dahulu.");
+    if (!karyawanId) {
+      setFormError("Pilih karyawan terlebih dahulu.");
       return;
     }
 
@@ -130,7 +130,7 @@ export function DistributionModal({
     }));
 
     const { error } = await createDistribution(
-      distributorId,
+      karyawanId,
       currentUserId,
       distributionItems,
     );
@@ -178,7 +178,7 @@ export function DistributionModal({
             <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex gap-3">
               <Package className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
               <p className="text-sm text-blue-700">
-                Stok pusat akan otomatis berkurang dan stok distributor akan
+                Stok pusat akan otomatis berkurang dan stok karyawan akan
                 bertambah setelah distribusi dibuat.
               </p>
             </div>
@@ -192,28 +192,28 @@ export function DistributionModal({
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                Tujuan Distributor <span className="text-red-500">*</span>
+                Tujuan Karyawan <span className="text-red-500">*</span>
               </label>
               <select
                 required
-                value={distributorId}
+                value={karyawanId}
                 onChange={(e) => {
-                  setDistributorId(e.target.value);
+                  setKaryawanId(e.target.value);
                   setFormError(null);
                 }}
                 className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
               >
-                <option value="">-- Pilih Distributor --</option>
-                {distributors.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.distributor_name}
-                    {d.address ? ` — ${d.address}` : ""}
+                <option value="">-- Pilih Karyawan --</option>
+                {karyawanList.map((k) => (
+                  <option key={k.id} value={k.id}>
+                    {k.nama}
+                    {k.address ? ` — ${k.address}` : ""}
                   </option>
                 ))}
               </select>
-              {distributors.length === 0 && (
+              {karyawanList.length === 0 && (
                 <p className="text-xs text-orange-600 mt-1">
-                  Belum ada distributor yang disetujui.
+                  Belum ada karyawan aktif dengan peran jual/antar.
                 </p>
               )}
             </div>
