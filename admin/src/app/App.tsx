@@ -10,6 +10,7 @@ import { StockAlert } from "../components/shared/StockAlert";
 import { Calendar } from "../components/shared/Calendar";
 import { ProductManagement } from "../features/produk/ProductManagement";
 import { StockManagement } from "../features/stok/StockManagement";
+import { MaterialManagement } from "../features/bahan/MaterialManagement";
 import {
   DollarSign,
   TrendingUp,
@@ -348,6 +349,8 @@ export default function App() {
         return <ProductManagement />;
       case "stok":
         return <StockManagement />;
+      case "bahan":
+        return <MaterialManagement />;
       case "distribusi":
         return <DistributionManagement currentUserId={currentUser?.id ?? ""} />;
       case "transaksi":

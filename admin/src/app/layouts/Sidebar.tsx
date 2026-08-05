@@ -10,6 +10,7 @@ import {
   History,
   Settings,
   UserCheck,
+  Boxes,
 } from "lucide-react";
 
 interface MenuItem {
@@ -47,6 +48,11 @@ export function Sidebar({
       id: "stok",
       label: "Manajemen Stok",
       icon: <Warehouse className="w-5 h-5" />,
+    },
+    {
+      id: "bahan",
+      label: "Manajemen Bahan",
+      icon: <Boxes className="w-5 h-5" />,
     },
     {
       id: "distribusi",
