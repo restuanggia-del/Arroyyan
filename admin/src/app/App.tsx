@@ -28,10 +28,7 @@ import { AuditLog } from "../features/pengaturan/AuditLog";
 import { SystemSettings } from "../features/pengaturan/SystemSettings";
 import { Login } from "../features/auth/Login";
 import { toast } from "sonner";
-import {
-  loginUser,
-  getCurrentUserRole,
-} from "../services/authService";
+import { loginUser, getCurrentUserRole } from "../services/authService";
 import {
   getDashboardStats,
   getMonthlySales,
@@ -52,14 +49,52 @@ const formatRp = (n: number): string => {
   return `Rp ${n.toLocaleString("id-ID")}`;
 };
 
+const MENU_TO_PATH: Record<string, string> = {
+  dashboard: "/",
+  karyawan: "/karyawan",
+  produk: "/produk",
+  stok: "/stok",
+  bahan: "/bahan",
+  pelanggan: "/pelanggan",
+  distribusi: "/distribusi",
+  transaksi: "/transaksi",
+  laporan: "/laporan",
+  prediksi: "/prediksi",
+  log: "/log",
+  pengaturan: "/pengaturan",
+};
+
+const PATH_TO_MENU: Record<string, string> = Object.fromEntries(
+  Object.entries(MENU_TO_PATH).map(([menu, path]) => [path, menu]),
+);
+
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authReady, setAuthReady] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
-  const [activeMenu, setActiveMenu] = useState("dashboard");
+  const [activeMenu, setActiveMenu] = useState(() => {
+    if (typeof window === "undefined") return "dashboard";
+
+    const savedMenu = localStorage.getItem("admin-active-menu");
+    if (savedMenu) return savedMenu;
+
+    const pathname = window.location.pathname;
+    return PATH_TO_MENU[pathname] || "dashboard";
+  });
 
   const [loginError, setLoginError] = useState<string | null>(null);
 
-  // Dashboard
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("admin-active-menu", activeMenu);
+      const targetPath = MENU_TO_PATH[activeMenu] || "/";
+      const currentPath = window.location.pathname;
+      if (currentPath !== targetPath) {
+        window.history.replaceState({}, "", targetPath);
+      }
+    }
+  }, [activeMenu]);
+
   const [dashStats, setDashStats] = useState<DashboardStats | null>(null);
   const [dashLoading, setDashLoading] = useState(false);
   const [prediction, setPrediction] = useState<{
@@ -70,19 +105,25 @@ export default function App() {
 
   useEffect(() => {
     const checkSession = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (session) {
-        const userData = await getCurrentUserRole();
-        if (userData && userData.role === "admin") {
-          setCurrentUser(userData);
-          setIsAuthenticated(true);
-        } else {
-          await supabase.auth.signOut();
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
+        if (session) {
+          const userData = await getCurrentUserRole();
+          if (userData && userData.role === "admin") {
+            setCurrentUser(userData);
+            setIsAuthenticated(true);
+          } else {
+            await supabase.auth.signOut();
+          }
         }
+      } finally {
+        setAuthReady(true);
       }
     };
+
     checkSession();
   }, []);
 
@@ -187,15 +228,24 @@ export default function App() {
     setDashStats(null);
     setPrediction(null);
     setLoginError(null);
+    if (typeof window !== "undefined") {
+      window.history.replaceState({}, "", "/");
+    }
   };
 
-  if (!isAuthenticated) {
+  if (!authReady) {
     return (
-      <Login
-        onLogin={handleLogin}
-        externalError={loginError}
-      />
+      <div className="flex h-screen items-center justify-center bg-gray-50">
+        <div className="flex items-center gap-3 text-gray-600">
+          <RefreshCw className="w-5 h-5 animate-spin" />
+          <span>Memuat aplikasi...</span>
+        </div>
+      </div>
     );
+  }
+
+  if (!isAuthenticated) {
+    return <Login onLogin={handleLogin} externalError={loginError} />;
   }
 
   const renderDashboard = () => (
@@ -375,10 +425,7 @@ export default function App() {
     <div className="flex h-screen bg-gray-50">
       <div className="flex flex-col">
         <Logo />
-        <Sidebar
-          activeMenu={activeMenu}
-          onMenuChange={handleMenuChange}
-        />
+        <Sidebar activeMenu={activeMenu} onMenuChange={handleMenuChange} />
       </div>
       <div className="flex-1 flex flex-col overflow-hidden">
         <header className="bg-white border-b border-gray-200 px-8 py-4">

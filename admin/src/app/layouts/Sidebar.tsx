@@ -24,10 +24,7 @@ interface SidebarProps {
   onMenuChange: (menuId: string) => void;
 }
 
-export function Sidebar({
-  activeMenu,
-  onMenuChange,
-}: SidebarProps) {
+export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
   const menuItems: MenuItem[] = [
     {
       id: "dashboard",
@@ -55,6 +52,11 @@ export function Sidebar({
       icon: <Boxes className="w-5 h-5" />,
     },
     {
+      id: "pelanggan",
+      label: "Manajemen Pelanggan",
+      icon: <Users className="w-5 h-5" />,
+    },
+    {
       id: "distribusi",
       label: "Distribusi",
       icon: <Truck className="w-5 h-5" />,
@@ -64,11 +66,7 @@ export function Sidebar({
       label: "Transaksi Penjualan",
       icon: <ShoppingCart className="w-5 h-5" />,
     },
-    {
-      id: "pelanggan",
-      label: "Pelanggan",
-      icon: <Users className="w-5 h-5" />,
-    },
+
     {
       id: "laporan",
       label: "Laporan",
