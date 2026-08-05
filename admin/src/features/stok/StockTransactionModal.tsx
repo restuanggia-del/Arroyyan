@@ -13,7 +13,7 @@ import {
 } from "../../services/stockService";
 
 interface StockTransactionModalProps {
-  type: "masuk" | "keluar";
+  type: "masuk" | "awal" | "keluar";
   onClose: () => void;
   onSaveSuccess: () => void;
 }
@@ -38,9 +38,16 @@ export function StockTransactionModal({
   const [formData, setFormData] = useState<FormState>({
     productId: "",
     quantity: 1,
-    movementType: type === "masuk" ? "stock_in" : "sale_out",
+    movementType:
+      type === "masuk"
+        ? "stock_in"
+        : type === "awal"
+          ? "stok_awal"
+          : "sale_out",
     note: "",
   });
+
+  const isInitialBalance = type === "awal";
 
   useEffect(() => {
     const load = async () => {
@@ -52,7 +59,10 @@ export function StockTransactionModal({
     load();
   }, []);
 
-  const categoriesMasuk = [{ value: "stock_in", label: "Produksi / Restok" }];
+  const categoriesMasuk = [
+    { value: "stock_in", label: "Produksi / Restok" },
+    { value: "stok_awal", label: "Saldo Awal / Opname" },
+  ];
 
   const categoriesKeluar = [{ value: "sale_out", label: "Penjualan Langsung" }];
 
@@ -82,11 +92,13 @@ export function StockTransactionModal({
     setFormError(null);
 
     let error;
-    if (type === "masuk") {
+    if (type === "masuk" || type === "awal") {
       ({ error } = await addCentralStock(
         formData.productId,
         formData.quantity,
-        "stock_in",
+        (type === "awal" ? "stok_awal" : formData.movementType) as
+          | "stock_in"
+          | "stok_awal",
         formData.note,
       ));
     } else {
@@ -112,7 +124,7 @@ export function StockTransactionModal({
     onSaveSuccess();
   };
 
-  const isGreen = type === "masuk";
+  const isGreen = type !== "keluar";
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -131,7 +143,11 @@ export function StockTransactionModal({
               )}
             </div>
             <h2 className="text-xl font-semibold text-gray-900">
-              {isGreen ? "Stok Masuk" : "Stok Keluar"}
+              {type === "awal"
+                ? "Stok Awal"
+                : isGreen
+                  ? "Stok Masuk"
+                  : "Stok Keluar"}
             </h2>
           </div>
           <button
@@ -177,23 +193,25 @@ export function StockTransactionModal({
             )}
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">
-              Jenis Transaksi <span className="text-red-500">*</span>
-            </label>
-            <select
-              required
-              value={formData.movementType}
-              onChange={(e) => handleChange("movementType", e.target.value)}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
-            >
-              {categories.map((cat) => (
-                <option key={cat.value} value={cat.value}>
-                  {cat.label}
-                </option>
-              ))}
-            </select>
-          </div>
+          {!isInitialBalance && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Jenis Transaksi <span className="text-red-500">*</span>
+              </label>
+              <select
+                required
+                value={formData.movementType}
+                onChange={(e) => handleChange("movementType", e.target.value)}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+              >
+                {categories.map((cat) => (
+                  <option key={cat.value} value={cat.value}>
+                    {cat.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
@@ -225,9 +243,11 @@ export function StockTransactionModal({
               value={formData.note}
               onChange={(e) => handleChange("note", e.target.value)}
               placeholder={
-                isGreen
-                  ? "Contoh: Produksi batch #1"
-                  : "Contoh: Penjualan ke Toko ABC"
+                type === "awal"
+                  ? "Contoh: Opname awal bulan"
+                  : isGreen
+                    ? "Contoh: Produksi batch #1"
+                    : "Contoh: Penjualan ke Toko ABC"
               }
               rows={3}
               className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
@@ -244,16 +264,20 @@ export function StockTransactionModal({
             <p
               className={`text-sm font-medium mb-1 ${isGreen ? "text-green-800" : "text-red-800"}`}
             >
-              {isGreen
-                ? "✓ Stok pusat akan bertambah"
-                : "⚠ Stok pusat akan berkurang"}
+              {type === "awal"
+                ? "✓ Saldo awal akan ditambahkan ke stok pusat"
+                : isGreen
+                  ? "✓ Stok pusat akan bertambah"
+                  : "⚠ Stok pusat akan berkurang"}
             </p>
             <p
               className={`text-xs ${isGreen ? "text-green-700" : "text-red-700"}`}
             >
-              {isGreen
-                ? "Stok pusat otomatis bertambah dan dicatat di riwayat pergerakan."
-                : "Pastikan stok pusat mencukupi sebelum menyimpan."}
+              {type === "awal"
+                ? "Digunakan untuk melanjutkan saldo stok atau menginput opname awal periode berikutnya."
+                : isGreen
+                  ? "Stok pusat otomatis bertambah dan dicatat di riwayat pergerakan."
+                  : "Pastikan stok pusat mencukupi sebelum menyimpan."}
             </p>
           </div>
 

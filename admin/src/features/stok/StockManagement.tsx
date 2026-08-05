@@ -53,6 +53,7 @@ function buildSummary(items: StockItem[]): ProductStockSummary[] {
 
 const movementLabel: Record<string, string> = {
   stock_in: "Produksi / Restok",
+  stok_awal: "Stok Awal (Opname)",
   distribution_out: "Kirim ke Karyawan",
   distribution_in: "Diterima Karyawan",
   sale_out: "Penjualan",
@@ -60,6 +61,7 @@ const movementLabel: Record<string, string> = {
 
 const movementColor: Record<string, string> = {
   stock_in: "bg-green-100 text-green-700",
+  stok_awal: "bg-cyan-100 text-cyan-700",
   distribution_out: "bg-orange-100 text-orange-700",
   distribution_in: "bg-blue-100 text-blue-700",
   sale_out: "bg-gray-100 text-gray-700",
@@ -74,9 +76,9 @@ export function StockManagement() {
     "overview",
   );
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [transactionType, setTransactionType] = useState<"masuk" | "keluar">(
-    "masuk",
-  );
+  const [transactionType, setTransactionType] = useState<
+    "masuk" | "awal" | "keluar"
+  >("masuk");
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
@@ -104,7 +106,7 @@ export function StockManagement() {
     fetchAll();
   }, [fetchAll]);
 
-  const handleAddTransaction = (type: "masuk" | "keluar") => {
+  const handleAddTransaction = (type: "masuk" | "awal" | "keluar") => {
     setTransactionType(type);
     setIsModalOpen(true);
   };
@@ -226,6 +228,13 @@ export function StockManagement() {
             </button>
           </div>
           <div className="flex gap-2">
+            <button
+              onClick={() => handleAddTransaction("awal")}
+              className="bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer"
+            >
+              <TrendingUp className="w-4 h-4" />
+              Stok Awal
+            </button>
             <button
               onClick={() => handleAddTransaction("masuk")}
               className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer"
@@ -353,6 +362,7 @@ export function StockManagement() {
                 movements.map((mov) => {
                   const isIn =
                     mov.movement_type === "stock_in" ||
+                    mov.movement_type === "stok_awal" ||
                     mov.movement_type === "distribution_in";
                   return (
                     <div
@@ -377,10 +387,7 @@ export function StockManagement() {
                               {mov.products?.product_name ?? "—"}
                             </p>
                             <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1.5">
-                              <span>
-                                {mov.karyawan?.nama ??
-                                  "Stok Pusat"}
-                              </span>
+                              <span>{mov.karyawan?.nama ?? "Stok Pusat"}</span>
                               <ArrowRight className="w-3 h-3" />
                               <span>{isIn ? "Stok Masuk" : "Stok Keluar"}</span>
                             </div>

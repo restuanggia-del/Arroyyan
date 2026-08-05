@@ -15,6 +15,10 @@ import {
 } from "lucide-react";
 import { getActiveProducts, Product } from "../../services/productService";
 import {
+  getAllActiveProductPrices,
+  ProductPrice,
+} from "../../services/productPriceService";
+import {
   getCentralStock,
   getKaryawanStock,
 } from "../../services/stockService";
@@ -33,6 +37,7 @@ interface CartItem {
   product: Product;
   quantity: number;
   maxStock: number;
+  unitPrice: number;
 }
 
 interface SalesTransactionProps {
@@ -47,6 +52,9 @@ export function SalesTransaction({
   karyawanId,
 }: SalesTransactionProps) {
   const [products, setProducts] = useState<Product[]>([]);
+  const [priceOptionsMap, setPriceOptionsMap] = useState<
+    Record<string, ProductPrice[]>
+  >({});
   const [stockMap, setStockMap] = useState<Record<string, number>>({});
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loadingData, setLoadingData] = useState(true);
@@ -89,6 +97,15 @@ export function SalesTransaction({
       map[s.product_id] = s.stock_quantity;
     }
     setStockMap(map);
+
+    const priceRes = await getAllActiveProductPrices();
+    const pMap: Record<string, ProductPrice[]> = {};
+    for (const p of priceRes.data ?? []) {
+      if (!pMap[p.product_id]) pMap[p.product_id] = [];
+      pMap[p.product_id].push(p);
+    }
+    setPriceOptionsMap(pMap);
+
     setLoadingData(false);
   }, [role, karyawanId]);
 
@@ -107,8 +124,19 @@ export function SalesTransaction({
           i.product.id === product.id ? { ...i, quantity: i.quantity + 1 } : i,
         );
       }
-      return [...prev, { product, quantity: 1, maxStock: max }];
+      return [
+        ...prev,
+        { product, quantity: 1, maxStock: max, unitPrice: product.price },
+      ];
     });
+  };
+
+  const updatePrice = (productId: string, newPrice: number) => {
+    setCart((prev) =>
+      prev.map((i) =>
+        i.product.id === productId ? { ...i, unitPrice: newPrice } : i,
+      ),
+    );
   };
 
   const updateQty = (productId: string, delta: number) => {
@@ -128,7 +156,7 @@ export function SalesTransaction({
   const removeFromCart = (productId: string) =>
     setCart((prev) => prev.filter((i) => i.product.id !== productId));
 
-  const subtotal = cart.reduce((s, i) => s + i.product.price * i.quantity, 0);
+  const subtotal = cart.reduce((s, i) => s + i.unitPrice * i.quantity, 0);
 
   const handleCheckout = async () => {
     if (cart.length === 0) {
@@ -142,7 +170,7 @@ export function SalesTransaction({
       product_id: i.product.id,
       product_name: i.product.product_name,
       quantity: i.quantity,
-      price: i.product.price,
+      price: i.unitPrice,
     }));
 
     const txOptions =
@@ -281,6 +309,11 @@ export function SalesTransaction({
                         </div>
                         <p className="text-base font-bold text-blue-600 mb-1.5">
                           {formatRp(product.price)}
+                          {(priceOptionsMap[product.id]?.length ?? 0) > 0 && (
+                            <span className="ml-1.5 align-middle text-[10px] font-medium text-cyan-700 bg-cyan-100 px-1.5 py-0.5 rounded-full">
+                              +{priceOptionsMap[product.id].length} harga
+                            </span>
+                          )}
                         </p>
                         <span
                           className={`text-xs px-2 py-0.5 rounded-full ${
@@ -363,6 +396,27 @@ export function SalesTransaction({
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
+
+                      {(priceOptionsMap[item.product.id]?.length ?? 0) > 0 && (
+                        <select
+                          value={item.unitPrice}
+                          onChange={(e) =>
+                            updatePrice(item.product.id, Number(e.target.value))
+                          }
+                          className="w-full mb-2 px-2 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer bg-blue-50/50"
+                        >
+                          <option value={item.product.price}>
+                            {formatRp(item.product.price)} (Harga Dasar)
+                          </option>
+                          {priceOptionsMap[item.product.id].map((p) => (
+                            <option key={p.id} value={p.price}>
+                              {formatRp(p.price)}
+                              {p.label ? ` (${p.label})` : ""}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-1.5">
                           <button
@@ -382,7 +436,7 @@ export function SalesTransaction({
                           </button>
                         </div>
                         <p className="text-sm font-bold text-gray-900">
-                          {formatRp(item.product.price * item.quantity)}
+                          {formatRp(item.unitPrice * item.quantity)}
                         </p>
                       </div>
                       <p className="text-xs text-gray-400 mt-1">
@@ -528,10 +582,10 @@ export function SalesTransaction({
                       </td>
                       <td className="text-center py-1">{item.quantity}</td>
                       <td className="text-right py-1">
-                        {item.product.price.toLocaleString("id-ID")}
+                        {item.unitPrice.toLocaleString("id-ID")}
                       </td>
                       <td className="text-right py-1">
-                        {(item.product.price * item.quantity).toLocaleString(
+                        {(item.unitPrice * item.quantity).toLocaleString(
                           "id-ID",
                         )}
                       </td>

@@ -1,10 +1,16 @@
 import { useState, useEffect } from "react";
-import { X, Upload, RefreshCw } from "lucide-react";
+import { X, Upload, RefreshCw, Plus, Trash2, Tag } from "lucide-react";
 import {
   Product,
   createProduct,
   updateProduct,
 } from "../../services/productService";
+import {
+  ProductPrice,
+  getProductPrices,
+  createProductPrice,
+  deleteProductPrice,
+} from "../../services/productPriceService";
 
 interface ProductModalProps {
   product: Product | null;
@@ -41,6 +47,21 @@ export function ProductModal({
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
+  // Harga variatif (product_prices)
+  const [prices, setPrices] = useState<ProductPrice[]>([]);
+  const [loadingPrices, setLoadingPrices] = useState(false);
+  const [newPriceLabel, setNewPriceLabel] = useState("");
+  const [newPriceValue, setNewPriceValue] = useState(0);
+  const [priceError, setPriceError] = useState<string | null>(null);
+  const [savingPrice, setSavingPrice] = useState(false);
+
+  const loadPrices = async (productId: string) => {
+    setLoadingPrices(true);
+    const { data } = await getProductPrices(productId);
+    setPrices(data || []);
+    setLoadingPrices(false);
+  };
+
   useEffect(() => {
     if (product) {
       setFormData({
@@ -52,10 +73,42 @@ export function ProductModal({
         photo_url: product.photo_url ?? "",
         is_active: product.is_active,
       });
+      loadPrices(product.id);
     } else {
       setFormData(defaultForm);
+      setPrices([]);
     }
   }, [product]);
+
+  const handleAddPrice = async () => {
+    if (!product) return;
+    setPriceError(null);
+    if (newPriceValue <= 0) {
+      setPriceError("Nominal harga harus lebih dari 0.");
+      return;
+    }
+    setSavingPrice(true);
+    const { data, error } = await createProductPrice({
+      product_id: product.id,
+      price: newPriceValue,
+      label: newPriceLabel.trim() || null,
+      is_active: true,
+    });
+    if (error) {
+      setPriceError("Gagal menambah harga: " + error.message);
+      setSavingPrice(false);
+      return;
+    }
+    if (data) setPrices((prev) => [...prev, data]);
+    setNewPriceLabel("");
+    setNewPriceValue(0);
+    setSavingPrice(false);
+  };
+
+  const handleDeletePrice = async (id: string) => {
+    setPrices((prev) => prev.filter((p) => p.id !== id));
+    await deleteProductPrice(id);
+  };
 
   const handleChange = <K extends keyof FormState>(
     field: K,
@@ -223,6 +276,121 @@ export function ProductModal({
                 className="w-full pl-12 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
+            <p className="text-xs text-gray-400 mt-1.5">
+              Harga di atas adalah harga dasar/default produk ini.
+            </p>
+          </div>
+
+          <div className="border border-gray-200 rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-1">
+              <Tag className="w-4 h-4 text-blue-600" />
+              <label className="text-sm font-medium text-gray-700">
+                Harga Variatif
+                <span className="text-gray-400 font-normal ml-1">
+                  (opsional)
+                </span>
+              </label>
+            </div>
+            <p className="text-xs text-gray-500 mb-3">
+              Opsi harga tambahan yang bisa dipilih lewat dropdown saat
+              Transaksi Penjualan (mis. harga promo, harga grosir).
+            </p>
+
+            {!product ? (
+              <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg p-3">
+                Simpan produk ini terlebih dahulu, lalu edit kembali untuk
+                menambahkan opsi harga variatif.
+              </p>
+            ) : (
+              <>
+                {priceError && (
+                  <div className="mb-3 p-2.5 bg-red-50 border border-red-200 rounded-lg text-xs text-red-700">
+                    {priceError}
+                  </div>
+                )}
+
+                {loadingPrices ? (
+                  <div className="flex items-center gap-2 text-xs text-gray-500 py-2">
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    Memuat harga...
+                  </div>
+                ) : prices.length > 0 ? (
+                  <div className="space-y-2 mb-3">
+                    {prices.map((p) => (
+                      <div
+                        key={p.id}
+                        className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg px-3 py-2"
+                      >
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">
+                            Rp {p.price.toLocaleString("id-ID")}
+                          </p>
+                          {p.label && (
+                            <p className="text-xs text-gray-500">{p.label}</p>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleDeletePrice(p.id)}
+                          className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                          title="Hapus harga ini"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-gray-400 mb-3">
+                    Belum ada opsi harga tambahan.
+                  </p>
+                )}
+
+                <div className="flex items-end gap-2">
+                  <div className="flex-1">
+                    <label className="block text-xs text-gray-600 mb-1">
+                      Label
+                    </label>
+                    <input
+                      type="text"
+                      value={newPriceLabel}
+                      onChange={(e) => setNewPriceLabel(e.target.value)}
+                      placeholder="Contoh: Harga Grosir"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div className="w-32">
+                    <label className="block text-xs text-gray-600 mb-1">
+                      Harga
+                    </label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={newPriceValue === 0 ? "" : newPriceValue}
+                      onChange={(e) => {
+                        const v = e.target.value.replace(/\D/g, "");
+                        setNewPriceValue(v === "" ? 0 : parseInt(v, 10));
+                      }}
+                      placeholder="0"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleAddPrice}
+                    disabled={savingPrice}
+                    className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm flex items-center gap-1 cursor-pointer disabled:opacity-60"
+                  >
+                    {savingPrice ? (
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Plus className="w-4 h-4" />
+                    )}
+                    Tambah
+                  </button>
+                </div>
+              </>
+            )}
           </div>
 
           <div>
