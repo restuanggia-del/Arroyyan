@@ -21,6 +21,7 @@ import {
 import { DistributionManagement } from "../features/distribusi/DistributionManagement";
 import { KaryawanManagement } from "../features/distributor-karyawan/KaryawanManagement";
 import { SalesTransaction } from "../features/transaksi-penjualan/SalesTransaction";
+import { TransaksiTitipan } from "../features/transaksi-titipan/TransaksiTitipan";
 import { CustomerManagement } from "../features/customer/CustomerManagement";
 import { Reports } from "../features/laporan/penjualan/Reports";
 import { SalesPrediction } from "../features/laporan/sales/SalesPrediction";
@@ -49,52 +50,14 @@ const formatRp = (n: number): string => {
   return `Rp ${n.toLocaleString("id-ID")}`;
 };
 
-const MENU_TO_PATH: Record<string, string> = {
-  dashboard: "/",
-  karyawan: "/karyawan",
-  produk: "/produk",
-  stok: "/stok",
-  bahan: "/bahan",
-  pelanggan: "/pelanggan",
-  distribusi: "/distribusi",
-  transaksi: "/transaksi",
-  laporan: "/laporan",
-  prediksi: "/prediksi",
-  log: "/log",
-  pengaturan: "/pengaturan",
-};
-
-const PATH_TO_MENU: Record<string, string> = Object.fromEntries(
-  Object.entries(MENU_TO_PATH).map(([menu, path]) => [path, menu]),
-);
-
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [authReady, setAuthReady] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
-  const [activeMenu, setActiveMenu] = useState(() => {
-    if (typeof window === "undefined") return "dashboard";
-
-    const savedMenu = localStorage.getItem("admin-active-menu");
-    if (savedMenu) return savedMenu;
-
-    const pathname = window.location.pathname;
-    return PATH_TO_MENU[pathname] || "dashboard";
-  });
+  const [activeMenu, setActiveMenu] = useState("dashboard");
 
   const [loginError, setLoginError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("admin-active-menu", activeMenu);
-      const targetPath = MENU_TO_PATH[activeMenu] || "/";
-      const currentPath = window.location.pathname;
-      if (currentPath !== targetPath) {
-        window.history.replaceState({}, "", targetPath);
-      }
-    }
-  }, [activeMenu]);
-
+  // Dashboard
   const [dashStats, setDashStats] = useState<DashboardStats | null>(null);
   const [dashLoading, setDashLoading] = useState(false);
   const [prediction, setPrediction] = useState<{
@@ -105,25 +68,19 @@ export default function App() {
 
   useEffect(() => {
     const checkSession = async () => {
-      try {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-
-        if (session) {
-          const userData = await getCurrentUserRole();
-          if (userData && userData.role === "admin") {
-            setCurrentUser(userData);
-            setIsAuthenticated(true);
-          } else {
-            await supabase.auth.signOut();
-          }
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (session) {
+        const userData = await getCurrentUserRole();
+        if (userData && userData.role === "admin") {
+          setCurrentUser(userData);
+          setIsAuthenticated(true);
+        } else {
+          await supabase.auth.signOut();
         }
-      } finally {
-        setAuthReady(true);
       }
     };
-
     checkSession();
   }, []);
 
@@ -228,21 +185,7 @@ export default function App() {
     setDashStats(null);
     setPrediction(null);
     setLoginError(null);
-    if (typeof window !== "undefined") {
-      window.history.replaceState({}, "", "/");
-    }
   };
-
-  if (!authReady) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-gray-50">
-        <div className="flex items-center gap-3 text-gray-600">
-          <RefreshCw className="w-5 h-5 animate-spin" />
-          <span>Memuat aplikasi...</span>
-        </div>
-      </div>
-    );
-  }
 
   if (!isAuthenticated) {
     return <Login onLogin={handleLogin} externalError={loginError} />;
@@ -405,6 +348,8 @@ export default function App() {
         return <DistributionManagement currentUserId={currentUser?.id ?? ""} />;
       case "transaksi":
         return <SalesTransaction role="admin" karyawanId={undefined} />;
+      case "titipan":
+        return <TransaksiTitipan />;
       case "pelanggan":
         return <CustomerManagement />;
       case "laporan":

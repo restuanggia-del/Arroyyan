@@ -14,7 +14,7 @@ import {
 } from "../../services/materialService";
 
 interface MaterialTransactionModalProps {
-  type: "masuk" | "awal" | "keluar";
+  type: "masuk" | "keluar";
   onClose: () => void;
   onSaveSuccess: () => void;
 }
@@ -44,7 +44,7 @@ export function MaterialTransactionModal({
   }, []);
 
   const selectedMaterial = materials.find((m) => m.id === materialId);
-  const isGreen = type !== "keluar";
+  const isGreen = type === "masuk";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,14 +62,9 @@ export function MaterialTransactionModal({
     setFormError(null);
 
     const { error } =
-      type === "keluar"
-        ? await reduceMaterialStock(materialId, quantity, note)
-        : await addMaterialStock(
-            materialId,
-            quantity,
-            note,
-            type === "awal" ? "awal" : "masuk",
-          );
+      type === "masuk"
+        ? await addMaterialStock(materialId, quantity, note)
+        : await reduceMaterialStock(materialId, quantity, note);
 
     if (error) {
       setFormError(
@@ -102,11 +97,7 @@ export function MaterialTransactionModal({
               )}
             </div>
             <h2 className="text-xl font-semibold text-gray-900">
-              {type === "awal"
-                ? "Saldo Awal Bahan"
-                : isGreen
-                  ? "Stok Bahan Masuk"
-                  : "Stok Bahan Keluar"}
+              {isGreen ? "Stok Bahan Masuk" : "Stok Bahan Keluar"}
             </h2>
           </div>
           <button
@@ -186,11 +177,9 @@ export function MaterialTransactionModal({
               value={note}
               onChange={(e) => setNote(e.target.value)}
               placeholder={
-                type === "awal"
-                  ? "Contoh: Opname awal bulan"
-                  : isGreen
-                    ? "Contoh: Pembelian dari supplier"
-                    : "Contoh: Dipakai untuk produksi batch #1"
+                isGreen
+                  ? "Contoh: Pembelian dari supplier"
+                  : "Contoh: Dipakai untuk produksi batch #1"
               }
               rows={3}
               className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
@@ -207,11 +196,9 @@ export function MaterialTransactionModal({
             <p
               className={`text-sm font-medium ${isGreen ? "text-green-800" : "text-red-800"}`}
             >
-              {type === "awal"
-                ? "✓ Saldo awal bahan akan ditambahkan"
-                : isGreen
-                  ? "✓ Stok bahan akan bertambah"
-                  : "⚠ Stok bahan akan berkurang"}
+              {isGreen
+                ? "✓ Stok bahan akan bertambah"
+                : "⚠ Stok bahan akan berkurang"}
             </p>
           </div>
 

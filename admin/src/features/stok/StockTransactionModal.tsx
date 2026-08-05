@@ -5,6 +5,7 @@ import {
   TrendingDown,
   RefreshCw,
   AlertCircle,
+  ClipboardList,
 } from "lucide-react";
 import { getActiveProducts, Product } from "../../services/productService";
 import {
@@ -13,7 +14,7 @@ import {
 } from "../../services/stockService";
 
 interface StockTransactionModalProps {
-  type: "masuk" | "awal" | "keluar";
+  type: "awal" | "masuk" | "keluar";
   onClose: () => void;
   onSaveSuccess: () => void;
 }
@@ -39,15 +40,13 @@ export function StockTransactionModal({
     productId: "",
     quantity: 1,
     movementType:
-      type === "masuk"
-        ? "stock_in"
-        : type === "awal"
-          ? "stok_awal"
+      type === "awal"
+        ? "stok_awal"
+        : type === "masuk"
+          ? "stock_in"
           : "sale_out",
     note: "",
   });
-
-  const isInitialBalance = type === "awal";
 
   useEffect(() => {
     const load = async () => {
@@ -59,14 +58,20 @@ export function StockTransactionModal({
     load();
   }, []);
 
-  const categoriesMasuk = [
-    { value: "stock_in", label: "Produksi / Restok" },
-    { value: "stok_awal", label: "Saldo Awal / Opname" },
+  const categoriesAwal = [
+    { value: "stok_awal", label: "Stok Awal (Input Awal / Opname)" },
   ];
+
+  const categoriesMasuk = [{ value: "stock_in", label: "Produksi / Restok" }];
 
   const categoriesKeluar = [{ value: "sale_out", label: "Penjualan Langsung" }];
 
-  const categories = type === "masuk" ? categoriesMasuk : categoriesKeluar;
+  const categories =
+    type === "awal"
+      ? categoriesAwal
+      : type === "masuk"
+        ? categoriesMasuk
+        : categoriesKeluar;
 
   const handleChange = <K extends keyof FormState>(
     field: K,
@@ -92,13 +97,11 @@ export function StockTransactionModal({
     setFormError(null);
 
     let error;
-    if (type === "masuk" || type === "awal") {
+    if (type === "awal" || type === "masuk") {
       ({ error } = await addCentralStock(
         formData.productId,
         formData.quantity,
-        (type === "awal" ? "stok_awal" : formData.movementType) as
-          | "stock_in"
-          | "stok_awal",
+        formData.movementType as "stock_in" | "stok_awal",
         formData.note,
       ));
     } else {
@@ -124,7 +127,50 @@ export function StockTransactionModal({
     onSaveSuccess();
   };
 
-  const isGreen = type !== "keluar";
+  const theme =
+    type === "awal"
+      ? {
+          title: "Stok Awal",
+          bg: "bg-cyan-100",
+          text: "text-cyan-600",
+          solidBg: "bg-cyan-600 hover:bg-cyan-700",
+          softBg: "bg-cyan-50 border border-cyan-200",
+          softText: "text-cyan-800",
+          softTextLight: "text-cyan-700",
+          icon: <ClipboardList className="w-5 h-5 text-cyan-600" />,
+          notePlaceholder: "Contoh: Input awal stok gudang / hasil opname",
+          infoTitle: "✓ Stok pusat akan bertambah",
+          infoBody:
+            "Dipakai untuk mencatat stok awal/opname, tercatat terpisah dari Stok Masuk biasa di riwayat pergerakan.",
+        }
+      : type === "masuk"
+        ? {
+            title: "Stok Masuk",
+            bg: "bg-green-100",
+            text: "text-green-600",
+            solidBg: "bg-green-600 hover:bg-green-700",
+            softBg: "bg-green-50 border border-green-200",
+            softText: "text-green-800",
+            softTextLight: "text-green-700",
+            icon: <TrendingUp className="w-5 h-5 text-green-600" />,
+            notePlaceholder: "Contoh: Produksi batch #1",
+            infoTitle: "✓ Stok pusat akan bertambah",
+            infoBody:
+              "Stok pusat otomatis bertambah dan dicatat di riwayat pergerakan.",
+          }
+        : {
+            title: "Stok Keluar",
+            bg: "bg-red-100",
+            text: "text-red-600",
+            solidBg: "bg-red-600 hover:bg-red-700",
+            softBg: "bg-red-50 border border-red-200",
+            softText: "text-red-800",
+            softTextLight: "text-red-700",
+            icon: <TrendingDown className="w-5 h-5 text-red-600" />,
+            notePlaceholder: "Contoh: Penjualan ke Toko ABC",
+            infoTitle: "⚠ Stok pusat akan berkurang",
+            infoBody: "Pastikan stok pusat mencukupi sebelum menyimpan.",
+          };
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -132,22 +178,12 @@ export function StockTransactionModal({
         <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div
-              className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                isGreen ? "bg-green-100" : "bg-red-100"
-              }`}
+              className={`w-10 h-10 rounded-xl flex items-center justify-center ${theme.bg}`}
             >
-              {isGreen ? (
-                <TrendingUp className="w-5 h-5 text-green-600" />
-              ) : (
-                <TrendingDown className="w-5 h-5 text-red-600" />
-              )}
+              {theme.icon}
             </div>
             <h2 className="text-xl font-semibold text-gray-900">
-              {type === "awal"
-                ? "Stok Awal"
-                : isGreen
-                  ? "Stok Masuk"
-                  : "Stok Keluar"}
+              {theme.title}
             </h2>
           </div>
           <button
@@ -193,25 +229,23 @@ export function StockTransactionModal({
             )}
           </div>
 
-          {!isInitialBalance && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                Jenis Transaksi <span className="text-red-500">*</span>
-              </label>
-              <select
-                required
-                value={formData.movementType}
-                onChange={(e) => handleChange("movementType", e.target.value)}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
-              >
-                {categories.map((cat) => (
-                  <option key={cat.value} value={cat.value}>
-                    {cat.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Jenis Transaksi <span className="text-red-500">*</span>
+            </label>
+            <select
+              required
+              value={formData.movementType}
+              onChange={(e) => handleChange("movementType", e.target.value)}
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+            >
+              {categories.map((cat) => (
+                <option key={cat.value} value={cat.value}>
+                  {cat.label}
+                </option>
+              ))}
+            </select>
+          </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
@@ -242,43 +276,17 @@ export function StockTransactionModal({
             <textarea
               value={formData.note}
               onChange={(e) => handleChange("note", e.target.value)}
-              placeholder={
-                type === "awal"
-                  ? "Contoh: Opname awal bulan"
-                  : isGreen
-                    ? "Contoh: Produksi batch #1"
-                    : "Contoh: Penjualan ke Toko ABC"
-              }
+              placeholder={theme.notePlaceholder}
               rows={3}
               className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
             />
           </div>
 
-          <div
-            className={`rounded-xl p-4 ${
-              isGreen
-                ? "bg-green-50 border border-green-200"
-                : "bg-red-50 border border-red-200"
-            }`}
-          >
-            <p
-              className={`text-sm font-medium mb-1 ${isGreen ? "text-green-800" : "text-red-800"}`}
-            >
-              {type === "awal"
-                ? "✓ Saldo awal akan ditambahkan ke stok pusat"
-                : isGreen
-                  ? "✓ Stok pusat akan bertambah"
-                  : "⚠ Stok pusat akan berkurang"}
+          <div className={`rounded-xl p-4 ${theme.softBg}`}>
+            <p className={`text-sm font-medium mb-1 ${theme.softText}`}>
+              {theme.infoTitle}
             </p>
-            <p
-              className={`text-xs ${isGreen ? "text-green-700" : "text-red-700"}`}
-            >
-              {type === "awal"
-                ? "Digunakan untuk melanjutkan saldo stok atau menginput opname awal periode berikutnya."
-                : isGreen
-                  ? "Stok pusat otomatis bertambah dan dicatat di riwayat pergerakan."
-                  : "Pastikan stok pusat mencukupi sebelum menyimpan."}
-            </p>
+            <p className={`text-xs ${theme.softTextLight}`}>{theme.infoBody}</p>
           </div>
 
           <div className="flex items-center justify-end gap-3 pt-1">
@@ -293,11 +301,7 @@ export function StockTransactionModal({
             <button
               type="submit"
               disabled={saving || loadingProducts}
-              className={`px-5 py-2.5 text-white rounded-xl transition-colors cursor-pointer disabled:opacity-70 flex items-center gap-2 ${
-                isGreen
-                  ? "bg-green-600 hover:bg-green-700"
-                  : "bg-red-600 hover:bg-red-700"
-              }`}
+              className={`px-5 py-2.5 text-white rounded-xl transition-colors cursor-pointer disabled:opacity-70 flex items-center gap-2 ${theme.solidBg}`}
             >
               {saving && <RefreshCw className="w-4 h-4 animate-spin" />}
               Simpan Transaksi

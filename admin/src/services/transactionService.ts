@@ -16,7 +16,7 @@ export interface Transaction {
     karyawan_id: string | null;
     customer_id: string | null;
     total_price: number;
-    payment_method: "cash" | "transfer";
+    payment_method: "cash" | "transfer" | "kasbon";
     created_at: string;
     customers?: { customer_name: string; phone: string | null } | null;
     transaction_details?: {
@@ -59,12 +59,19 @@ export const getAllTransactions = async () => {
 
 export const createTransaction = async (
     items: TransactionItem[],
-    paymentMethod: "cash" | "transfer",
+    paymentMethod: "cash" | "transfer" | "kasbon",
     customerId: string | null,
     options:
-        | { mode: "admin" }
+        | { mode: "admin"; karyawanId?: string }
         | { mode: "karyawan"; karyawanId: string }
 ) => {
+    if (paymentMethod === "kasbon" && !customerId) {
+        return {
+            data: null,
+            error: { message: "Transaksi kasbon wajib memilih toko/pelanggan tujuan." },
+        };
+    }
+
     const totalPrice = items.reduce(
         (sum, item) => sum + item.price * item.quantity,
         0
@@ -98,7 +105,10 @@ export const createTransaction = async (
     const { data: trx, error: trxErr } = await supabaseAdmin
         .from("transactions")
         .insert([{
-            karyawan_id: options.mode === "karyawan" ? options.karyawanId : null,
+            karyawan_id:
+                options.mode === "karyawan"
+                    ? options.karyawanId
+                    : options.karyawanId ?? null,
             customer_id: customerId,
             total_price: totalPrice,
             payment_method: paymentMethod,

@@ -7,6 +7,7 @@ import {
   ArrowRight,
   RefreshCw,
   AlertCircle,
+  ClipboardList,
 } from "lucide-react";
 import { StockTransactionModal } from "./StockTransactionModal";
 import {
@@ -77,7 +78,7 @@ export function StockManagement() {
   );
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [transactionType, setTransactionType] = useState<
-    "masuk" | "awal" | "keluar"
+    "awal" | "masuk" | "keluar"
   >("masuk");
 
   const fetchAll = useCallback(async () => {
@@ -106,7 +107,7 @@ export function StockManagement() {
     fetchAll();
   }, [fetchAll]);
 
-  const handleAddTransaction = (type: "masuk" | "awal" | "keluar") => {
+  const handleAddTransaction = (type: "awal" | "masuk" | "keluar") => {
     setTransactionType(type);
     setIsModalOpen(true);
   };
@@ -232,7 +233,7 @@ export function StockManagement() {
               onClick={() => handleAddTransaction("awal")}
               className="bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer"
             >
-              <TrendingUp className="w-4 h-4" />
+              <ClipboardList className="w-4 h-4" />
               Stok Awal
             </button>
             <button
