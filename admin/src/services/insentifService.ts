@@ -252,6 +252,23 @@ export const getIncentivePayments = async (jenis: IncentiveJenis, periode?: stri
     return { data: (data as unknown) as IncentivePayment[], error: null };
 };
 
+export const getIncentivePaymentsRange = async (
+    jenisList: IncentiveJenis[],
+    startPeriode: string,
+    endPeriode: string,
+) => {
+    const { data, error } = await supabaseAdmin
+        .from("incentive_payments")
+        .select(PAYMENT_SELECT)
+        .in("jenis", jenisList)
+        .gte("periode", startPeriode)
+        .lte("periode", endPeriode)
+        .order("periode", { ascending: false });
+
+    if (error) return { data: null, error };
+    return { data: (data as unknown) as IncentivePayment[], error: null };
+};
+
 export const savePayments = async (
     jenis: IncentiveJenis,
     periode: string,

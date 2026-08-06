@@ -29,6 +29,7 @@ import { InsentifProduksiManagement } from "../features/insentif/InsentifProduks
 import { FeeRekapanManagement } from "../features/fee-rekapan/FeeRekapanManagement";
 import { LaporanBonus } from "../features/laporan/bonus/LaporanBonus";
 import { LaporanHandlingFee } from "../features/laporan/handling-fee/LaporanHandlingFee";
+import { LaporanInsentif } from "../features/laporan/insentif/LaporanInsentif";
 import { CustomerManagement } from "../features/manajemen/customer/CustomerManagement";
 import { Reports } from "../features/laporan/penjualan/Reports";
 import { SalesPrediction } from "../features/laporan/sales/SalesPrediction";
@@ -376,6 +377,8 @@ export default function App() {
         return <LaporanBonus />;
       case "laporan-handling-fee":
         return <LaporanHandlingFee />;
+      case "laporan-insentif":
+        return <LaporanInsentif />;
       case "prediksi":
         return <SalesPrediction />;
       case "log":
