@@ -20,8 +20,8 @@ import {
 } from "lucide-react";
 import { DistributionManagement } from "../features/distribusi/DistributionManagement";
 import { KaryawanManagement } from "../features/manajemen/distributor-karyawan/KaryawanManagement";
-import { SalesTransaction } from "../features/transaksi-penjualan/SalesTransaction";
-import { TransaksiTitipan } from "../features/transaksi-titipan/TransaksiTitipan";
+import { SalesTransaction } from "../features/transaksi/transaksi-penjualan/SalesTransaction";
+import { TransaksiTitipan } from "../features/transaksi/transaksi-titipan/TransaksiTitipan";
 import { PotonganSetoranManagement } from "../features/potongan-setoran/PotonganSetoranManagement";
 import { BonusManagement } from "../features/bonus/BonusManagement";
 import { HandlingFeeManagement } from "../features/handling-fee/HandlingFeeManagement";

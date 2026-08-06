@@ -4,7 +4,7 @@ import {
   KasbonTransaction,
   KasbonPayment,
   getKasbonPaymentHistory,
-} from "../../services/kasbonService";
+} from "../../../services/kasbonService";
 
 interface KasbonHistoryModalProps {
   transaction: KasbonTransaction;

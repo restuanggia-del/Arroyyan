@@ -3,7 +3,7 @@ import { X, RefreshCw, AlertCircle } from "lucide-react";
 import {
   KasbonTransaction,
   addKasbonPayment,
-} from "../../services/kasbonService";
+} from "../../../services/kasbonService";
 
 interface KasbonPaymentModalProps {
   transaction: KasbonTransaction;

@@ -1,15 +1,15 @@
 import { useState, useEffect } from "react";
 import { X, RefreshCw, AlertCircle, Plus, Minus, Trash2 } from "lucide-react";
-import { getActiveProducts, Product } from "../../services/productService";
-import { getAllCustomers, Customer } from "../../services/customerService";
-import { getActiveKaryawan, Karyawan } from "../../services/karyawanService";
-import { getKaryawanStock } from "../../services/stockService";
+import { getActiveProducts, Product } from "../../../services/productService";
+import { getAllCustomers, Customer } from "../../../services/customerService";
+import { getActiveKaryawan, Karyawan } from "../../../services/karyawanService";
+import { getKaryawanStock } from "../../../services/stockService";
 import {
   getAllActiveProductPrices,
   ProductPrice,
-} from "../../services/productPriceService";
-import { createKasbonTransaction } from "../../services/kasbonService";
-import { TransactionItem } from "../../services/transactionService";
+} from "../../../services/productPriceService";
+import { createKasbonTransaction } from "../../../services/kasbonService";
+import { TransactionItem } from "../../../services/transactionService";
 
 interface KasbonTransactionModalProps {
   onClose: () => void;

@@ -15,7 +15,7 @@ import { KasbonHistoryModal } from "./KasbonHistoryModal";
 import {
   KasbonTransaction,
   getKasbonTransactions,
-} from "../../services/kasbonService";
+} from "../../../services/kasbonService";
 
 const formatRp = (n: number) => `Rp ${n.toLocaleString("id-ID")}`;
 const formatDate = (d: string) =>

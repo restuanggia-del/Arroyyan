@@ -13,25 +13,25 @@ import {
   Building2,
   Truck,
 } from "lucide-react";
-import { getActiveProducts, Product } from "../../services/productService";
+import { getActiveProducts, Product } from "../../../services/productService";
 import {
   getAllActiveProductPrices,
   ProductPrice,
-} from "../../services/productPriceService";
+} from "../../../services/productPriceService";
 import {
   getCentralStock,
   getKaryawanStock,
-} from "../../services/stockService";
-import { getAllCustomers, Customer } from "../../services/customerService";
+} from "../../../services/stockService";
+import { getAllCustomers, Customer } from "../../../services/customerService";
 import {
   createTransaction,
   TransactionItem,
-} from "../../services/transactionService";
+} from "../../../services/transactionService";
 import {
   getSystemSettings,
   DEFAULT_SYSTEM_SETTINGS,
   SystemSettingsData,
-} from "../../services/systemSettingsService";
+} from "../../../services/systemSettingsService";
 
 interface CartItem {
   product: Product;
@@ -47,10 +47,7 @@ interface SalesTransactionProps {
 
 const formatRp = (n: number) => "Rp " + n.toLocaleString("id-ID");
 
-export function SalesTransaction({
-  role,
-  karyawanId,
-}: SalesTransactionProps) {
+export function SalesTransaction({ role, karyawanId }: SalesTransactionProps) {
   const [products, setProducts] = useState<Product[]>([]);
   const [priceOptionsMap, setPriceOptionsMap] = useState<
     Record<string, ProductPrice[]>
