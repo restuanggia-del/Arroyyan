@@ -13,6 +13,7 @@ import {
   Boxes,
   Wallet,
   Wallet2,
+  Award,
 } from "lucide-react";
 
 interface MenuItem {
@@ -77,6 +78,11 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
       id: "potongan-setoran",
       label: "Potongan & Setoran",
       icon: <Wallet2 className="w-5 h-5" />,
+    },
+    {
+      id: "bonus",
+      label: "Bonus Karyawan",
+      icon: <Award className="w-5 h-5" />,
     },
 
     {

@@ -23,6 +23,7 @@ import { KaryawanManagement } from "../features/distributor-karyawan/KaryawanMan
 import { SalesTransaction } from "../features/transaksi-penjualan/SalesTransaction";
 import { TransaksiTitipan } from "../features/transaksi-titipan/TransaksiTitipan";
 import { PotonganSetoranManagement } from "../features/potongan-setoran/PotonganSetoranManagement";
+import { BonusManagement } from "../features/bonus/BonusManagement";
 import { CustomerManagement } from "../features/customer/CustomerManagement";
 import { Reports } from "../features/laporan/penjualan/Reports";
 import { SalesPrediction } from "../features/laporan/sales/SalesPrediction";
@@ -355,6 +356,8 @@ export default function App() {
         return (
           <PotonganSetoranManagement currentUserId={currentUser?.id ?? ""} />
         );
+      case "bonus":
+        return <BonusManagement />;
       case "pelanggan":
         return <CustomerManagement />;
       case "laporan":
