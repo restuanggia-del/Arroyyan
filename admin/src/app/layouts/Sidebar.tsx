@@ -16,6 +16,7 @@ import {
   Award,
   HardHat,
   Factory,
+  FileSpreadsheet,
 } from "lucide-react";
 
 interface MenuItem {
@@ -95,6 +96,11 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
       id: "insentif",
       label: "Insentif & Fee Penjualan",
       icon: <Factory className="w-5 h-5" />,
+    },
+    {
+      id: "fee-rekapan",
+      label: "Fee Rekapan",
+      icon: <FileSpreadsheet className="w-5 h-5" />,
     },
 
     {
