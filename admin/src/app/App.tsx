@@ -25,6 +25,7 @@ import { TransaksiTitipan } from "../features/transaksi/transaksi-titipan/Transa
 import { PotonganSetoranManagement } from "../features/potongan-setoran/PotonganSetoranManagement";
 import { BonusManagement } from "../features/bonus/BonusManagement";
 import { HandlingFeeManagement } from "../features/handling-fee/HandlingFeeManagement";
+import { InsentifProduksiManagement } from "../features/insentif/InsentifProduksiManagement";
 import { CustomerManagement } from "../features/manajemen/customer/CustomerManagement";
 import { Reports } from "../features/laporan/penjualan/Reports";
 import { SalesPrediction } from "../features/laporan/sales/SalesPrediction";
@@ -360,6 +361,8 @@ export default function App() {
         return <BonusManagement />;
       case "handling-fee":
         return <HandlingFeeManagement />;
+      case "insentif":
+        return <InsentifProduksiManagement />;
       case "pelanggan":
         return <CustomerManagement />;
       case "laporan":

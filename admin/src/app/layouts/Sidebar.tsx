@@ -15,6 +15,7 @@ import {
   Wallet2,
   Award,
   HardHat,
+  Factory,
 } from "lucide-react";
 
 interface MenuItem {
@@ -89,6 +90,11 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
       id: "handling-fee",
       label: "Handling Fee",
       icon: <HardHat className="w-5 h-5" />,
+    },
+    {
+      id: "insentif",
+      label: "Insentif & Fee Penjualan",
+      icon: <Factory className="w-5 h-5" />,
     },
 
     {
