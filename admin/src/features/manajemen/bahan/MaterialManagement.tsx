@@ -1,99 +1,61 @@
 import { useState, useEffect, useCallback } from "react";
 import {
-  Warehouse,
-  TrendingUp,
-  TrendingDown,
-  AlertTriangle,
-  ArrowRight,
+  Plus,
+  Edit2,
+  Trash2,
   RefreshCw,
   AlertCircle,
+  AlertTriangle,
+  Boxes,
+  TrendingUp,
+  TrendingDown,
+  ArrowRight,
   ClipboardList,
 } from "lucide-react";
-import { StockTransactionModal } from "./StockTransactionModal";
+import { MaterialModal } from "./MaterialModal";
+import { MaterialTransactionModal } from "./MaterialTransactionModal";
 import {
-  getAllStockSummary,
-  getStockMovements,
-  StockItem,
-  StockMovement,
-  MINIMUM_STOCK,
-} from "../../services/stockService";
+  Material,
+  MaterialMovement,
+  getMaterials,
+  getMaterialMovements,
+  toggleMaterialStatus,
+  deleteMaterial,
+  MATERIAL_MINIMUM_STOCK,
+} from "../../../services/materialService";
 
-interface ProductStockSummary {
-  product_id: string;
-  product_name: string;
-  category: "cup" | "botol";
-  stokPusat: number;
-  stokKaryawan: number;
-  minimumStok: number;
-}
-
-function buildSummary(items: StockItem[]): ProductStockSummary[] {
-  const map: Record<string, ProductStockSummary> = {};
-
-  for (const item of items) {
-    const pid = item.product_id;
-    if (!map[pid]) {
-      map[pid] = {
-        product_id: pid,
-        product_name: item.products?.product_name ?? "—",
-        category: (item.products?.category ?? "cup") as "cup" | "botol",
-        stokPusat: 0,
-        stokKaryawan: 0,
-        minimumStok: MINIMUM_STOCK,
-      };
-    }
-    if (item.karyawan_id === null) {
-      map[pid].stokPusat += item.stock_quantity;
-    } else {
-      map[pid].stokKaryawan += item.stock_quantity;
-    }
-  }
-
-  return Object.values(map);
-}
-
-const movementLabel: Record<string, string> = {
-  stock_in: "Produksi / Restok",
-  stok_awal: "Stok Awal (Opname)",
-  distribution_out: "Kirim ke Karyawan",
-  distribution_in: "Diterima Karyawan",
-  sale_out: "Penjualan",
-};
-
-const movementColor: Record<string, string> = {
-  stock_in: "bg-green-100 text-green-700",
-  stok_awal: "bg-cyan-100 text-cyan-700",
-  distribution_out: "bg-orange-100 text-orange-700",
-  distribution_in: "bg-blue-100 text-blue-700",
-  sale_out: "bg-gray-100 text-gray-700",
-};
-
-export function StockManagement() {
-  const [stockSummary, setStockSummary] = useState<ProductStockSummary[]>([]);
-  const [movements, setMovements] = useState<StockMovement[]>([]);
+export function MaterialManagement() {
+  const [materials, setMaterials] = useState<Material[]>([]);
+  const [movements, setMovements] = useState<MaterialMovement[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"overview" | "movement">(
     "overview",
   );
+
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [transactionType, setTransactionType] = useState<
-    "awal" | "masuk" | "keluar"
-  >("masuk");
+  const [editingMaterial, setEditingMaterial] = useState<Material | null>(null);
+  const [isTxModalOpen, setIsTxModalOpen] = useState(false);
+  const [txType, setTxType] = useState<"masuk" | "awal" | "keluar">("masuk");
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
     setError(null);
 
-    const [stockRes, movRes] = await Promise.all([
-      getAllStockSummary(),
-      getStockMovements(50),
+    const [matRes, movRes] = await Promise.all([
+      getMaterials(),
+      getMaterialMovements(50),
     ]);
 
-    if (stockRes.error) {
-      setError("Gagal memuat data stok.");
+    if (matRes.error) {
+      setError("Gagal memuat data bahan.");
     } else {
-      setStockSummary(buildSummary(stockRes.data || []));
+      setMaterials(matRes.data || []);
     }
 
     if (!movRes.error) {
@@ -107,8 +69,13 @@ export function StockManagement() {
     fetchAll();
   }, [fetchAll]);
 
-  const handleAddTransaction = (type: "awal" | "masuk" | "keluar") => {
-    setTransactionType(type);
+  const handleAddMaterial = () => {
+    setEditingMaterial(null);
+    setIsModalOpen(true);
+  };
+
+  const handleEditMaterial = (material: Material) => {
+    setEditingMaterial(material);
     setIsModalOpen(true);
   };
 
@@ -117,12 +84,54 @@ export function StockManagement() {
     fetchAll();
   };
 
-  const lowStockItems = stockSummary.filter(
-    (item) => item.stokPusat < item.minimumStok,
-  );
+  const handleAddTransaction = (type: "masuk" | "awal" | "keluar") => {
+    setTxType(type);
+    setIsTxModalOpen(true);
+  };
 
-  const totalPusat = stockSummary.reduce((s, i) => s + i.stokPusat, 0);
-  const totalDist = stockSummary.reduce((s, i) => s + i.stokKaryawan, 0);
+  const handleTxSuccess = () => {
+    setIsTxModalOpen(false);
+    fetchAll();
+  };
+
+  const handleToggleStatus = async (material: Material) => {
+    setActionLoading(material.id);
+    const { error } = await toggleMaterialStatus(
+      material.id,
+      !material.is_active,
+    );
+    if (error) {
+      alert("Gagal mengubah status: " + error.message);
+    } else {
+      setMaterials((prev) =>
+        prev.map((m) =>
+          m.id === material.id ? { ...m, is_active: !material.is_active } : m,
+        ),
+      );
+    }
+    setActionLoading(null);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!confirmDelete) return;
+    setActionLoading(confirmDelete.id);
+    setConfirmDelete(null);
+    const { error } = await deleteMaterial(
+      confirmDelete.id,
+      confirmDelete.name,
+    );
+    if (error) {
+      alert("Gagal menghapus bahan: " + error.message);
+    } else {
+      setMaterials((prev) => prev.filter((m) => m.id !== confirmDelete.id));
+    }
+    setActionLoading(null);
+  };
+
+  const lowStockItems = materials.filter(
+    (m) => m.is_active && m.stock_quantity < MATERIAL_MINIMUM_STOCK,
+  );
+  const totalMaterials = materials.length;
 
   const formatDate = (d: string) =>
     new Date(d).toLocaleString("id-ID", {
@@ -138,9 +147,11 @@ export function StockManagement() {
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 mb-1">
-            Manajemen Stok
+            Manajemen Bahan
           </h1>
-          <p className="text-gray-600">Kelola stok pusat dan karyawan</p>
+          <p className="text-gray-600">
+            Kelola bahan baku produksi (preform, tutup, sedotan, dll)
+          </p>
         </div>
         <button
           onClick={fetchAll}
@@ -157,16 +168,16 @@ export function StockManagement() {
           <AlertTriangle className="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" />
           <div>
             <h3 className="font-semibold text-orange-900 mb-1">
-              Peringatan Stok Minimum
+              Peringatan Stok Bahan Menipis
             </h3>
             <p className="text-sm text-orange-700">
-              {lowStockItems.length} produk memiliki stok pusat di bawah{" "}
-              {MINIMUM_STOCK} unit. Segera lakukan restok!
+              {lowStockItems.length} bahan memiliki stok di bawah{" "}
+              {MATERIAL_MINIMUM_STOCK} unit.
             </p>
             <ul className="mt-1 text-xs text-orange-600 list-disc list-inside">
-              {lowStockItems.map((i) => (
-                <li key={i.product_id}>
-                  {i.product_name} — stok pusat: {i.stokPusat} unit
+              {lowStockItems.map((m) => (
+                <li key={m.id}>
+                  {m.nama_bahan} — stok: {m.stock_quantity} {m.satuan}
                 </li>
               ))}
             </ul>
@@ -174,52 +185,43 @@ export function StockManagement() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
-            <Warehouse className="w-6 h-6 text-blue-600" />
+            <Boxes className="w-6 h-6 text-blue-600" />
           </div>
-          <h3 className="text-sm text-gray-600 mb-1">Total Stok Pusat</h3>
+          <h3 className="text-sm text-gray-600 mb-1">Total Jenis Bahan</h3>
           <p className="text-2xl font-bold text-gray-900">
-            {loading ? "—" : `${totalPusat} Unit`}
-          </p>
-        </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
-            <TrendingUp className="w-6 h-6 text-green-600" />
-          </div>
-          <h3 className="text-sm text-gray-600 mb-1">Total Stok Karyawan</h3>
-          <p className="text-2xl font-bold text-gray-900">
-            {loading ? "—" : `${totalDist} Unit`}
+            {loading ? "—" : `${totalMaterials} Bahan`}
           </p>
         </div>
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-4">
             <AlertTriangle className="w-6 h-6 text-orange-600" />
           </div>
-          <h3 className="text-sm text-gray-600 mb-1">Produk Stok Kritis</h3>
+          <h3 className="text-sm text-gray-600 mb-1">Bahan Stok Kritis</h3>
           <p className="text-2xl font-bold text-gray-900">
-            {loading ? "—" : `${lowStockItems.length} Produk`}
+            {loading ? "—" : `${lowStockItems.length} Bahan`}
           </p>
         </div>
       </div>
 
       <div className="bg-white rounded-lg border border-gray-200">
-        <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+        <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between flex-wrap gap-3">
           <div className="flex gap-2">
             <button
               onClick={() => setActiveTab("overview")}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
                 activeTab === "overview"
                   ? "bg-blue-50 text-blue-600"
                   : "text-gray-600 hover:bg-gray-50"
               }`}
             >
-              Ringkasan Stok
+              Daftar Bahan
             </button>
             <button
               onClick={() => setActiveTab("movement")}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
                 activeTab === "movement"
                   ? "bg-blue-50 text-blue-600"
                   : "text-gray-600 hover:bg-gray-50"
@@ -229,6 +231,13 @@ export function StockManagement() {
             </button>
           </div>
           <div className="flex gap-2">
+            <button
+              onClick={handleAddMaterial}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              Tambah Bahan
+            </button>
             <button
               onClick={() => handleAddTransaction("awal")}
               className="bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer"
@@ -264,7 +273,7 @@ export function StockManagement() {
           {loading ? (
             <div className="py-16 text-center">
               <RefreshCw className="w-8 h-8 text-gray-400 animate-spin mx-auto mb-3" />
-              <p className="text-gray-500 text-sm">Memuat data stok...</p>
+              <p className="text-gray-500 text-sm">Memuat data bahan...</p>
             </div>
           ) : activeTab === "overview" ? (
             <div className="overflow-x-auto">
@@ -272,13 +281,12 @@ export function StockManagement() {
                 <thead>
                   <tr className="border-b border-gray-200">
                     {[
-                      "Produk",
-                      "Kategori",
-                      "Stok Pusat",
-                      "Stok Karyawan",
-                      "Total",
-                      "Min. Stok",
+                      "Nama Bahan",
+                      "Satuan",
+                      "Stok",
                       "Status",
+                      "Kondisi",
+                      "Aksi",
                     ].map((h) => (
                       <th
                         key={h}
@@ -290,61 +298,82 @@ export function StockManagement() {
                   </tr>
                 </thead>
                 <tbody>
-                  {stockSummary.length === 0 ? (
+                  {materials.length === 0 ? (
                     <tr>
                       <td
-                        colSpan={7}
+                        colSpan={6}
                         className="py-12 text-center text-gray-500 text-sm"
                       >
-                        Belum ada data stok
+                        Belum ada data bahan
                       </td>
                     </tr>
                   ) : (
-                    stockSummary.map((item) => {
-                      const isLow = item.stokPusat < item.minimumStok;
-                      const total = item.stokPusat + item.stokKaryawan;
+                    materials.map((m) => {
+                      const isLow = m.stock_quantity < MATERIAL_MINIMUM_STOCK;
                       return (
                         <tr
-                          key={item.product_id}
+                          key={m.id}
                           className="border-b border-gray-100 hover:bg-gray-50"
                         >
                           <td className="py-3 px-4 text-sm font-medium text-gray-900">
-                            {item.product_name}
-                          </td>
-                          <td className="py-3 px-4">
-                            <span
-                              className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
-                                item.category === "cup"
-                                  ? "bg-blue-100 text-blue-700"
-                                  : "bg-purple-100 text-purple-700"
-                              }`}
-                            >
-                              {item.category === "cup" ? "Cup" : "Botol"}
-                            </span>
-                          </td>
-                          <td className="py-3 px-4 text-sm text-gray-900">
-                            {item.stokPusat}
-                          </td>
-                          <td className="py-3 px-4 text-sm text-gray-900">
-                            {item.stokKaryawan}
-                          </td>
-                          <td className="py-3 px-4 text-sm font-semibold text-gray-900">
-                            {total}
+                            {m.nama_bahan}
                           </td>
                           <td className="py-3 px-4 text-sm text-gray-600">
-                            {item.minimumStok}
+                            {m.satuan}
+                          </td>
+                          <td className="py-3 px-4 text-sm font-semibold text-gray-900">
+                            {m.stock_quantity}
+                          </td>
+                          <td className="py-3 px-4">
+                            {actionLoading === m.id ? (
+                              <RefreshCw className="w-4 h-4 animate-spin text-gray-400" />
+                            ) : (
+                              <button
+                                onClick={() => handleToggleStatus(m)}
+                                className={`inline-flex px-3 py-1 rounded-full text-xs font-medium transition-colors cursor-pointer ${
+                                  m.is_active
+                                    ? "bg-green-100 text-green-700 hover:bg-green-200"
+                                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                }`}
+                              >
+                                {m.is_active ? "Aktif" : "Nonaktif"}
+                              </button>
+                            )}
                           </td>
                           <td className="py-3 px-4">
                             {isLow ? (
                               <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-700">
                                 <AlertTriangle className="w-3 h-3" />
-                                Stok Rendah
+                                Menipis
                               </span>
                             ) : (
                               <span className="inline-flex px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
                                 Aman
                               </span>
                             )}
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => handleEditMaterial(m)}
+                                className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
+                                title="Edit"
+                              >
+                                <Edit2 className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() =>
+                                  setConfirmDelete({
+                                    id: m.id,
+                                    name: m.nama_bahan,
+                                  })
+                                }
+                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                                title="Hapus"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       );
@@ -357,14 +386,13 @@ export function StockManagement() {
             <div className="space-y-3">
               {movements.length === 0 ? (
                 <p className="text-center text-gray-500 py-12 text-sm">
-                  Belum ada riwayat pergerakan stok
+                  Belum ada riwayat pergerakan bahan
                 </p>
               ) : (
                 movements.map((mov) => {
                   const isIn =
-                    mov.movement_type === "stock_in" ||
-                    mov.movement_type === "stok_awal" ||
-                    mov.movement_type === "distribution_in";
+                    mov.movement_type === "masuk" ||
+                    mov.movement_type === "awal";
                   return (
                     <div
                       key={mov.id}
@@ -385,22 +413,19 @@ export function StockManagement() {
                           </div>
                           <div>
                             <p className="text-sm font-medium text-gray-900 mb-0.5">
-                              {mov.products?.product_name ?? "—"}
+                              {mov.materials?.nama_bahan ?? "—"}
                             </p>
                             <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1.5">
-                              <span>{mov.karyawan?.nama ?? "Stok Pusat"}</span>
+                              <span>Bahan Baku</span>
                               <ArrowRight className="w-3 h-3" />
-                              <span>{isIn ? "Stok Masuk" : "Stok Keluar"}</span>
+                              <span>
+                                {mov.movement_type === "awal"
+                                  ? "Stok Awal"
+                                  : isIn
+                                    ? "Stok Masuk"
+                                    : "Stok Keluar"}
+                              </span>
                             </div>
-                            <span
-                              className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
-                                movementColor[mov.movement_type] ??
-                                "bg-gray-100 text-gray-600"
-                              }`}
-                            >
-                              {movementLabel[mov.movement_type] ??
-                                mov.movement_type}
-                            </span>
                             {mov.note && (
                               <p className="text-xs text-gray-500 mt-1">
                                 {mov.note}
@@ -415,7 +440,7 @@ export function StockManagement() {
                             }`}
                           >
                             {isIn ? "+" : "-"}
-                            {mov.quantity}
+                            {mov.quantity} {mov.materials?.satuan ?? ""}
                           </p>
                           <p className="text-xs text-gray-400">
                             {formatDate(mov.created_at)}
@@ -432,11 +457,52 @@ export function StockManagement() {
       </div>
 
       {isModalOpen && (
-        <StockTransactionModal
-          type={transactionType}
+        <MaterialModal
+          material={editingMaterial}
           onClose={() => setIsModalOpen(false)}
           onSaveSuccess={handleSaveSuccess}
         />
+      )}
+
+      {isTxModalOpen && (
+        <MaterialTransactionModal
+          type={txType}
+          onClose={() => setIsTxModalOpen(false)}
+          onSaveSuccess={handleTxSuccess}
+        />
+      )}
+
+      {confirmDelete && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm">
+            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Trash2 className="w-6 h-6 text-red-600" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 text-center mb-2">
+              Hapus Bahan?
+            </h3>
+            <p className="text-sm text-gray-600 text-center mb-1">
+              <span className="font-medium">{confirmDelete.name}</span>
+            </p>
+            <p className="text-xs text-gray-400 text-center mb-6">
+              Bahan yang sudah dihapus tidak bisa dikembalikan.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmDelete(null)}
+                className="flex-1 px-4 py-2.5 border border-gray-300 rounded-xl text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-medium cursor-pointer"
+              >
+                Ya, Hapus
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

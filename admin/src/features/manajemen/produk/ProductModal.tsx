@@ -4,13 +4,13 @@ import {
   Product,
   createProduct,
   updateProduct,
-} from "../../services/productService";
+} from "../../../services/productService";
 import {
   ProductPrice,
   getProductPrices,
   createProductPrice,
   deleteProductPrice,
-} from "../../services/productPriceService";
+} from "../../../services/productPriceService";
 
 interface ProductModalProps {
   product: Product | null;

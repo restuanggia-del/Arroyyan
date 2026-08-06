@@ -20,8 +20,8 @@ import {
   deleteKaryawan,
   Karyawan,
   KaryawanRole,
-} from "../../services/karyawanService";
-import { supabaseAdmin } from "../../lib/supabaseAdmin";
+} from "../../../services/karyawanService";
+import { supabaseAdmin } from "../../../lib/supabaseAdmin";
 
 const ROLE_OPTIONS: { value: KaryawanRole; label: string }[] = [
   { value: "produksi", label: "Produksi" },
@@ -156,7 +156,9 @@ export function KaryawanManagement() {
       : await createKaryawan(payload);
 
     if (result.error) {
-      setFormError((result.error as any).message ?? "Gagal menyimpan data karyawan.");
+      setFormError(
+        (result.error as any).message ?? "Gagal menyimpan data karyawan.",
+      );
       setSaving(false);
       return;
     }
@@ -177,8 +179,13 @@ export function KaryawanManagement() {
 
   const toggleActive = async (k: Karyawan) => {
     setActionLoading(k.id);
-    const { error } = await updateKaryawan(k.id, { is_active: !k.is_active }, { oldName: k.nama });
-    if (error) alert("Gagal mengubah status karyawan: " + (error as any).message);
+    const { error } = await updateKaryawan(
+      k.id,
+      { is_active: !k.is_active },
+      { oldName: k.nama },
+    );
+    if (error)
+      alert("Gagal mengubah status karyawan: " + (error as any).message);
     else fetchKaryawan();
     setActionLoading(null);
   };
@@ -188,7 +195,11 @@ export function KaryawanManagement() {
       k.nama.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (k.phone || "").includes(searchQuery);
     const matchFilter =
-      filter === "all" ? true : filter === "active" ? k.is_active : !k.is_active;
+      filter === "all"
+        ? true
+        : filter === "active"
+          ? k.is_active
+          : !k.is_active;
     return matchSearch && matchFilter;
   });
 
@@ -228,9 +239,27 @@ export function KaryawanManagement() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         {[
-          { key: "all", label: "Total Karyawan", value: totalAll, color: "blue", Icon: Users },
-          { key: "active", label: "Aktif", value: totalActive, color: "green", Icon: Power },
-          { key: "inactive", label: "Nonaktif", value: totalInactive, color: "gray", Icon: Power },
+          {
+            key: "all",
+            label: "Total Karyawan",
+            value: totalAll,
+            color: "blue",
+            Icon: Users,
+          },
+          {
+            key: "active",
+            label: "Aktif",
+            value: totalActive,
+            color: "green",
+            Icon: Power,
+          },
+          {
+            key: "inactive",
+            label: "Nonaktif",
+            value: totalInactive,
+            color: "gray",
+            Icon: Power,
+          },
         ].map(({ key, label, value, color, Icon }) => (
           <button
             key={key}
@@ -241,7 +270,9 @@ export function KaryawanManagement() {
                 : "border-gray-200 hover:border-gray-300"
             }`}
           >
-            <div className={`w-12 h-12 bg-${color}-100 rounded-lg flex items-center justify-center mb-4`}>
+            <div
+              className={`w-12 h-12 bg-${color}-100 rounded-lg flex items-center justify-center mb-4`}
+            >
               <Icon className={`w-6 h-6 text-${color}-600`} />
             </div>
             <p className="text-sm text-gray-600 mb-1">{label}</p>
@@ -301,14 +332,18 @@ export function KaryawanManagement() {
                       <div className="flex items-start gap-4 flex-1 min-w-0">
                         <div
                           className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-lg flex-shrink-0 ${
-                            k.is_active ? "bg-blue-600 text-white" : "bg-gray-300 text-white"
+                            k.is_active
+                              ? "bg-blue-600 text-white"
+                              : "bg-gray-300 text-white"
                           }`}
                         >
                           {k.nama.charAt(0).toUpperCase()}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1 flex-wrap">
-                            <h3 className="font-semibold text-gray-900">{k.nama}</h3>
+                            <h3 className="font-semibold text-gray-900">
+                              {k.nama}
+                            </h3>
                             {k.bonus_khusus && (
                               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
                                 <Star className="w-3 h-3" /> Bonus Khusus
@@ -354,7 +389,8 @@ export function KaryawanManagement() {
                       <div className="flex items-center gap-2 flex-shrink-0">
                         {actionLoading === k.id ? (
                           <div className="flex items-center gap-2 text-sm text-gray-500">
-                            <RefreshCw className="w-4 h-4 animate-spin" /> Memproses...
+                            <RefreshCw className="w-4 h-4 animate-spin" />{" "}
+                            Memproses...
                           </div>
                         ) : (
                           <>
@@ -438,7 +474,9 @@ export function KaryawanManagement() {
                   <input
                     type="text"
                     value={form.phone}
-                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                    onChange={(e) =>
+                      setForm({ ...form, phone: e.target.value })
+                    }
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
@@ -449,7 +487,9 @@ export function KaryawanManagement() {
                   <input
                     type="text"
                     value={form.address}
-                    onChange={(e) => setForm({ ...form, address: e.target.value })}
+                    onChange={(e) =>
+                      setForm({ ...form, address: e.target.value })
+                    }
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
@@ -458,7 +498,9 @@ export function KaryawanManagement() {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">
                   Peran <span className="text-red-500">*</span>{" "}
-                  <span className="text-gray-400 font-normal">(bisa lebih dari 1)</span>
+                  <span className="text-gray-400 font-normal">
+                    (bisa lebih dari 1)
+                  </span>
                 </label>
                 <div className="grid grid-cols-2 gap-2">
                   {ROLE_OPTIONS.map((opt) => (
@@ -487,7 +529,9 @@ export function KaryawanManagement() {
                   <input
                     type="checkbox"
                     checked={form.bonus_khusus}
-                    onChange={(e) => setForm({ ...form, bonus_khusus: e.target.checked })}
+                    onChange={(e) =>
+                      setForm({ ...form, bonus_khusus: e.target.checked })
+                    }
                     className="rounded border-gray-300"
                   />
                   Bonus khusus (ditandai manual oleh admin)
@@ -496,7 +540,9 @@ export function KaryawanManagement() {
                   <input
                     type="checkbox"
                     checked={form.is_active}
-                    onChange={(e) => setForm({ ...form, is_active: e.target.checked })}
+                    onChange={(e) =>
+                      setForm({ ...form, is_active: e.target.checked })
+                    }
                     className="rounded border-gray-300"
                   />
                   Aktif
@@ -516,7 +562,11 @@ export function KaryawanManagement() {
                 disabled={saving}
                 className="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-medium cursor-pointer disabled:opacity-50"
               >
-                {saving ? "Menyimpan..." : form.id ? "Simpan Perubahan" : "Tambah Karyawan"}
+                {saving
+                  ? "Menyimpan..."
+                  : form.id
+                    ? "Simpan Perubahan"
+                    : "Tambah Karyawan"}
               </button>
             </div>
           </div>

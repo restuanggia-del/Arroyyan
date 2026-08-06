@@ -11,7 +11,7 @@ import {
   Material,
   addMaterialStock,
   reduceMaterialStock,
-} from "../../services/materialService";
+} from "../../../services/materialService";
 
 interface MaterialTransactionModalProps {
   type: "masuk" | "awal" | "keluar";

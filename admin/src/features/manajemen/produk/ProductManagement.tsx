@@ -14,7 +14,7 @@ import {
   getProducts,
   toggleProductStatus,
   deleteProduct,
-} from "../../services/productService";
+} from "../../../services/productService";
 
 export type { Product };
 

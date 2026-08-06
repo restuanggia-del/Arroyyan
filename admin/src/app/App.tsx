@@ -8,9 +8,9 @@ import { DashboardChart } from "../components/shared/DashboardChart";
 import { TopProducts } from "../components/shared/TopProducts";
 import { StockAlert } from "../components/shared/StockAlert";
 import { Calendar } from "../components/shared/Calendar";
-import { ProductManagement } from "../features/produk/ProductManagement";
-import { StockManagement } from "../features/stok/StockManagement";
-import { MaterialManagement } from "../features/bahan/MaterialManagement";
+import { ProductManagement } from "../features/manajemen/produk/ProductManagement";
+import { StockManagement } from "../features/manajemen/stok/StockManagement";
+import { MaterialManagement } from "../features/manajemen/bahan/MaterialManagement";
 import {
   DollarSign,
   TrendingUp,
@@ -19,13 +19,13 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { DistributionManagement } from "../features/distribusi/DistributionManagement";
-import { KaryawanManagement } from "../features/distributor-karyawan/KaryawanManagement";
+import { KaryawanManagement } from "../features/manajemen/distributor-karyawan/KaryawanManagement";
 import { SalesTransaction } from "../features/transaksi-penjualan/SalesTransaction";
 import { TransaksiTitipan } from "../features/transaksi-titipan/TransaksiTitipan";
 import { PotonganSetoranManagement } from "../features/potongan-setoran/PotonganSetoranManagement";
 import { BonusManagement } from "../features/bonus/BonusManagement";
 import { HandlingFeeManagement } from "../features/handling-fee/HandlingFeeManagement";
-import { CustomerManagement } from "../features/customer/CustomerManagement";
+import { CustomerManagement } from "../features/manajemen/customer/CustomerManagement";
 import { Reports } from "../features/laporan/penjualan/Reports";
 import { SalesPrediction } from "../features/laporan/sales/SalesPrediction";
 import { AuditLog } from "../features/pengaturan/AuditLog";

@@ -26,12 +26,12 @@ import {
   updateCustomer,
   deleteCustomer,
   Customer,
-} from "../../services/customerService";
+} from "../../../services/customerService";
 import {
   getSubscriptionThreshold,
   saveSubscriptionThreshold,
   SubscriptionThreshold,
-} from "../../services/subscriptionSettingsService";
+} from "../../../services/subscriptionSettingsService";
 
 interface CustomerModalProps {
   customer: Customer | null;

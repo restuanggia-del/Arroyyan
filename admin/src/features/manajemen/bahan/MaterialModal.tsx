@@ -4,7 +4,7 @@ import {
   Material,
   createMaterial,
   updateMaterial,
-} from "../../services/materialService";
+} from "../../../services/materialService";
 
 interface MaterialModalProps {
   material: Material | null;

@@ -7,11 +7,11 @@ import {
   AlertCircle,
   ClipboardList,
 } from "lucide-react";
-import { getActiveProducts, Product } from "../../services/productService";
+import { getActiveProducts, Product } from "../../../services/productService";
 import {
   addCentralStock,
   reduceCentralStock,
-} from "../../services/stockService";
+} from "../../../services/stockService";
 
 interface StockTransactionModalProps {
   type: "awal" | "masuk" | "keluar";
