@@ -10,6 +10,7 @@ import {
   TrendingUp,
   TrendingDown,
   ArrowRight,
+  ClipboardList,
 } from "lucide-react";
 import { MaterialModal } from "./MaterialModal";
 import { MaterialTransactionModal } from "./MaterialTransactionModal";
@@ -35,7 +36,7 @@ export function MaterialManagement() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingMaterial, setEditingMaterial] = useState<Material | null>(null);
   const [isTxModalOpen, setIsTxModalOpen] = useState(false);
-  const [txType, setTxType] = useState<"masuk" | "keluar">("masuk");
+  const [txType, setTxType] = useState<"masuk" | "awal" | "keluar">("masuk");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<{
     id: string;
@@ -83,7 +84,7 @@ export function MaterialManagement() {
     fetchAll();
   };
 
-  const handleAddTransaction = (type: "masuk" | "keluar") => {
+  const handleAddTransaction = (type: "masuk" | "awal" | "keluar") => {
     setTxType(type);
     setIsTxModalOpen(true);
   };
@@ -238,6 +239,13 @@ export function MaterialManagement() {
               Tambah Bahan
             </button>
             <button
+              onClick={() => handleAddTransaction("awal")}
+              className="bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer"
+            >
+              <ClipboardList className="w-4 h-4" />
+              Stok Awal
+            </button>
+            <button
               onClick={() => handleAddTransaction("masuk")}
               className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer"
             >
@@ -382,7 +390,9 @@ export function MaterialManagement() {
                 </p>
               ) : (
                 movements.map((mov) => {
-                  const isIn = mov.movement_type === "masuk";
+                  const isIn =
+                    mov.movement_type === "masuk" ||
+                    mov.movement_type === "awal";
                   return (
                     <div
                       key={mov.id}
@@ -408,7 +418,13 @@ export function MaterialManagement() {
                             <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1.5">
                               <span>Bahan Baku</span>
                               <ArrowRight className="w-3 h-3" />
-                              <span>{isIn ? "Stok Masuk" : "Stok Keluar"}</span>
+                              <span>
+                                {mov.movement_type === "awal"
+                                  ? "Stok Awal"
+                                  : isIn
+                                    ? "Stok Masuk"
+                                    : "Stok Keluar"}
+                              </span>
                             </div>
                             {mov.note && (
                               <p className="text-xs text-gray-500 mt-1">

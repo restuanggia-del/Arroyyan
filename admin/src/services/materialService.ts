@@ -13,7 +13,7 @@ export interface Material {
 export interface MaterialMovement {
     id: string;
     material_id: string;
-    movement_type: "masuk" | "keluar";
+    movement_type: "masuk" | "awal" | "keluar";
     quantity: number;
     note: string | null;
     created_at: string;
@@ -134,7 +134,8 @@ export const getMaterialMovements = async (limit = 50) => {
 export const addMaterialStock = async (
     materialId: string,
     quantity: number,
-    note: string
+    note: string,
+    movementType: "masuk" | "awal" = "masuk"
 ) => {
     const { data: existing, error: fetchErr } = await supabaseAdmin
         .from("materials")
@@ -155,7 +156,7 @@ export const addMaterialStock = async (
         .from("material_movements")
         .insert([{
             material_id: materialId,
-            movement_type: "masuk",
+            movement_type: movementType,
             quantity,
             note: note || null,
         }]);

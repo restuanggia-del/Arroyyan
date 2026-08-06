@@ -161,8 +161,9 @@ export function MaterialModal({
 
           {!material && (
             <div className="p-3 bg-blue-50 border border-blue-100 rounded-xl text-xs text-blue-600">
-              Stok awal bahan baru dimulai dari 0. Gunakan tombol "Stok Masuk"
-              setelah bahan tersimpan untuk mencatat stok yang sudah ada.
+              Stok awal bahan baru dimulai dari 0. Gunakan tombol "Stok Awal"
+              setelah bahan tersimpan jika saldo awal perlu dilanjutkan atau
+              diinput terlebih dahulu.
             </div>
           )}
 
