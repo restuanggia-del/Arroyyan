@@ -24,6 +24,7 @@ import { SalesTransaction } from "../features/transaksi-penjualan/SalesTransacti
 import { TransaksiTitipan } from "../features/transaksi-titipan/TransaksiTitipan";
 import { PotonganSetoranManagement } from "../features/potongan-setoran/PotonganSetoranManagement";
 import { BonusManagement } from "../features/bonus/BonusManagement";
+import { HandlingFeeManagement } from "../features/handling-fee/HandlingFeeManagement";
 import { CustomerManagement } from "../features/customer/CustomerManagement";
 import { Reports } from "../features/laporan/penjualan/Reports";
 import { SalesPrediction } from "../features/laporan/sales/SalesPrediction";
@@ -59,7 +60,6 @@ export default function App() {
 
   const [loginError, setLoginError] = useState<string | null>(null);
 
-  // Dashboard
   const [dashStats, setDashStats] = useState<DashboardStats | null>(null);
   const [dashLoading, setDashLoading] = useState(false);
   const [prediction, setPrediction] = useState<{
@@ -358,6 +358,8 @@ export default function App() {
         );
       case "bonus":
         return <BonusManagement />;
+      case "handling-fee":
+        return <HandlingFeeManagement />;
       case "pelanggan":
         return <CustomerManagement />;
       case "laporan":
