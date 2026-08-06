@@ -114,6 +114,11 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
       icon: <Award className="w-5 h-5" />,
     },
     {
+      id: "laporan-handling-fee",
+      label: "Laporan Handling Fee",
+      icon: <HardHat className="w-5 h-5" />,
+    },
+    {
       id: "prediksi",
       label: "Prediksi Penjualan",
       icon: <TrendingUp className="w-5 h-5" />,

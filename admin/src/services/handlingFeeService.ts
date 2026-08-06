@@ -37,6 +37,54 @@ export const getHandlingFeeRecords = async (limit = 200) => {
     return { data: (data as unknown) as HandlingFeeRecord[], error: null };
 };
 
+export const getHandlingFeeRecordsByDateRange = async (startDate: string, endDate: string) => {
+    const { data, error } = await supabaseAdmin
+        .from("handling_fee_records")
+        .select(RECORD_SELECT)
+        .gte("tanggal", startDate)
+        .lte("tanggal", endDate)
+        .order("tanggal", { ascending: false });
+
+    if (error) return { data: null, error };
+    return { data: (data as unknown) as HandlingFeeRecord[], error: null };
+};
+
+export interface HandlingFeeDetailRow {
+    tanggal: string;
+    karyawan_id: string;
+    nama: string;
+    jumlah_dus: number;
+    rate_per_dus: number;
+    fee_per_orang: number;
+    keterangan: string | null;
+}
+
+export const getHandlingFeeDetailByDateRange = async (
+    startDate: string,
+    endDate: string,
+): Promise<{ data: HandlingFeeDetailRow[] | null; error: any }> => {
+    const { data, error } = await getHandlingFeeRecordsByDateRange(startDate, endDate);
+    if (error) return { data: null, error };
+
+    const rows: HandlingFeeDetailRow[] = [];
+    for (const record of data ?? []) {
+        for (const w of record.handling_fee_workers) {
+            rows.push({
+                tanggal: record.tanggal,
+                karyawan_id: w.karyawan_id,
+                nama: w.karyawan?.nama ?? "(Karyawan tidak aktif)",
+                jumlah_dus: record.jumlah_dus,
+                rate_per_dus: Number(record.rate_per_dus),
+                fee_per_orang: Number(w.fee_per_orang),
+                keterangan: record.keterangan,
+            });
+        }
+    }
+
+    rows.sort((a, b) => (a.tanggal < b.tanggal ? 1 : -1));
+    return { data: rows, error: null };
+};
+
 export const createHandlingFee = async (input: {
     tanggal: string;
     jumlah_dus: number;
