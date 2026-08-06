@@ -155,6 +155,18 @@ export const getBonusRecords = async (periode?: string) => {
     return { data: (data as unknown) as BonusRecord[], error: null };
 };
 
+export const getBonusRecordsByPeriodeRange = async (startPeriode: string, endPeriode: string) => {
+    const { data, error } = await supabaseAdmin
+        .from("bonus_records")
+        .select(RECORD_SELECT)
+        .gte("periode", startPeriode)
+        .lte("periode", endPeriode)
+        .order("periode", { ascending: false });
+
+    if (error) return { data: null, error };
+    return { data: (data as unknown) as BonusRecord[], error: null };
+};
+
 export const deleteBonusRecord = async (id: string) => {
     const { error } = await supabaseAdmin.from("bonus_records").delete().eq("id", id);
     if (error) return { error };

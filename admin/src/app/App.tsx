@@ -1,4 +1,11 @@
 import { useState, useEffect } from "react";
+import {
+  DollarSign,
+  TrendingUp,
+  ShoppingCart,
+  Package,
+  RefreshCw,
+} from "lucide-react";
 import { Logo } from "../components/shared/Logo";
 import { SearchBar } from "../components/shared/SearchBar";
 import { UserProfile } from "../features/pengaturan/UserProfile";
@@ -11,13 +18,6 @@ import { Calendar } from "../components/shared/Calendar";
 import { ProductManagement } from "../features/manajemen/produk/ProductManagement";
 import { StockManagement } from "../features/manajemen/stok/StockManagement";
 import { MaterialManagement } from "../features/manajemen/bahan/MaterialManagement";
-import {
-  DollarSign,
-  TrendingUp,
-  ShoppingCart,
-  Package,
-  RefreshCw,
-} from "lucide-react";
 import { DistributionManagement } from "../features/distribusi/DistributionManagement";
 import { KaryawanManagement } from "../features/manajemen/distributor-karyawan/KaryawanManagement";
 import { SalesTransaction } from "../features/transaksi/transaksi-penjualan/SalesTransaction";
@@ -27,6 +27,7 @@ import { BonusManagement } from "../features/bonus/BonusManagement";
 import { HandlingFeeManagement } from "../features/handling-fee/HandlingFeeManagement";
 import { InsentifProduksiManagement } from "../features/insentif/InsentifProduksiManagement";
 import { FeeRekapanManagement } from "../features/fee-rekapan/FeeRekapanManagement";
+import { LaporanBonus } from "../features/laporan/bonus/LaporanBonus";
 import { CustomerManagement } from "../features/manajemen/customer/CustomerManagement";
 import { Reports } from "../features/laporan/penjualan/Reports";
 import { SalesPrediction } from "../features/laporan/sales/SalesPrediction";
@@ -370,6 +371,8 @@ export default function App() {
         return <CustomerManagement />;
       case "laporan":
         return <Reports />;
+      case "laporan-bonus":
+        return <LaporanBonus />;
       case "prediksi":
         return <SalesPrediction />;
       case "log":

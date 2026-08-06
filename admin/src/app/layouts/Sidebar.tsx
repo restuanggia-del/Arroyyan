@@ -109,6 +109,11 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
       icon: <FileText className="w-5 h-5" />,
     },
     {
+      id: "laporan-bonus",
+      label: "Laporan Bonus",
+      icon: <Award className="w-5 h-5" />,
+    },
+    {
       id: "prediksi",
       label: "Prediksi Penjualan",
       icon: <TrendingUp className="w-5 h-5" />,
