@@ -9,6 +9,7 @@ import {
   Save,
   Pencil,
 } from "lucide-react";
+import { BonusRuleModal } from "./BonusRuleModal";
 import {
   BonusRule,
   BonusRecord,
@@ -21,8 +22,8 @@ import {
   saveBonusRecords,
   REWARD_TYPE_LABEL,
   APPLIES_TO_LABEL,
+  RULE_MODE_LABEL,
 } from "../../services/bonusService";
-import { BonusRuleModal } from "./BonusRuleModal";
 
 const formatRp = (n: number) => `Rp ${n.toLocaleString("id-ID")}`;
 const formatDus = (n: number) =>
@@ -35,7 +36,6 @@ type PreviewState = (BonusPreviewRow & { catatan: string })[];
 export function BonusManagement() {
   const [activeTab, setActiveTab] = useState<"aturan" | "rekap">("aturan");
 
-  // --- Aturan Bonus ---
   const [rules, setRules] = useState<BonusRule[]>([]);
   const [loadingRules, setLoadingRules] = useState(true);
   const [rulesError, setRulesError] = useState<string | null>(null);
@@ -82,7 +82,6 @@ export function BonusManagement() {
     setRuleActionLoading(null);
   };
 
-  // --- Rekap Bonus per Periode ---
   const [periode, setPeriode] = useState(currentPeriode());
   const [preview, setPreview] = useState<PreviewState>([]);
   const [savedRecords, setSavedRecords] = useState<BonusRecord[]>([]);
@@ -194,7 +193,6 @@ export function BonusManagement() {
         </div>
       </div>
 
-      {/* Tabs */}
       <div className="flex gap-1 mb-6 border-b border-gray-200">
         {[
           { id: "aturan", label: "Aturan Bonus" },
@@ -247,7 +245,8 @@ export function BonusManagement() {
                   <thead>
                     <tr className="border-b border-gray-200 bg-gray-50">
                       {[
-                        "Threshold (dus)",
+                        "Mode",
+                        "Threshold / Per Dus",
                         "Jenis Reward",
                         "Nilai",
                         "Berlaku Untuk",
@@ -267,7 +266,7 @@ export function BonusManagement() {
                     {rules.length === 0 ? (
                       <tr>
                         <td
-                          colSpan={6}
+                          colSpan={7}
                           className="py-12 text-center text-gray-500 text-sm"
                         >
                           Belum ada aturan bonus. Tambahkan aturan pertama.
@@ -279,8 +278,21 @@ export function BonusManagement() {
                           key={r.id}
                           className="border-b border-gray-100 hover:bg-gray-50"
                         >
+                          <td className="py-3 px-4">
+                            <span
+                              className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
+                                r.rule_mode === "ratio"
+                                  ? "bg-blue-100 text-blue-700"
+                                  : "bg-purple-100 text-purple-700"
+                              }`}
+                            >
+                              {RULE_MODE_LABEL[r.rule_mode]}
+                            </span>
+                          </td>
                           <td className="py-3 px-4 text-sm font-semibold text-gray-900">
-                            {formatDus(r.threshold_dus)} dus
+                            {r.rule_mode === "ratio"
+                              ? `tiap ${formatDus(r.threshold_dus)} dus`
+                              : `${formatDus(r.threshold_dus)} dus`}
                           </td>
                           <td className="py-3 px-4">
                             <span className="inline-flex px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-700">

@@ -4,8 +4,10 @@ import {
   BonusRule,
   BonusRewardType,
   BonusAppliesTo,
+  BonusRuleMode,
   REWARD_TYPE_LABEL,
   APPLIES_TO_LABEL,
+  RULE_MODE_LABEL,
   createBonusRule,
   updateBonusRule,
 } from "../../services/bonusService";
@@ -30,6 +32,9 @@ export function BonusRuleModal({
   const [rewardValue, setRewardValue] = useState(rule?.reward_value ?? 0);
   const [appliesTo, setAppliesTo] = useState<BonusAppliesTo>(
     rule?.applies_to ?? "umum",
+  );
+  const [ruleMode, setRuleMode] = useState<BonusRuleMode>(
+    rule?.rule_mode ?? "threshold",
   );
   const [keterangan, setKeterangan] = useState(rule?.keterangan ?? "");
   const [isActive, setIsActive] = useState(rule?.is_active ?? true);
@@ -64,6 +69,7 @@ export function BonusRuleModal({
       reward_type: rewardType,
       reward_value: rewardValue,
       applies_to: appliesTo,
+      rule_mode: ruleMode,
       keterangan: keterangan || null,
       is_active: isActive,
     };
@@ -112,7 +118,32 @@ export function BonusRuleModal({
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
-              Threshold (jumlah dus terjual){" "}
+              Mode Aturan <span className="text-red-500">*</span>
+            </label>
+            <select
+              required
+              value={ruleMode}
+              onChange={(e) => setRuleMode(e.target.value as BonusRuleMode)}
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+            >
+              {Object.entries(RULE_MODE_LABEL).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-gray-400 mt-1">
+              {ruleMode === "ratio"
+                ? "Reward diberikan berkelipatan otomatis, mis. tiap 100 dus dapat 1 dus bonus (950 dus -> 9 dus bonus)."
+                : "Reward diberikan sekali saat total dus terjual mencapai angka ini (tidak berkelipatan)."}
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              {ruleMode === "ratio"
+                ? "Per Berapa Dus"
+                : "Threshold (jumlah dus terjual)"}{" "}
               <span className="text-red-500">*</span>
             </label>
             <input
@@ -123,12 +154,15 @@ export function BonusRuleModal({
               onChange={(e) =>
                 handleNumberChange(setThresholdDus)(e.target.value)
               }
-              placeholder="Contoh: 500"
+              placeholder={
+                ruleMode === "ratio" ? "Contoh: 100" : "Contoh: 3000"
+              }
               className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <p className="text-xs text-gray-400 mt-1">
-              Bonus diberikan jika total dus terjual karyawan dalam 1 periode
-              (bulan) mencapai angka ini.
+              {ruleMode === "ratio"
+                ? "Reward diulang tiap kelipatan angka ini tercapai dalam 1 periode (bulan)."
+                : "Bonus diberikan jika total dus terjual karyawan dalam 1 periode (bulan) mencapai angka ini."}
             </p>
           </div>
 
@@ -154,7 +188,8 @@ export function BonusRuleModal({
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                Nilai Reward <span className="text-red-500">*</span>
+                Nilai Reward {ruleMode === "ratio" ? "per Kelipatan" : ""}{" "}
+                <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"

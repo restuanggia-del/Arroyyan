@@ -2,6 +2,7 @@ import { supabaseAdmin } from "../lib/supabaseAdmin";
 
 export type BonusRewardType = "dus_bonus" | "kaos" | "uang";
 export type BonusAppliesTo = "umum" | "khusus";
+export type BonusRuleMode = "ratio" | "threshold";
 
 export const REWARD_TYPE_LABEL: Record<BonusRewardType, string> = {
     dus_bonus: "Bonus Dus",
@@ -14,12 +15,18 @@ export const APPLIES_TO_LABEL: Record<BonusAppliesTo, string> = {
     khusus: "Bonus Khusus Saja",
 };
 
+export const RULE_MODE_LABEL: Record<BonusRuleMode, string> = {
+    ratio: "Rasio (berulang tiap kelipatan)",
+    threshold: "Threshold (sekali capai)",
+};
+
 export interface BonusRule {
     id: string;
     threshold_dus: number;
     reward_type: BonusRewardType;
     reward_value: number;
     applies_to: BonusAppliesTo;
+    rule_mode: BonusRuleMode;
     keterangan: string | null;
     is_active: boolean;
     created_at: string;
@@ -49,12 +56,13 @@ export interface BonusPreviewRow {
     matched_rules: BonusRule[];
 }
 
-const RULE_SELECT = `id, threshold_dus, reward_type, reward_value, applies_to, keterangan, is_active, created_at`;
+const RULE_SELECT = `id, threshold_dus, reward_type, reward_value, applies_to, rule_mode, keterangan, is_active, created_at`;
 
 export const getBonusRules = async () => {
     const { data, error } = await supabaseAdmin
         .from("bonus_rules")
         .select(RULE_SELECT)
+        .order("rule_mode", { ascending: true })
         .order("threshold_dus", { ascending: true });
 
     if (error) return { data: null, error };
@@ -66,6 +74,7 @@ export const createBonusRule = async (input: {
     reward_type: BonusRewardType;
     reward_value: number;
     applies_to: BonusAppliesTo;
+    rule_mode: BonusRuleMode;
     keterangan?: string | null;
     is_active?: boolean;
 }) => {
@@ -76,6 +85,7 @@ export const createBonusRule = async (input: {
             reward_type: input.reward_type,
             reward_value: input.reward_value,
             applies_to: input.applies_to,
+            rule_mode: input.rule_mode,
             keterangan: input.keterangan || null,
             is_active: input.is_active ?? true,
         }])
@@ -86,7 +96,7 @@ export const createBonusRule = async (input: {
 
     await supabaseAdmin.from("activity_logs").insert([{
         activity_type: "create_bonus_rule",
-        description: `Aturan bonus baru: ${input.threshold_dus} dus -> ${REWARD_TYPE_LABEL[input.reward_type]} (${APPLIES_TO_LABEL[input.applies_to]})`,
+        description: `Aturan bonus baru (${RULE_MODE_LABEL[input.rule_mode]}): ${input.threshold_dus} dus -> ${REWARD_TYPE_LABEL[input.reward_type]} (${APPLIES_TO_LABEL[input.applies_to]})`,
     }]);
 
     return { data: (data as unknown) as BonusRule, error: null };
@@ -99,6 +109,7 @@ export const updateBonusRule = async (
         reward_type: BonusRewardType;
         reward_value: number;
         applies_to: BonusAppliesTo;
+        rule_mode: BonusRuleMode;
         keterangan: string | null;
         is_active: boolean;
     }>,
@@ -110,6 +121,7 @@ export const updateBonusRule = async (
             ...(input.reward_type !== undefined && { reward_type: input.reward_type }),
             ...(input.reward_value !== undefined && { reward_value: input.reward_value }),
             ...(input.applies_to !== undefined && { applies_to: input.applies_to }),
+            ...(input.rule_mode !== undefined && { rule_mode: input.rule_mode }),
             ...(input.keterangan !== undefined && { keterangan: input.keterangan || null }),
             ...(input.is_active !== undefined && { is_active: input.is_active }),
         })
@@ -240,25 +252,39 @@ export const calculateBonusPreview = async (
             (r) => r.applies_to === "umum" || (r.applies_to === "khusus" && bonusKhusus),
         );
 
+        const sums: Record<BonusRewardType, number> = { dus_bonus: 0, kaos: 0, uang: 0 };
+        const matchedRules: BonusRule[] = [];
+
+        for (const rule of eligibleRules.filter((r) => r.rule_mode === "ratio")) {
+            if (!rule.threshold_dus) continue;
+            const units = Math.floor(totalDus / rule.threshold_dus);
+            if (units <= 0) continue;
+            sums[rule.reward_type] += units * rule.reward_value;
+            matchedRules.push(rule);
+        }
+
         const bestByType: Partial<Record<BonusRewardType, BonusRule>> = {};
-        for (const rule of eligibleRules) {
+        for (const rule of eligibleRules.filter((r) => r.rule_mode === "threshold")) {
             if (totalDus < rule.threshold_dus) continue;
             const current = bestByType[rule.reward_type];
             if (!current || rule.threshold_dus > current.threshold_dus) {
                 bestByType[rule.reward_type] = rule;
             }
         }
-
-        const matchedRules = Object.values(bestByType).filter(Boolean) as BonusRule[];
+        for (const rule of Object.values(bestByType)) {
+            if (!rule) continue;
+            sums[rule.reward_type] += rule.reward_value;
+            matchedRules.push(rule);
+        }
 
         result.push({
             karyawan_id: karyawanId,
             nama,
             bonus_khusus: bonusKhusus,
             total_dus_terjual: Math.round(totalDus * 100) / 100,
-            bonus_dus: bestByType.dus_bonus?.reward_value ?? 0,
-            bonus_kaos: bestByType.kaos?.reward_value ?? 0,
-            bonus_target_rp: bestByType.uang?.reward_value ?? 0,
+            bonus_dus: sums.dus_bonus,
+            bonus_kaos: sums.kaos,
+            bonus_target_rp: sums.uang,
             matched_rules: matchedRules,
         });
     }
