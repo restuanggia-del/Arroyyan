@@ -20,6 +20,7 @@ import {
   FileSpreadsheet,
   ChevronDown,
   ChevronRight,
+  HandCoins,
 } from "lucide-react";
 
 interface MenuItem {
@@ -161,7 +162,7 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
         {
           id: "laporan-sales",
           label: "Laporan Sales",
-          icon: <TrendingUp className="w-5 h-5" />,
+          icon: <HandCoins className="w-5 h-5" />,
         },
         {
           id: "laporan-handling-fee",

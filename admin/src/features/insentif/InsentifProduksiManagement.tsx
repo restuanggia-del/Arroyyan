@@ -33,7 +33,7 @@ const formatDate = (d: string) =>
     year: "numeric",
   });
 const currentPeriode = () => new Date().toISOString().slice(0, 7);
-const DEFAULT_RATE_FEE_PENJUALAN = 200;
+const DEFAULT_RATE_FEE_PENJUALAN = 500;
 
 type PreviewRow = KaryawanAmount & {
   jumlah_dibayar: number;
@@ -676,7 +676,7 @@ function FeePenjualanTab() {
               inputMode="numeric"
               value={rate === 0 ? "" : rate}
               onChange={(e) => handleRateChange(e.target.value)}
-              placeholder="200"
+              placeholder="500"
               className="w-40 px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
