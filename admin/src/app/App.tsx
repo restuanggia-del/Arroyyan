@@ -31,6 +31,7 @@ import { LaporanBonus } from "../features/laporan/bonus/LaporanBonus";
 import { LaporanHandlingFee } from "../features/laporan/handling-fee/LaporanHandlingFee";
 import { LaporanInsentif } from "../features/laporan/insentif/LaporanInsentif";
 import { LaporanSales } from "../features/laporan/sales/LaporanSales";
+import { LaporanTandaTerimaInsentif } from "../features/laporan/tanda-terima-insentif/LaporanTandaTerimaInsentif";
 import { CustomerManagement } from "../features/manajemen/customer/CustomerManagement";
 import { Reports } from "../features/laporan/penjualan/Reports";
 import { SalesPrediction } from "../features/laporan/sales/SalesPrediction";
@@ -66,7 +67,6 @@ export default function App() {
 
   const [loginError, setLoginError] = useState<string | null>(null);
 
-  // Dashboard
   const [dashStats, setDashStats] = useState<DashboardStats | null>(null);
   const [dashLoading, setDashLoading] = useState(false);
   const [prediction, setPrediction] = useState<{
@@ -383,6 +383,8 @@ export default function App() {
         return <LaporanInsentif />;
       case "laporan-sales":
         return <LaporanSales />;
+      case "laporan-tanda-terima-insentif":
+        return <LaporanTandaTerimaInsentif />;
       case "prediksi":
         return <SalesPrediction />;
       case "log":

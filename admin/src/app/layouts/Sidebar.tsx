@@ -21,6 +21,7 @@ import {
   ChevronDown,
   ChevronRight,
   HandCoins,
+  ClipboardCheck,
 } from "lucide-react";
 
 interface MenuItem {
@@ -38,10 +39,10 @@ interface SidebarProps {
 export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(
     {
-      manajemen: true,
-      transaksi: true,
-      "komisi-keuangan": true,
-      laporan: true,
+      manajemen: false,
+      transaksi: false,
+      "komisi-keuangan": false,
+      laporan: false,
     },
   );
 
@@ -176,8 +177,8 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
         },
         {
           id: "laporan-tanda-terima-insentif",
-          label: "Laporan Tanda Terima Insentif",
-          icon: <FileText className="w-5 h-5" />,
+          label: "Tanda Terima Insentif",
+          icon: <ClipboardCheck className="w-5 h-5" />,
         },
         {
           id: "laporan-global",
