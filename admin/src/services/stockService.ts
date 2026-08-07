@@ -18,7 +18,16 @@ export interface StockMovement {
     id: string;
     product_id: string;
     karyawan_id: string | null;
-    movement_type: "stock_in" | "stok_awal" | "distribution_out" | "distribution_in" | "sale_out";
+    movement_type:
+    | "stock_in"
+    | "stok_awal"
+    | "distribution_out"
+    | "distribution_in"
+    | "sale_out"
+    | "sodaqoh_out"
+    | "pribadi_out"
+    | "bonus_out"
+    | "return_out";
     quantity: number;
     note: string | null;
     created_at: string;
@@ -161,7 +170,7 @@ export const addCentralStock = async (
 export const reduceCentralStock = async (
     productId: string,
     quantity: number,
-    movementType: "sale_out",
+    movementType: "sale_out" | "sodaqoh_out" | "pribadi_out" | "bonus_out",
     note: string
 ) => {
     const { data: existing, error: fetchErr } = await supabaseAdmin

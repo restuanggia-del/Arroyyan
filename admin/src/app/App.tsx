@@ -32,6 +32,7 @@ import { LaporanHandlingFee } from "../features/laporan/handling-fee/LaporanHand
 import { LaporanInsentif } from "../features/laporan/insentif/LaporanInsentif";
 import { LaporanSales } from "../features/laporan/sales/LaporanSales";
 import { LaporanTandaTerimaInsentif } from "../features/laporan/tanda-terima-insentif/LaporanTandaTerimaInsentif";
+import { LaporanGlobal } from "../features/laporan/global/LaporanGlobal";
 import { CustomerManagement } from "../features/manajemen/customer/CustomerManagement";
 import { Reports } from "../features/laporan/penjualan/Reports";
 import { SalesPrediction } from "../features/laporan/sales/SalesPrediction";
@@ -385,6 +386,8 @@ export default function App() {
         return <LaporanSales />;
       case "laporan-tanda-terima-insentif":
         return <LaporanTandaTerimaInsentif />;
+      case "laporan-global":
+        return <LaporanGlobal />;
       case "prediksi":
         return <SalesPrediction />;
       case "log":

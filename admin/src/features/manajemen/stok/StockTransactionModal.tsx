@@ -64,7 +64,12 @@ export function StockTransactionModal({
 
   const categoriesMasuk = [{ value: "stock_in", label: "Produksi / Restok" }];
 
-  const categoriesKeluar = [{ value: "sale_out", label: "Penjualan Langsung" }];
+  const categoriesKeluar = [
+    { value: "sale_out", label: "Penjualan Langsung" },
+    { value: "sodaqoh_out", label: "Sodaqoh" },
+    { value: "pribadi_out", label: "Pemakaian Pribadi" },
+    { value: "bonus_out", label: "Bonus / Hadiah Barang" },
+  ];
 
   const categories =
     type === "awal"
@@ -108,7 +113,11 @@ export function StockTransactionModal({
       ({ error } = await reduceCentralStock(
         formData.productId,
         formData.quantity,
-        "sale_out",
+        formData.movementType as
+          | "sale_out"
+          | "sodaqoh_out"
+          | "pribadi_out"
+          | "bonus_out",
         formData.note,
       ));
     }
