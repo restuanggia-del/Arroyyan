@@ -61,10 +61,23 @@ const formatRp = (n: number): string => {
   return `Rp ${n.toLocaleString("id-ID")}`;
 };
 
+const getMenuFromPath = (pathname: string): string => {
+  const slug = pathname.replace(/^\/+|\/+$/g, "");
+  return slug || "dashboard";
+};
+
+const getPathFromMenu = (menuId: string): string => {
+  return menuId === "dashboard" ? "/" : `/${menuId}`;
+};
+
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authReady, setAuthReady] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
-  const [activeMenu, setActiveMenu] = useState("dashboard");
+  const [activeMenu, setActiveMenu] = useState(() => {
+    if (typeof window === "undefined") return "dashboard";
+    return getMenuFromPath(window.location.pathname);
+  });
 
   const [loginError, setLoginError] = useState<string | null>(null);
 
@@ -90,6 +103,8 @@ export default function App() {
           await supabase.auth.signOut();
         }
       }
+
+      setAuthReady(true);
     };
     checkSession();
   }, []);
@@ -97,6 +112,15 @@ export default function App() {
   useEffect(() => {
     if (isAuthenticated && activeMenu === "dashboard") fetchDashboardData();
   }, [isAuthenticated, activeMenu]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const nextPath = getPathFromMenu(activeMenu);
+    if (window.location.pathname !== nextPath) {
+      window.history.replaceState(null, "", nextPath);
+    }
+  }, [activeMenu]);
 
   const fetchDashboardData = async () => {
     setDashLoading(true);
@@ -190,12 +214,24 @@ export default function App() {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setIsAuthenticated(false);
+    setAuthReady(true);
     setCurrentUser(null);
     setActiveMenu("dashboard");
     setDashStats(null);
     setPrediction(null);
     setLoginError(null);
   };
+
+  if (!authReady) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-blue-200 border-t-blue-600" />
+          <p className="text-sm text-gray-600">Memeriksa sesi akun...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     return <Login onLogin={handleLogin} externalError={loginError} />;
