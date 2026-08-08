@@ -3,21 +3,126 @@ import {
   X,
   TrendingUp,
   TrendingDown,
+  ArrowRightCircle,
+  ArrowLeftCircle,
+  Factory,
   RefreshCw,
   AlertCircle,
+  ClipboardList,
 } from "lucide-react";
 import {
   getActiveMaterials,
   Material,
   addMaterialStock,
   reduceMaterialStock,
+  moveToSementara,
+  returnToGudang,
+  consumeSementara,
+  MOVEMENT_TYPE_LABEL,
 } from "../../../services/materialService";
 
+export type MaterialTxType =
+  | "masuk"
+  | "stok_awal"
+  | "keluar"
+  | "ke_sementara"
+  | "kembali_gudang"
+  | "produksi";
+
 interface MaterialTransactionModalProps {
-  type: "masuk" | "awal" | "keluar";
+  type: MaterialTxType;
   onClose: () => void;
   onSaveSuccess: () => void;
 }
+
+const TX_CONFIG: Record<
+  MaterialTxType,
+  {
+    icon: React.ReactNode;
+    color: "green" | "cyan" | "red" | "blue" | "amber" | "purple";
+    sourceField: "stock_quantity" | "stock_sementara" | null;
+    notePlaceholder: string;
+    effectText: string;
+  }
+> = {
+  masuk: {
+    icon: <TrendingUp className="w-5 h-5" />,
+    color: "green",
+    sourceField: null,
+    notePlaceholder: "Contoh: Pembelian dari supplier",
+    effectText: "✓ Stok Gudang akan bertambah",
+  },
+  stok_awal: {
+    icon: <ClipboardList className="w-5 h-5" />,
+    color: "cyan",
+    sourceField: null,
+    notePlaceholder: "Contoh: Input awal stok gudang / hasil opname",
+    effectText:
+      "✓ Stok Gudang akan bertambah (tercatat terpisah dari Stok Masuk biasa)",
+  },
+  keluar: {
+    icon: <TrendingDown className="w-5 h-5" />,
+    color: "red",
+    sourceField: "stock_quantity",
+    notePlaceholder: "Contoh: Bahan rusak / hilang",
+    effectText: "⚠ Stok Gudang akan berkurang",
+  },
+  ke_sementara: {
+    icon: <ArrowRightCircle className="w-5 h-5" />,
+    color: "blue",
+    sourceField: "stock_quantity",
+    notePlaceholder: "Contoh: Disiapkan untuk produksi batch pagi",
+    effectText: "→ Stok Gudang berkurang, Stok Sementara bertambah",
+  },
+  kembali_gudang: {
+    icon: <ArrowLeftCircle className="w-5 h-5" />,
+    color: "amber",
+    sourceField: "stock_sementara",
+    notePlaceholder: "Contoh: Batal produksi, bahan dikembalikan",
+    effectText: "← Stok Sementara berkurang, Stok Gudang bertambah",
+  },
+  produksi: {
+    icon: <Factory className="w-5 h-5" />,
+    color: "purple",
+    sourceField: "stock_sementara",
+    notePlaceholder: "Contoh: Terpakai produksi batch #1",
+    effectText: "⚠ Stok Sementara akan berkurang (terpakai produksi)",
+  },
+};
+
+const COLOR_CLASSES: Record<string, { bg: string; text: string; btn: string }> =
+  {
+    green: {
+      bg: "bg-green-100",
+      text: "text-green-600",
+      btn: "bg-green-600 hover:bg-green-700",
+    },
+    cyan: {
+      bg: "bg-cyan-100",
+      text: "text-cyan-600",
+      btn: "bg-cyan-600 hover:bg-cyan-700",
+    },
+    red: {
+      bg: "bg-red-100",
+      text: "text-red-600",
+      btn: "bg-red-600 hover:bg-red-700",
+    },
+    blue: {
+      bg: "bg-blue-100",
+      text: "text-blue-600",
+      btn: "bg-blue-600 hover:bg-blue-700",
+    },
+    amber: {
+      bg: "bg-amber-100",
+      text: "text-amber-600",
+      btn: "bg-amber-600 hover:bg-amber-700",
+    },
+    purple: {
+      bg: "bg-purple-100",
+      text: "text-purple-600",
+      btn: "bg-purple-600 hover:bg-purple-700",
+    },
+  };
 
 export function MaterialTransactionModal({
   type,
@@ -43,8 +148,12 @@ export function MaterialTransactionModal({
     load();
   }, []);
 
+  const config = TX_CONFIG[type];
+  const colors = COLOR_CLASSES[config.color];
   const selectedMaterial = materials.find((m) => m.id === materialId);
-  const isGreen = type !== "keluar";
+  const availableStock = config.sourceField
+    ? selectedMaterial?.[config.sourceField]
+    : undefined;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,22 +170,21 @@ export function MaterialTransactionModal({
     setSaving(true);
     setFormError(null);
 
-    const { error } =
-      type === "keluar"
-        ? await reduceMaterialStock(materialId, quantity, note)
-        : await addMaterialStock(
-            materialId,
-            quantity,
-            note,
-            type === "awal" ? "awal" : "masuk",
-          );
+    let error;
+    if (type === "masuk" || type === "stok_awal") {
+      ({ error } = await addMaterialStock(materialId, quantity, note, type));
+    } else {
+      const fn = {
+        keluar: reduceMaterialStock,
+        ke_sementara: moveToSementara,
+        kembali_gudang: returnToGudang,
+        produksi: consumeSementara,
+      }[type];
+      ({ error } = await fn(materialId, quantity, note));
+    }
 
     if (error) {
-      setFormError(
-        (error as any).message === "Stok bahan tidak mencukupi"
-          ? "Stok bahan tidak mencukupi untuk jumlah yang diminta."
-          : "Gagal menyimpan transaksi: " + (error as any).message,
-      );
+      setFormError("Gagal menyimpan transaksi: " + (error as any).message);
       setSaving(false);
       return;
     }
@@ -91,22 +199,12 @@ export function MaterialTransactionModal({
         <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div
-              className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                isGreen ? "bg-green-100" : "bg-red-100"
-              }`}
+              className={`w-10 h-10 rounded-xl flex items-center justify-center ${colors.bg} ${colors.text}`}
             >
-              {isGreen ? (
-                <TrendingUp className="w-5 h-5 text-green-600" />
-              ) : (
-                <TrendingDown className="w-5 h-5 text-red-600" />
-              )}
+              {config.icon}
             </div>
             <h2 className="text-xl font-semibold text-gray-900">
-              {type === "awal"
-                ? "Saldo Awal Bahan"
-                : isGreen
-                  ? "Stok Bahan Masuk"
-                  : "Stok Bahan Keluar"}
+              {MOVEMENT_TYPE_LABEL[type]}
             </h2>
           </div>
           <button
@@ -151,10 +249,17 @@ export function MaterialTransactionModal({
                 <option value="">-- Pilih Bahan --</option>
                 {materials.map((m) => (
                   <option key={m.id} value={m.id}>
-                    {m.nama_bahan} ({m.satuan}) — stok: {m.stock_quantity}
+                    {m.nama_bahan} ({m.satuan}) — Gudang: {m.stock_quantity} |
+                    Sementara: {m.stock_sementara}
                   </option>
                 ))}
               </select>
+            )}
+            {selectedMaterial && config.sourceField && (
+              <p className="text-xs text-gray-400 mt-1">
+                Tersedia: <span className="font-medium">{availableStock}</span>{" "}
+                {selectedMaterial.satuan}
+              </p>
             )}
           </div>
 
@@ -185,33 +290,17 @@ export function MaterialTransactionModal({
             <textarea
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              placeholder={
-                type === "awal"
-                  ? "Contoh: Opname awal bulan"
-                  : isGreen
-                    ? "Contoh: Pembelian dari supplier"
-                    : "Contoh: Dipakai untuk produksi batch #1"
-              }
+              placeholder={config.notePlaceholder}
               rows={3}
               className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
             />
           </div>
 
           <div
-            className={`rounded-xl p-4 ${
-              isGreen
-                ? "bg-green-50 border border-green-200"
-                : "bg-red-50 border border-red-200"
-            }`}
+            className={`rounded-xl p-4 ${colors.bg} bg-opacity-50 border border-current ${colors.text}`}
           >
-            <p
-              className={`text-sm font-medium ${isGreen ? "text-green-800" : "text-red-800"}`}
-            >
-              {type === "awal"
-                ? "✓ Saldo awal bahan akan ditambahkan"
-                : isGreen
-                  ? "✓ Stok bahan akan bertambah"
-                  : "⚠ Stok bahan akan berkurang"}
+            <p className={`text-sm font-medium ${colors.text}`}>
+              {config.effectText}
             </p>
           </div>
 
@@ -227,11 +316,7 @@ export function MaterialTransactionModal({
             <button
               type="submit"
               disabled={saving || loadingMaterials || materials.length === 0}
-              className={`px-5 py-2.5 text-white rounded-xl transition-colors cursor-pointer disabled:opacity-70 flex items-center gap-2 ${
-                isGreen
-                  ? "bg-green-600 hover:bg-green-700"
-                  : "bg-red-600 hover:bg-red-700"
-              }`}
+              className={`px-5 py-2.5 text-white rounded-xl transition-colors cursor-pointer disabled:opacity-70 flex items-center gap-2 ${colors.btn}`}
             >
               {saving && <RefreshCw className="w-4 h-4 animate-spin" />}
               Simpan Transaksi

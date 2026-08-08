@@ -1,4 +1,3 @@
-import { supabase } from "../lib/supabase";
 import { supabaseAdmin } from "../lib/supabaseAdmin";
 
 export interface Material {
@@ -6,6 +5,7 @@ export interface Material {
     nama_bahan: string;
     satuan: string;
     stock_quantity: number;
+    stock_sementara: number;
     is_active: boolean;
     created_at: string;
 }
@@ -13,17 +13,32 @@ export interface Material {
 export interface MaterialMovement {
     id: string;
     material_id: string;
-    movement_type: "masuk" | "awal" | "keluar";
+    movement_type:
+    | "masuk"
+    | "stok_awal"
+    | "keluar"
+    | "ke_sementara"
+    | "kembali_gudang"
+    | "produksi";
     quantity: number;
     note: string | null;
     created_at: string;
     materials: { nama_bahan: string; satuan: string } | null;
 }
 
+export const MOVEMENT_TYPE_LABEL: Record<MaterialMovement["movement_type"], string> = {
+    masuk: "Stok Masuk (Gudang)",
+    stok_awal: "Stok Awal (Input Awal / Opname)",
+    keluar: "Stok Keluar (Gudang)",
+    ke_sementara: "Pindah ke Sementara",
+    kembali_gudang: "Kembali ke Gudang",
+    produksi: "Pemakaian Produksi",
+};
+
 export const MATERIAL_MINIMUM_STOCK = 10;
 
 export const getMaterials = async () => {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
         .from("materials")
         .select("*")
         .order("created_at", { ascending: false });
@@ -33,7 +48,7 @@ export const getMaterials = async () => {
 };
 
 export const getActiveMaterials = async () => {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
         .from("materials")
         .select("*")
         .eq("is_active", true)
@@ -135,7 +150,7 @@ export const addMaterialStock = async (
     materialId: string,
     quantity: number,
     note: string,
-    movementType: "masuk" | "awal" = "masuk"
+    movementType: "masuk" | "stok_awal" = "masuk"
 ) => {
     const { data: existing, error: fetchErr } = await supabaseAdmin
         .from("materials")
@@ -193,6 +208,120 @@ export const reduceMaterialStock = async (
         .insert([{
             material_id: materialId,
             movement_type: "keluar",
+            quantity,
+            note: note || null,
+        }]);
+
+    if (movErr) return { error: movErr };
+    return { error: null };
+};
+
+export const moveToSementara = async (
+    materialId: string,
+    quantity: number,
+    note: string
+) => {
+    const { data: existing, error: fetchErr } = await supabaseAdmin
+        .from("materials")
+        .select("id, stock_quantity, stock_sementara")
+        .eq("id", materialId)
+        .single();
+
+    if (fetchErr) return { error: fetchErr };
+    if (existing.stock_quantity < quantity) {
+        return { error: { message: "Stok bahan gudang tidak mencukupi" } };
+    }
+
+    const { error } = await supabaseAdmin
+        .from("materials")
+        .update({
+            stock_quantity: existing.stock_quantity - quantity,
+            stock_sementara: existing.stock_sementara + quantity,
+        })
+        .eq("id", materialId);
+
+    if (error) return { error };
+
+    const { error: movErr } = await supabaseAdmin
+        .from("material_movements")
+        .insert([{
+            material_id: materialId,
+            movement_type: "ke_sementara",
+            quantity,
+            note: note || null,
+        }]);
+
+    if (movErr) return { error: movErr };
+    return { error: null };
+};
+
+export const returnToGudang = async (
+    materialId: string,
+    quantity: number,
+    note: string
+) => {
+    const { data: existing, error: fetchErr } = await supabaseAdmin
+        .from("materials")
+        .select("id, stock_quantity, stock_sementara")
+        .eq("id", materialId)
+        .single();
+
+    if (fetchErr) return { error: fetchErr };
+    if (existing.stock_sementara < quantity) {
+        return { error: { message: "Stok sementara tidak mencukupi" } };
+    }
+
+    const { error } = await supabaseAdmin
+        .from("materials")
+        .update({
+            stock_sementara: existing.stock_sementara - quantity,
+            stock_quantity: existing.stock_quantity + quantity,
+        })
+        .eq("id", materialId);
+
+    if (error) return { error };
+
+    const { error: movErr } = await supabaseAdmin
+        .from("material_movements")
+        .insert([{
+            material_id: materialId,
+            movement_type: "kembali_gudang",
+            quantity,
+            note: note || null,
+        }]);
+
+    if (movErr) return { error: movErr };
+    return { error: null };
+};
+
+export const consumeSementara = async (
+    materialId: string,
+    quantity: number,
+    note: string
+) => {
+    const { data: existing, error: fetchErr } = await supabaseAdmin
+        .from("materials")
+        .select("id, stock_sementara")
+        .eq("id", materialId)
+        .single();
+
+    if (fetchErr) return { error: fetchErr };
+    if (existing.stock_sementara < quantity) {
+        return { error: { message: "Stok sementara tidak mencukupi" } };
+    }
+
+    const { error } = await supabaseAdmin
+        .from("materials")
+        .update({ stock_sementara: existing.stock_sementara - quantity })
+        .eq("id", materialId);
+
+    if (error) return { error };
+
+    const { error: movErr } = await supabaseAdmin
+        .from("material_movements")
+        .insert([{
+            material_id: materialId,
+            movement_type: "produksi",
             quantity,
             note: note || null,
         }]);
