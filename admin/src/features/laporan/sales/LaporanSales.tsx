@@ -51,7 +51,21 @@ const exportToExcel = async (result: LaporanSalesResult, fileName: string) => {
       "Sub Total (Rp)": result.total_sub_total_rp,
     } as any);
 
-    const ws = XLSX.utils.json_to_sheet(rows, {
+    const templateRows =
+      rows.length > 0
+        ? rows
+        : [
+            {
+              Tanggal: "",
+              Ukuran: "",
+              "Cash (Dos)": "",
+              "Cash (Rp)": "",
+              "Titip (Dos)": "",
+              "Titip (Rp)": "",
+              "Sub Total (Rp)": "",
+            },
+          ];
+    const ws = XLSX.utils.json_to_sheet(templateRows, {
       header: [
         "Tanggal",
         "Ukuran",
@@ -89,6 +103,28 @@ const exportToPDF = async (result: LaporanSalesResult, fileName: string) => {
     doc.text(`Nama Sales: ${result.nama_sales}`, 14, 26);
     doc.text(`Bulan: ${result.periode}`, 14, 32);
 
+    const tableRows = [
+      ...result.rows.map((r) => [
+        formatDate(r.tanggal),
+        r.size,
+        formatDos(r.cash_dos),
+        formatRp(r.cash_rp),
+        formatDos(r.titip_dos),
+        formatRp(r.titip_rp),
+        formatRp(r.sub_total_rp),
+      ]),
+      [
+        "TOTAL",
+        "",
+        formatDos(result.total_cash_dos),
+        formatRp(result.total_cash_rp),
+        formatDos(result.total_titip_dos),
+        formatRp(result.total_titip_rp),
+        formatRp(result.total_sub_total_rp),
+      ],
+    ];
+    const bodyRows = result.rows.length === 0 ? [Array(7).fill("")] : tableRows;
+
     autoTable(doc, {
       head: [
         [
@@ -101,26 +137,7 @@ const exportToPDF = async (result: LaporanSalesResult, fileName: string) => {
           "Sub Total",
         ],
       ],
-      body: [
-        ...result.rows.map((r) => [
-          formatDate(r.tanggal),
-          r.size,
-          formatDos(r.cash_dos),
-          formatRp(r.cash_rp),
-          formatDos(r.titip_dos),
-          formatRp(r.titip_rp),
-          formatRp(r.sub_total_rp),
-        ]),
-        [
-          "TOTAL",
-          "",
-          formatDos(result.total_cash_dos),
-          formatRp(result.total_cash_rp),
-          formatDos(result.total_titip_dos),
-          formatRp(result.total_titip_rp),
-          formatRp(result.total_sub_total_rp),
-        ],
-      ],
+      body: bodyRows,
       startY: 38,
       styles: { fontSize: 8 },
       headStyles: { fillColor: [30, 64, 175] },
@@ -171,7 +188,9 @@ export function LaporanSales() {
 
   const [result, setResult] = useState<LaporanSalesResult | null>(null);
   const [loading, setLoading] = useState(false);
-  const [exporting, setExporting] = useState(false);
+  const [exportingType, setExportingType] = useState<"pdf" | "excel" | null>(
+    null,
+  );
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -303,7 +322,6 @@ export function LaporanSales() {
         </div>
       )}
 
-      {/* Ringkasan */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
@@ -353,18 +371,26 @@ export function LaporanSales() {
           </div>
           <div className="flex gap-2">
             <button
-              onClick={() =>
-                result &&
-                (setExporting(true),
-                exportToPDF(
-                  result,
-                  `laporan-sales-${result.nama_sales}-${periode}`,
-                ).finally(() => setExporting(false)))
+              onClick={async () => {
+                if (!result) return;
+                setExportingType("pdf");
+                try {
+                  await exportToPDF(
+                    result,
+                    `laporan-sales-${result.nama_sales}-${periode}`,
+                  );
+                } finally {
+                  setExportingType(null);
+                }
+              }}
+              disabled={
+                loading ||
+                !result ||
+                (exportingType !== null && exportingType !== "pdf")
               }
-              disabled={exporting || loading || !result}
               className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer disabled:opacity-60"
             >
-              {exporting ? (
+              {exportingType === "pdf" ? (
                 <RefreshCw className="w-4 h-4 animate-spin" />
               ) : (
                 <File className="w-4 h-4" />
@@ -372,18 +398,26 @@ export function LaporanSales() {
               Export PDF
             </button>
             <button
-              onClick={() =>
-                result &&
-                (setExporting(true),
-                exportToExcel(
-                  result,
-                  `laporan-sales-${result.nama_sales}-${periode}`,
-                ).finally(() => setExporting(false)))
+              onClick={async () => {
+                if (!result) return;
+                setExportingType("excel");
+                try {
+                  await exportToExcel(
+                    result,
+                    `laporan-sales-${result.nama_sales}-${periode}`,
+                  );
+                } finally {
+                  setExportingType(null);
+                }
+              }}
+              disabled={
+                loading ||
+                !result ||
+                (exportingType !== null && exportingType !== "excel")
               }
-              disabled={exporting || loading || !result}
               className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer disabled:opacity-60"
             >
-              {exporting ? (
+              {exportingType === "excel" ? (
                 <RefreshCw className="w-4 h-4 animate-spin" />
               ) : (
                 <FileSpreadsheet className="w-4 h-4" />

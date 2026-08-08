@@ -34,6 +34,17 @@ const today = () => new Date().toISOString().slice(0, 10);
 const exportToExcel = async (data: IncentiveReceipt[], periode: string) => {
   try {
     const XLSX = await import("xlsx");
+    const headers = [
+      "Karyawan",
+      "Insentif Produksi",
+      "Fee Penjualan",
+      "Handling",
+      "Fee Rekapan",
+      "Bonus Target",
+      "Jumlah Total",
+      "Status",
+      "Tanggal Terima",
+    ];
     const rows = data.map((r) => ({
       Karyawan: r.karyawan?.nama ?? "—",
       "Insentif Produksi": r.total_produksi,
@@ -46,18 +57,12 @@ const exportToExcel = async (data: IncentiveReceipt[], periode: string) => {
         r.status_tanda_terima === "sudah" ? "Sudah Diterima" : "Belum Diterima",
       "Tanggal Terima": r.tanggal_terima ?? "",
     }));
-    const ws = XLSX.utils.json_to_sheet(rows, {
-      header: [
-        "Karyawan",
-        "Insentif Produksi",
-        "Fee Penjualan",
-        "Handling",
-        "Fee Rekapan",
-        "Bonus Target",
-        "Jumlah Total",
-        "Status",
-        "Tanggal Terima",
-      ],
+    const safeRows =
+      rows.length > 0
+        ? rows
+        : [Object.fromEntries(headers.map((h) => [h, ""]))];
+    const ws = XLSX.utils.json_to_sheet(safeRows, {
+      header: headers,
     });
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Tanda Terima Insentif");
@@ -85,6 +90,18 @@ const exportToPDF = async (data: IncentiveReceipt[], periode: string) => {
     doc.setFontSize(10);
     doc.text(`Periode: ${periode}`, 14, 28);
 
+    const tableRows = data.map((r) => [
+      r.karyawan?.nama ?? "—",
+      formatRp(r.total_produksi),
+      formatRp(r.total_fee_penjualan),
+      formatRp(r.total_handling),
+      formatRp(r.total_fee_rekapan),
+      formatRp(r.total_bonus_target),
+      formatRp(r.jumlah_total),
+      "",
+    ]);
+    const bodyRows = data.length === 0 ? [Array(8).fill("")] : tableRows;
+
     autoTable(doc, {
       head: [
         [
@@ -98,16 +115,7 @@ const exportToPDF = async (data: IncentiveReceipt[], periode: string) => {
           "Tanda Tangan",
         ],
       ],
-      body: data.map((r) => [
-        r.karyawan?.nama ?? "—",
-        formatRp(r.total_produksi),
-        formatRp(r.total_fee_penjualan),
-        formatRp(r.total_handling),
-        formatRp(r.total_fee_rekapan),
-        formatRp(r.total_bonus_target),
-        formatRp(r.jumlah_total),
-        "",
-      ]),
+      body: bodyRows,
       startY: 35,
       styles: { fontSize: 8 },
       headStyles: { fillColor: [79, 70, 229] },
@@ -133,7 +141,9 @@ export function LaporanTandaTerimaInsentif() {
   const [data, setData] = useState<IncentiveReceipt[]>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
-  const [exporting, setExporting] = useState(false);
+  const [exportingType, setExportingType] = useState<"pdf" | "excel" | null>(
+    null,
+  );
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<IncentiveReceipt | null>(
@@ -211,7 +221,6 @@ export function LaporanTandaTerimaInsentif() {
         </p>
       </div>
 
-      {/* Ringkasan */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mb-4">
@@ -275,14 +284,19 @@ export function LaporanTandaTerimaInsentif() {
           <div className="flex gap-2">
             <button
               onClick={async () => {
-                setExporting(true);
-                await exportToPDF(data, periode);
-                setExporting(false);
+                setExportingType("pdf");
+                try {
+                  await exportToPDF(data, periode);
+                } finally {
+                  setExportingType(null);
+                }
               }}
-              disabled={exporting || loading}
+              disabled={
+                loading || (exportingType !== null && exportingType !== "pdf")
+              }
               className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer disabled:opacity-60"
             >
-              {exporting ? (
+              {exportingType === "pdf" ? (
                 <RefreshCw className="w-4 h-4 animate-spin" />
               ) : (
                 <File className="w-4 h-4" />
@@ -291,14 +305,19 @@ export function LaporanTandaTerimaInsentif() {
             </button>
             <button
               onClick={async () => {
-                setExporting(true);
-                await exportToExcel(data, periode);
-                setExporting(false);
+                setExportingType("excel");
+                try {
+                  await exportToExcel(data, periode);
+                } finally {
+                  setExportingType(null);
+                }
               }}
-              disabled={exporting || loading}
+              disabled={
+                loading || (exportingType !== null && exportingType !== "excel")
+              }
               className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer disabled:opacity-60"
             >
-              {exporting ? (
+              {exportingType === "excel" ? (
                 <RefreshCw className="w-4 h-4 animate-spin" />
               ) : (
                 <FileSpreadsheet className="w-4 h-4" />

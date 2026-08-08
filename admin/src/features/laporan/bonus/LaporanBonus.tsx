@@ -28,7 +28,11 @@ const exportToExcel = async (
 ) => {
   try {
     const XLSX = await import("xlsx");
-    const ws = XLSX.utils.json_to_sheet(data, { header: headers });
+    const safeData =
+      data.length > 0
+        ? data
+        : [Object.fromEntries(headers.map((h) => [h, ""]))];
+    const ws = XLSX.utils.json_to_sheet(safeData, { header: headers });
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Laporan Bonus");
     XLSX.writeFile(wb, `${fileName}.xlsx`);
@@ -59,9 +63,10 @@ const exportToPDF = async (
     doc.text("ARROYYAN99 — " + title, 14, 20);
     doc.setFontSize(10);
     doc.text(`Dicetak: ${new Date().toLocaleString("id-ID")}`, 14, 28);
+    const safeRows = rows.length > 0 ? rows : [Array(headers.length).fill("")];
     autoTable(doc, {
       head: [headers],
-      body: rows,
+      body: safeRows,
       startY: 35,
       styles: { fontSize: 9 },
       headStyles: { fillColor: [217, 119, 6] },
@@ -84,7 +89,9 @@ export function LaporanBonus() {
   const [startPeriode, setStartPeriode] = useState(currentPeriode());
   const [endPeriode, setEndPeriode] = useState(currentPeriode());
   const [loading, setLoading] = useState(false);
-  const [exporting, setExporting] = useState(false);
+  const [exportingType, setExportingType] = useState<"pdf" | "excel" | null>(
+    null,
+  );
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<BonusRecord[]>([]);
 
@@ -117,54 +124,60 @@ export function LaporanBonus() {
   const jumlahPenerima = new Set(data.map((r) => r.karyawan_id)).size;
 
   const handleExportExcel = async () => {
-    setExporting(true);
-    await exportToExcel(
-      data.map((r) => ({
-        Periode: r.periode,
-        Karyawan: r.karyawan?.nama ?? "—",
-        "Total Dus Terjual": Number(r.total_dus_terjual),
-        "Bonus Dus": r.bonus_dus,
-        "Bonus Kaos": r.bonus_kaos,
-        "Bonus Uang (Rp)": Number(r.bonus_target_rp),
-        Catatan: r.catatan ?? "",
-      })),
-      [
-        "Periode",
-        "Karyawan",
-        "Total Dus Terjual",
-        "Bonus Dus",
-        "Bonus Kaos",
-        "Bonus Uang (Rp)",
-        "Catatan",
-      ],
-      `laporan-bonus-${startPeriode}-${endPeriode}`,
-    );
-    setExporting(false);
+    setExportingType("excel");
+    try {
+      await exportToExcel(
+        data.map((r) => ({
+          Periode: r.periode,
+          Karyawan: r.karyawan?.nama ?? "—",
+          "Total Dus Terjual": Number(r.total_dus_terjual),
+          "Bonus Dus": r.bonus_dus,
+          "Bonus Kaos": r.bonus_kaos,
+          "Bonus Uang (Rp)": Number(r.bonus_target_rp),
+          Catatan: r.catatan ?? "",
+        })),
+        [
+          "Periode",
+          "Karyawan",
+          "Total Dus Terjual",
+          "Bonus Dus",
+          "Bonus Kaos",
+          "Bonus Uang (Rp)",
+          "Catatan",
+        ],
+        `laporan-bonus-${startPeriode}-${endPeriode}`,
+      );
+    } finally {
+      setExportingType(null);
+    }
   };
 
   const handleExportPDF = async () => {
-    setExporting(true);
-    await exportToPDF(
-      `Laporan Bonus (${startPeriode} s/d ${endPeriode})`,
-      [
-        "Periode",
-        "Karyawan",
-        "Dus Terjual",
-        "Bonus Dus",
-        "Bonus Kaos",
-        "Bonus Uang",
-      ],
-      data.map((r) => [
-        r.periode,
-        r.karyawan?.nama ?? "—",
-        formatDus(Number(r.total_dus_terjual)),
-        r.bonus_dus,
-        r.bonus_kaos,
-        formatRp(Number(r.bonus_target_rp)),
-      ]),
-      `laporan-bonus-${startPeriode}-${endPeriode}`,
-    );
-    setExporting(false);
+    setExportingType("pdf");
+    try {
+      await exportToPDF(
+        `Laporan Bonus (${startPeriode} s/d ${endPeriode})`,
+        [
+          "Periode",
+          "Karyawan",
+          "Dus Terjual",
+          "Bonus Dus",
+          "Bonus Kaos",
+          "Bonus Uang",
+        ],
+        data.map((r) => [
+          r.periode,
+          r.karyawan?.nama ?? "—",
+          formatDus(Number(r.total_dus_terjual)),
+          r.bonus_dus,
+          r.bonus_kaos,
+          formatRp(Number(r.bonus_target_rp)),
+        ]),
+        `laporan-bonus-${startPeriode}-${endPeriode}`,
+      );
+    } finally {
+      setExportingType(null);
+    }
   };
 
   return (
@@ -176,7 +189,6 @@ export function LaporanBonus() {
         </p>
       </div>
 
-      {/* Ringkasan */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <div className="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center mb-4">
@@ -249,10 +261,12 @@ export function LaporanBonus() {
           <div className="flex gap-2">
             <button
               onClick={handleExportPDF}
-              disabled={exporting || loading}
+              disabled={
+                loading || (exportingType !== null && exportingType !== "pdf")
+              }
               className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer disabled:opacity-60"
             >
-              {exporting ? (
+              {exportingType === "pdf" ? (
                 <RefreshCw className="w-4 h-4 animate-spin" />
               ) : (
                 <File className="w-4 h-4" />
@@ -261,10 +275,12 @@ export function LaporanBonus() {
             </button>
             <button
               onClick={handleExportExcel}
-              disabled={exporting || loading}
+              disabled={
+                loading || (exportingType !== null && exportingType !== "excel")
+              }
               className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer disabled:opacity-60"
             >
-              {exporting ? (
+              {exportingType === "excel" ? (
                 <RefreshCw className="w-4 h-4 animate-spin" />
               ) : (
                 <FileSpreadsheet className="w-4 h-4" />

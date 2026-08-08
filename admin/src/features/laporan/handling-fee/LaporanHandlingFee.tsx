@@ -32,7 +32,11 @@ const exportToExcel = async (
 ) => {
   try {
     const XLSX = await import("xlsx");
-    const ws = XLSX.utils.json_to_sheet(data, { header: headers });
+    const safeData =
+      data.length > 0
+        ? data
+        : [Object.fromEntries(headers.map((h) => [h, ""]))];
+    const ws = XLSX.utils.json_to_sheet(safeData, { header: headers });
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Laporan Handling Fee");
     XLSX.writeFile(wb, `${fileName}.xlsx`);
@@ -63,9 +67,10 @@ const exportToPDF = async (
     doc.text("ARROYYAN99 — " + title, 14, 20);
     doc.setFontSize(10);
     doc.text(`Dicetak: ${new Date().toLocaleString("id-ID")}`, 14, 28);
+    const safeRows = rows.length > 0 ? rows : [Array(headers.length).fill("")];
     autoTable(doc, {
       head: [headers],
-      body: rows,
+      body: safeRows,
       startY: 35,
       styles: { fontSize: 9 },
       headStyles: { fillColor: [234, 88, 12] },
@@ -95,7 +100,9 @@ export function LaporanHandlingFee() {
   const [startDate, setStartDate] = useState(firstOfMonth());
   const [endDate, setEndDate] = useState(today());
   const [loading, setLoading] = useState(false);
-  const [exporting, setExporting] = useState(false);
+  const [exportingType, setExportingType] = useState<"pdf" | "excel" | null>(
+    null,
+  );
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<HandlingFeeDetailRow[]>([]);
 
@@ -156,44 +163,50 @@ export function LaporanHandlingFee() {
   }, [data]);
 
   const handleExportExcel = async () => {
-    setExporting(true);
-    await exportToExcel(
-      data.map((r) => ({
-        Tanggal: r.tanggal,
-        Karyawan: r.nama,
-        "Jumlah Dus": r.jumlah_dus,
-        "Rate/Dus": r.rate_per_dus,
-        "Fee Diterima": r.fee_per_orang,
-        Keterangan: r.keterangan ?? "",
-      })),
-      [
-        "Tanggal",
-        "Karyawan",
-        "Jumlah Dus",
-        "Rate/Dus",
-        "Fee Diterima",
-        "Keterangan",
-      ],
-      `laporan-handling-fee-${startDate}-${endDate}`,
-    );
-    setExporting(false);
+    setExportingType("excel");
+    try {
+      await exportToExcel(
+        data.map((r) => ({
+          Tanggal: r.tanggal,
+          Karyawan: r.nama,
+          "Jumlah Dus": r.jumlah_dus,
+          "Rate/Dus": r.rate_per_dus,
+          "Fee Diterima": r.fee_per_orang,
+          Keterangan: r.keterangan ?? "",
+        })),
+        [
+          "Tanggal",
+          "Karyawan",
+          "Jumlah Dus",
+          "Rate/Dus",
+          "Fee Diterima",
+          "Keterangan",
+        ],
+        `laporan-handling-fee-${startDate}-${endDate}`,
+      );
+    } finally {
+      setExportingType(null);
+    }
   };
 
   const handleExportPDF = async () => {
-    setExporting(true);
-    await exportToPDF(
-      `Laporan Handling Fee (${startDate} s/d ${endDate})`,
-      ["Tanggal", "Karyawan", "Jumlah Dus", "Rate/Dus", "Fee Diterima"],
-      data.map((r) => [
-        formatDate(r.tanggal),
-        r.nama,
-        r.jumlah_dus,
-        formatRp(r.rate_per_dus),
-        formatRp(r.fee_per_orang),
-      ]),
-      `laporan-handling-fee-${startDate}-${endDate}`,
-    );
-    setExporting(false);
+    setExportingType("pdf");
+    try {
+      await exportToPDF(
+        `Laporan Handling Fee (${startDate} s/d ${endDate})`,
+        ["Tanggal", "Karyawan", "Jumlah Dus", "Rate/Dus", "Fee Diterima"],
+        data.map((r) => [
+          formatDate(r.tanggal),
+          r.nama,
+          r.jumlah_dus,
+          formatRp(r.rate_per_dus),
+          formatRp(r.fee_per_orang),
+        ]),
+        `laporan-handling-fee-${startDate}-${endDate}`,
+      );
+    } finally {
+      setExportingType(null);
+    }
   };
 
   return (
@@ -207,7 +220,6 @@ export function LaporanHandlingFee() {
         </p>
       </div>
 
-      {/* Ringkasan */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-4">
@@ -238,7 +250,6 @@ export function LaporanHandlingFee() {
         </div>
       </div>
 
-      {/* Rekap per karyawan */}
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden mb-8">
         <div className="border-b border-gray-200 px-6 py-4">
           <h2 className="text-lg font-semibold text-gray-900">
@@ -293,7 +304,6 @@ export function LaporanHandlingFee() {
         )}
       </div>
 
-      {/* Detail per kegiatan */}
       <div className="bg-white rounded-xl border border-gray-200">
         <div className="border-b border-gray-200 px-6 py-4 flex items-end justify-between flex-wrap gap-4">
           <div className="flex items-end gap-3 flex-wrap">
@@ -325,10 +335,12 @@ export function LaporanHandlingFee() {
           <div className="flex gap-2">
             <button
               onClick={handleExportPDF}
-              disabled={exporting || loading}
+              disabled={
+                loading || (exportingType !== null && exportingType !== "pdf")
+              }
               className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer disabled:opacity-60"
             >
-              {exporting ? (
+              {exportingType === "pdf" ? (
                 <RefreshCw className="w-4 h-4 animate-spin" />
               ) : (
                 <File className="w-4 h-4" />
@@ -337,10 +349,12 @@ export function LaporanHandlingFee() {
             </button>
             <button
               onClick={handleExportExcel}
-              disabled={exporting || loading}
+              disabled={
+                loading || (exportingType !== null && exportingType !== "excel")
+              }
               className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer disabled:opacity-60"
             >
-              {exporting ? (
+              {exportingType === "excel" ? (
                 <RefreshCw className="w-4 h-4 animate-spin" />
               ) : (
                 <FileSpreadsheet className="w-4 h-4" />

@@ -32,6 +32,27 @@ const currentPeriode = () => new Date().toISOString().slice(0, 7);
 const exportToExcel = async (data: LaporanGlobalRow[], periode: string) => {
   try {
     const XLSX = await import("xlsx");
+    const headers = [
+      "Produk",
+      "Stok Awal (Dus)",
+      "Total Produksi (Dus)",
+      "Total Keluar (Dus)",
+      "Sisa Stok (Dus)",
+      "Cash (Dus)",
+      "Cash (Rp)",
+      "Bon (Dus)",
+      "Bon (Rp)",
+      "Tot. Penjualan (Dus)",
+      "Tot. Penjualan (Rp)",
+      "Sodaqoh (Dus)",
+      "Sodaqoh (Rp est.)",
+      "Pribadi (Dus)",
+      "Pribadi (Rp est.)",
+      "Bonus (Dus)",
+      "Bonus (Rp est.)",
+      "Retur (Dus)",
+      "Retur (Rp est.)",
+    ];
     const rows = data.map((r) => ({
       Produk: `${r.product_name}${r.size ? ` (${r.size})` : ""}`,
       "Stok Awal (Dus)": r.stok_awal_dus,
@@ -53,31 +74,11 @@ const exportToExcel = async (data: LaporanGlobalRow[], periode: string) => {
       "Retur (Dus)": r.retur_dus,
       "Retur (Rp est.)": r.retur_rp,
     }));
-    const ws = XLSX.utils.json_to_sheet(rows, {
-      header: Object.keys(
-        rows[0] ?? {
-          Produk: "",
-          "Stok Awal (Dus)": "",
-          "Total Produksi (Dus)": "",
-          "Total Keluar (Dus)": "",
-          "Sisa Stok (Dus)": "",
-          "Cash (Dus)": "",
-          "Cash (Rp)": "",
-          "Bon (Dus)": "",
-          "Bon (Rp)": "",
-          "Tot. Penjualan (Dus)": "",
-          "Tot. Penjualan (Rp)": "",
-          "Sodaqoh (Dus)": "",
-          "Sodaqoh (Rp est.)": "",
-          "Pribadi (Dus)": "",
-          "Pribadi (Rp est.)": "",
-          "Bonus (Dus)": "",
-          "Bonus (Rp est.)": "",
-          "Retur (Dus)": "",
-          "Retur (Rp est.)": "",
-        },
-      ),
-    });
+    const safeRows =
+      rows.length > 0
+        ? rows
+        : [Object.fromEntries(headers.map((h) => [h, ""]))];
+    const ws = XLSX.utils.json_to_sheet(safeRows, { header: headers });
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Laporan Global");
     XLSX.writeFile(wb, `laporan-global-${periode}.xlsx`);
@@ -108,6 +109,40 @@ const exportToPDF = async (
     doc.setFontSize(10);
     doc.text(`Periode: ${periode}`, 14, 23);
 
+    const tableRows = [
+      ...data.map((r) => [
+        `${r.product_name}${r.size ? ` (${r.size})` : ""}`,
+        formatDus(r.stok_awal_dus),
+        formatDus(r.total_produksi_dus),
+        formatDus(r.total_keluar_dus),
+        formatDus(r.sisa_stok_dus),
+        formatDus(r.penjualan_cash_dus),
+        formatRp(r.penjualan_cash_rp),
+        formatDus(r.penjualan_bon_dus),
+        formatRp(r.penjualan_bon_rp),
+        formatDus(r.sodaqoh_dus),
+        formatDus(r.pribadi_dus),
+        formatDus(r.bonus_dus),
+        formatDus(r.retur_dus),
+      ]),
+      [
+        "TOTAL",
+        formatDus(totals.stok_awal_dus),
+        formatDus(totals.total_produksi_dus),
+        formatDus(totals.total_keluar_dus),
+        formatDus(totals.sisa_stok_dus),
+        formatDus(totals.penjualan_cash_dus),
+        formatRp(totals.penjualan_cash_rp),
+        formatDus(totals.penjualan_bon_dus),
+        formatRp(totals.penjualan_bon_rp),
+        formatDus(totals.sodaqoh_dus),
+        formatDus(totals.pribadi_dus),
+        formatDus(totals.bonus_dus),
+        formatDus(totals.retur_dus),
+      ],
+    ];
+    const bodyRows = data.length === 0 ? [Array(13).fill("")] : tableRows;
+
     autoTable(doc, {
       head: [
         [
@@ -126,38 +161,7 @@ const exportToPDF = async (
           "Retur",
         ],
       ],
-      body: [
-        ...data.map((r) => [
-          `${r.product_name}${r.size ? ` (${r.size})` : ""}`,
-          formatDus(r.stok_awal_dus),
-          formatDus(r.total_produksi_dus),
-          formatDus(r.total_keluar_dus),
-          formatDus(r.sisa_stok_dus),
-          formatDus(r.penjualan_cash_dus),
-          formatRp(r.penjualan_cash_rp),
-          formatDus(r.penjualan_bon_dus),
-          formatRp(r.penjualan_bon_rp),
-          formatDus(r.sodaqoh_dus),
-          formatDus(r.pribadi_dus),
-          formatDus(r.bonus_dus),
-          formatDus(r.retur_dus),
-        ]),
-        [
-          "TOTAL",
-          formatDus(totals.stok_awal_dus),
-          formatDus(totals.total_produksi_dus),
-          formatDus(totals.total_keluar_dus),
-          formatDus(totals.sisa_stok_dus),
-          formatDus(totals.penjualan_cash_dus),
-          formatRp(totals.penjualan_cash_rp),
-          formatDus(totals.penjualan_bon_dus),
-          formatRp(totals.penjualan_bon_rp),
-          formatDus(totals.sodaqoh_dus),
-          formatDus(totals.pribadi_dus),
-          formatDus(totals.bonus_dus),
-          formatDus(totals.retur_dus),
-        ],
-      ],
+      body: bodyRows,
       startY: 28,
       styles: { fontSize: 7 },
       headStyles: { fillColor: [30, 64, 175] },
@@ -181,7 +185,9 @@ function RekapProdukTab() {
   const [periode, setPeriode] = useState(currentPeriode());
   const [data, setData] = useState<LaporanGlobalRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [exporting, setExporting] = useState(false);
+  const [exportingType, setExportingType] = useState<"pdf" | "excel" | null>(
+    null,
+  );
   const [error, setError] = useState<string | null>(null);
 
   const fetchReport = useCallback(async (p: string) => {
@@ -293,14 +299,19 @@ function RekapProdukTab() {
           <div className="flex gap-2">
             <button
               onClick={async () => {
-                setExporting(true);
-                await exportToPDF(data, periode, totals);
-                setExporting(false);
+                setExportingType("pdf");
+                try {
+                  await exportToPDF(data, periode, totals);
+                } finally {
+                  setExportingType(null);
+                }
               }}
-              disabled={exporting || loading}
+              disabled={
+                loading || (exportingType !== null && exportingType !== "pdf")
+              }
               className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer disabled:opacity-60"
             >
-              {exporting ? (
+              {exportingType === "pdf" ? (
                 <RefreshCw className="w-4 h-4 animate-spin" />
               ) : (
                 <File className="w-4 h-4" />
@@ -309,14 +320,19 @@ function RekapProdukTab() {
             </button>
             <button
               onClick={async () => {
-                setExporting(true);
-                await exportToExcel(data, periode);
-                setExporting(false);
+                setExportingType("excel");
+                try {
+                  await exportToExcel(data, periode);
+                } finally {
+                  setExportingType(null);
+                }
               }}
-              disabled={exporting || loading}
+              disabled={
+                loading || (exportingType !== null && exportingType !== "excel")
+              }
               className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer disabled:opacity-60"
             >
-              {exporting ? (
+              {exportingType === "excel" ? (
                 <RefreshCw className="w-4 h-4 animate-spin" />
               ) : (
                 <FileSpreadsheet className="w-4 h-4" />
@@ -532,7 +548,9 @@ function RekapanSetoranTab() {
   const [periode, setPeriode] = useState(currentPeriode());
   const [data, setData] = useState<RekapanSetoran | null>(null);
   const [loading, setLoading] = useState(true);
-  const [exporting, setExporting] = useState(false);
+  const [exportingType, setExportingType] = useState<"pdf" | "excel" | null>(
+    null,
+  );
   const [error, setError] = useState<string | null>(null);
 
   const fetchReport = useCallback(async (p: string) => {
@@ -551,7 +569,7 @@ function RekapanSetoranTab() {
 
   const handleExportPDF = async () => {
     if (!data) return;
-    setExporting(true);
+    setExportingType("pdf");
     try {
       const { jsPDF } = await import("jspdf");
       const autoTable = (await import("jspdf-autotable")).default;
@@ -648,13 +666,14 @@ function RekapanSetoranTab() {
       toast.error("Gagal export PDF", {
         description: "Jalankan: npm install jspdf jspdf-autotable",
       });
+    } finally {
+      setExportingType(null);
     }
-    setExporting(false);
   };
 
   const handleExportExcel = async () => {
     if (!data) return;
-    setExporting(true);
+    setExportingType("excel");
     try {
       const XLSX = await import("xlsx");
       const wb = XLSX.utils.book_new();
@@ -724,8 +743,9 @@ function RekapanSetoranTab() {
       toast.error("Gagal export Excel", {
         description: "Jalankan: npm install xlsx",
       });
+    } finally {
+      setExportingType(null);
     }
-    setExporting(false);
   };
 
   return (
@@ -749,10 +769,14 @@ function RekapanSetoranTab() {
           <div className="flex gap-2">
             <button
               onClick={handleExportPDF}
-              disabled={exporting || loading || !data}
+              disabled={
+                loading ||
+                !data ||
+                (exportingType !== null && exportingType !== "pdf")
+              }
               className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer disabled:opacity-60"
             >
-              {exporting ? (
+              {exportingType === "pdf" ? (
                 <RefreshCw className="w-4 h-4 animate-spin" />
               ) : (
                 <File className="w-4 h-4" />
@@ -761,10 +785,14 @@ function RekapanSetoranTab() {
             </button>
             <button
               onClick={handleExportExcel}
-              disabled={exporting || loading || !data}
+              disabled={
+                loading ||
+                !data ||
+                (exportingType !== null && exportingType !== "excel")
+              }
               className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer disabled:opacity-60"
             >
-              {exporting ? (
+              {exportingType === "excel" ? (
                 <RefreshCw className="w-4 h-4 animate-spin" />
               ) : (
                 <FileSpreadsheet className="w-4 h-4" />
@@ -870,7 +898,6 @@ function RekapanSetoranTab() {
             )}
           </SetoranBox>
 
-          {/* Insentif */}
           <SetoranBox
             title="Insentif"
             totalLabel="TOTAL INSENTIF"

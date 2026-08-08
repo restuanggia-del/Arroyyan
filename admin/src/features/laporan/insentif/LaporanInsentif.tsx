@@ -29,7 +29,11 @@ const exportToExcel = async (
 ) => {
   try {
     const XLSX = await import("xlsx");
-    const ws = XLSX.utils.json_to_sheet(data, { header: headers });
+    const safeData =
+      data.length > 0
+        ? data
+        : [Object.fromEntries(headers.map((h) => [h, ""]))];
+    const ws = XLSX.utils.json_to_sheet(safeData, { header: headers });
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Laporan Insentif");
     XLSX.writeFile(wb, `${fileName}.xlsx`);
@@ -60,9 +64,10 @@ const exportToPDF = async (
     doc.text("ARROYYAN99 — " + title, 14, 20);
     doc.setFontSize(10);
     doc.text(`Dicetak: ${new Date().toLocaleString("id-ID")}`, 14, 28);
+    const safeRows = rows.length > 0 ? rows : [Array(headers.length).fill("")];
     autoTable(doc, {
       head: [headers],
-      body: rows,
+      body: safeRows,
       startY: 35,
       styles: { fontSize: 9 },
       headStyles: { fillColor: [13, 148, 136] },
@@ -86,7 +91,9 @@ export function LaporanInsentif() {
   const [endPeriode, setEndPeriode] = useState(currentPeriode());
   const [filterJenis, setFilterJenis] = useState<FilterJenis>("semua");
   const [loading, setLoading] = useState(false);
-  const [exporting, setExporting] = useState(false);
+  const [exportingType, setExportingType] = useState<"pdf" | "excel" | null>(
+    null,
+  );
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<IncentivePayment[]>([]);
 
@@ -124,47 +131,53 @@ export function LaporanInsentif() {
   const jumlahKaryawan = new Set(data.map((r) => r.karyawan_id)).size;
 
   const handleExportExcel = async () => {
-    setExporting(true);
-    await exportToExcel(
-      data.map((r) => ({
-        Periode: r.periode,
-        Jenis: JENIS_LABEL[r.jenis],
-        Karyawan: r.karyawan?.nama ?? "—",
-        "Jumlah Dihitung": Number(r.jumlah_dihitung),
-        "Jumlah Dibayar": Number(r.jumlah_dibayar),
-        Selisih: Number(r.jumlah_dibayar) - Number(r.jumlah_dihitung),
-        Keterangan: r.keterangan ?? "",
-      })),
-      [
-        "Periode",
-        "Jenis",
-        "Karyawan",
-        "Jumlah Dihitung",
-        "Jumlah Dibayar",
-        "Selisih",
-        "Keterangan",
-      ],
-      `laporan-insentif-${startPeriode}-${endPeriode}`,
-    );
-    setExporting(false);
+    setExportingType("excel");
+    try {
+      await exportToExcel(
+        data.map((r) => ({
+          Periode: r.periode,
+          Jenis: JENIS_LABEL[r.jenis],
+          Karyawan: r.karyawan?.nama ?? "—",
+          "Jumlah Dihitung": Number(r.jumlah_dihitung),
+          "Jumlah Dibayar": Number(r.jumlah_dibayar),
+          Selisih: Number(r.jumlah_dibayar) - Number(r.jumlah_dihitung),
+          Keterangan: r.keterangan ?? "",
+        })),
+        [
+          "Periode",
+          "Jenis",
+          "Karyawan",
+          "Jumlah Dihitung",
+          "Jumlah Dibayar",
+          "Selisih",
+          "Keterangan",
+        ],
+        `laporan-insentif-${startPeriode}-${endPeriode}`,
+      );
+    } finally {
+      setExportingType(null);
+    }
   };
 
   const handleExportPDF = async () => {
-    setExporting(true);
-    await exportToPDF(
-      `Laporan Insentif (${startPeriode} s/d ${endPeriode})`,
-      ["Periode", "Jenis", "Karyawan", "Dihitung", "Dibayar", "Selisih"],
-      data.map((r) => [
-        r.periode,
-        JENIS_LABEL[r.jenis],
-        r.karyawan?.nama ?? "—",
-        formatRp(Number(r.jumlah_dihitung)),
-        formatRp(Number(r.jumlah_dibayar)),
-        formatRp(Number(r.jumlah_dibayar) - Number(r.jumlah_dihitung)),
-      ]),
-      `laporan-insentif-${startPeriode}-${endPeriode}`,
-    );
-    setExporting(false);
+    setExportingType("pdf");
+    try {
+      await exportToPDF(
+        `Laporan Insentif (${startPeriode} s/d ${endPeriode})`,
+        ["Periode", "Jenis", "Karyawan", "Dihitung", "Dibayar", "Selisih"],
+        data.map((r) => [
+          r.periode,
+          JENIS_LABEL[r.jenis],
+          r.karyawan?.nama ?? "—",
+          formatRp(Number(r.jumlah_dihitung)),
+          formatRp(Number(r.jumlah_dibayar)),
+          formatRp(Number(r.jumlah_dibayar) - Number(r.jumlah_dihitung)),
+        ]),
+        `laporan-insentif-${startPeriode}-${endPeriode}`,
+      );
+    } finally {
+      setExportingType(null);
+    }
   };
 
   return (
@@ -179,7 +192,6 @@ export function LaporanInsentif() {
         </p>
       </div>
 
-      {/* Ringkasan */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <div className="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center mb-4">
@@ -253,10 +265,12 @@ export function LaporanInsentif() {
           <div className="flex gap-2">
             <button
               onClick={handleExportPDF}
-              disabled={exporting || loading}
+              disabled={
+                loading || (exportingType !== null && exportingType !== "pdf")
+              }
               className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer disabled:opacity-60"
             >
-              {exporting ? (
+              {exportingType === "pdf" ? (
                 <RefreshCw className="w-4 h-4 animate-spin" />
               ) : (
                 <File className="w-4 h-4" />
@@ -265,10 +279,12 @@ export function LaporanInsentif() {
             </button>
             <button
               onClick={handleExportExcel}
-              disabled={exporting || loading}
+              disabled={
+                loading || (exportingType !== null && exportingType !== "excel")
+              }
               className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer disabled:opacity-60"
             >
-              {exporting ? (
+              {exportingType === "excel" ? (
                 <RefreshCw className="w-4 h-4 animate-spin" />
               ) : (
                 <FileSpreadsheet className="w-4 h-4" />
