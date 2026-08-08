@@ -13,10 +13,20 @@ import {
   getLaporanGlobal,
   LaporanGlobalRow,
 } from "../../../services/laporanGlobalService";
+import {
+  getRekapanSetoran,
+  RekapanSetoran,
+} from "../../../services/rekapanSetoranService";
 
 const formatRp = (n: number) => "Rp " + n.toLocaleString("id-ID");
 const formatDus = (n: number) =>
   n.toLocaleString("id-ID", { maximumFractionDigits: 2 });
+const formatDate = (d: string) =>
+  new Date(d).toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
 const currentPeriode = () => new Date().toISOString().slice(0, 7);
 
 const exportToExcel = async (data: LaporanGlobalRow[], periode: string) => {
@@ -167,7 +177,7 @@ const exportToPDF = async (
   }
 };
 
-export function LaporanGlobal() {
+function RekapProdukTab() {
   const [periode, setPeriode] = useState(currentPeriode());
   const [data, setData] = useState<LaporanGlobalRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -213,18 +223,7 @@ export function LaporanGlobal() {
   };
 
   return (
-    <div className="p-8">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-1">
-          Laporan Global
-        </h1>
-        <p className="text-gray-600">
-          Rekapan penjualan produk per bulan — Stok, Penjualan, Sodaqoh,
-          Pribadi, Bonus, Retur, mengikuti format Rekapan Penjualan Produk
-          ARROYYAN99
-        </p>
-      </div>
-
+    <div>
       <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6 flex gap-3">
         <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
         <p className="text-xs text-amber-800">
@@ -236,7 +235,6 @@ export function LaporanGlobal() {
         </p>
       </div>
 
-      {/* Ringkasan */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
@@ -526,6 +524,471 @@ export function LaporanGlobal() {
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+function RekapanSetoranTab() {
+  const [periode, setPeriode] = useState(currentPeriode());
+  const [data, setData] = useState<RekapanSetoran | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchReport = useCallback(async (p: string) => {
+    setLoading(true);
+    setError(null);
+    const { data, error } = await getRekapanSetoran(p);
+    if (error)
+      setError("Gagal memuat rekapan setoran: " + (error as any).message);
+    setData(data);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    fetchReport(periode);
+  }, [periode, fetchReport]);
+
+  const handleExportPDF = async () => {
+    if (!data) return;
+    setExporting(true);
+    try {
+      const { jsPDF } = await import("jspdf");
+      const autoTable = (await import("jspdf-autotable")).default;
+      const doc = new jsPDF();
+      doc.setFontSize(14);
+      doc.text(`REKAPAN SETORAN PERIODE ${periode}`, 14, 18);
+
+      let y = 28;
+      doc.setFontSize(11);
+      doc.text("Hasil Penjualan & Pembayaran Titipan", 14, y);
+      autoTable(doc, {
+        body: [
+          [`Penjualan Bulan ${periode}`, formatRp(data.penjualan_bulan_ini)],
+          ...data.titipan_lama.map((t) => [
+            `Titipan Bulan ${t.periode_asal}`,
+            formatRp(t.jumlah),
+          ]),
+          ["TOTAL DANA", formatRp(data.total_dana)],
+        ],
+        startY: y + 4,
+        styles: { fontSize: 9 },
+        theme: "grid",
+      });
+      y = (doc as any).lastAutoTable.finalY + 10;
+
+      doc.text("Potongan", 14, y);
+      autoTable(doc, {
+        body: [
+          ...data.potongan.map((p) => [p.label, formatRp(p.jumlah)]),
+          ["TOTAL POTONGAN", formatRp(data.total_potongan)],
+        ],
+        startY: y + 4,
+        styles: { fontSize: 9 },
+        theme: "grid",
+      });
+      y = (doc as any).lastAutoTable.finalY + 10;
+
+      doc.text(`Titipan/Bon Sales Bulan ${periode} (belum collect)`, 14, y);
+      autoTable(doc, {
+        body: [
+          ...data.titipan_sales_bulan_ini.map((t) => [
+            t.nama,
+            formatRp(t.jumlah),
+          ]),
+          ["TOTAL", formatRp(data.total_titipan_sales)],
+        ],
+        startY: y + 4,
+        styles: { fontSize: 9 },
+        theme: "grid",
+      });
+      y = (doc as any).lastAutoTable.finalY + 10;
+
+      doc.text("Insentif", 14, y);
+      autoTable(doc, {
+        body: [
+          ["Insentif Produksi", formatRp(data.insentif.total_produksi)],
+          ["Fee Penjualan", formatRp(data.insentif.total_fee_penjualan)],
+          ["Handling", formatRp(data.insentif.total_handling)],
+          ["Fee Rekapan", formatRp(data.insentif.total_fee_rekapan)],
+          ["Bonus Target", formatRp(data.insentif.total_bonus_target)],
+          ["TOTAL INSENTIF", formatRp(data.insentif.total_insentif)],
+        ],
+        startY: y + 4,
+        styles: { fontSize: 9 },
+        theme: "grid",
+      });
+      y = (doc as any).lastAutoTable.finalY + 10;
+
+      doc.text("Pembayaran via Transfer", 14, y);
+      autoTable(doc, {
+        body: [
+          [`Penjualan Bulan ${periode}`, formatRp(data.transfer_penjualan)],
+          ...data.transfer_titipan.map((t) => [
+            `${formatDate(t.tanggal_bayar)} — ${t.nama}`,
+            formatRp(t.jumlah_transfer),
+          ]),
+          ["TOTAL TRANSFER", formatRp(data.total_transfer)],
+        ],
+        startY: y + 4,
+        styles: { fontSize: 9 },
+        theme: "grid",
+      });
+      y = (doc as any).lastAutoTable.finalY + 10;
+
+      doc.setFontSize(12);
+      doc.text(
+        `SISA DANA PENJUALAN: ${formatRp(data.sisa_dana_penjualan)}`,
+        14,
+        y + 4,
+      );
+
+      doc.save(`rekapan-setoran-${periode}.pdf`);
+    } catch {
+      toast.error("Gagal export PDF", {
+        description: "Jalankan: npm install jspdf jspdf-autotable",
+      });
+    }
+    setExporting(false);
+  };
+
+  const handleExportExcel = async () => {
+    if (!data) return;
+    setExporting(true);
+    try {
+      const XLSX = await import("xlsx");
+      const wb = XLSX.utils.book_new();
+
+      const danaRows = [
+        {
+          Keterangan: `Penjualan Bulan ${periode}`,
+          Jumlah: data.penjualan_bulan_ini,
+        },
+        ...data.titipan_lama.map((t) => ({
+          Keterangan: `Titipan Bulan ${t.periode_asal}`,
+          Jumlah: t.jumlah,
+        })),
+        { Keterangan: "TOTAL DANA", Jumlah: data.total_dana },
+        {},
+        { Keterangan: "-- POTONGAN --", Jumlah: "" },
+        ...data.potongan.map((p) => ({
+          Keterangan: p.label,
+          Jumlah: p.jumlah,
+        })),
+        { Keterangan: "TOTAL POTONGAN", Jumlah: data.total_potongan },
+        {},
+        { Keterangan: `-- TITIPAN/BON SALES BULAN ${periode} --`, Jumlah: "" },
+        ...data.titipan_sales_bulan_ini.map((t) => ({
+          Keterangan: t.nama,
+          Jumlah: t.jumlah,
+        })),
+        { Keterangan: "TOTAL", Jumlah: data.total_titipan_sales },
+        {},
+        { Keterangan: "-- INSENTIF --", Jumlah: "" },
+        {
+          Keterangan: "Insentif Produksi",
+          Jumlah: data.insentif.total_produksi,
+        },
+        {
+          Keterangan: "Fee Penjualan",
+          Jumlah: data.insentif.total_fee_penjualan,
+        },
+        { Keterangan: "Handling", Jumlah: data.insentif.total_handling },
+        { Keterangan: "Fee Rekapan", Jumlah: data.insentif.total_fee_rekapan },
+        {
+          Keterangan: "Bonus Target",
+          Jumlah: data.insentif.total_bonus_target,
+        },
+        { Keterangan: "TOTAL INSENTIF", Jumlah: data.insentif.total_insentif },
+        {},
+        { Keterangan: "-- PEMBAYARAN VIA TRANSFER --", Jumlah: "" },
+        {
+          Keterangan: `Penjualan Bulan ${periode}`,
+          Jumlah: data.transfer_penjualan,
+        },
+        ...data.transfer_titipan.map((t) => ({
+          Keterangan: `${t.tanggal_bayar} — ${t.nama}`,
+          Jumlah: t.jumlah_transfer,
+        })),
+        { Keterangan: "TOTAL TRANSFER", Jumlah: data.total_transfer },
+        {},
+        { Keterangan: "SISA DANA PENJUALAN", Jumlah: data.sisa_dana_penjualan },
+      ];
+
+      const ws = XLSX.utils.json_to_sheet(danaRows, {
+        header: ["Keterangan", "Jumlah"],
+      });
+      XLSX.utils.book_append_sheet(wb, ws, "Rekapan Setoran");
+      XLSX.writeFile(wb, `rekapan-setoran-${periode}.xlsx`);
+    } catch {
+      toast.error("Gagal export Excel", {
+        description: "Jalankan: npm install xlsx",
+      });
+    }
+    setExporting(false);
+  };
+
+  return (
+    <div>
+      <div className="bg-white rounded-xl border border-gray-200 mb-6">
+        <div className="border-b border-gray-200 px-6 py-4 flex items-end justify-between flex-wrap gap-4">
+          <div className="flex items-end gap-3">
+            <Calendar className="w-5 h-5 text-gray-500 mb-2.5" />
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">
+                Periode
+              </label>
+              <input
+                type="month"
+                value={periode}
+                onChange={(e) => setPeriode(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={handleExportPDF}
+              disabled={exporting || loading || !data}
+              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer disabled:opacity-60"
+            >
+              {exporting ? (
+                <RefreshCw className="w-4 h-4 animate-spin" />
+              ) : (
+                <File className="w-4 h-4" />
+              )}
+              Export PDF
+            </button>
+            <button
+              onClick={handleExportExcel}
+              disabled={exporting || loading || !data}
+              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer disabled:opacity-60"
+            >
+              {exporting ? (
+                <RefreshCw className="w-4 h-4 animate-spin" />
+              ) : (
+                <FileSpreadsheet className="w-4 h-4" />
+              )}
+              Export Excel
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {error && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex gap-3">
+          <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
+          <p className="text-sm text-red-700">{error}</p>
+        </div>
+      )}
+
+      {loading ? (
+        <div className="py-16 text-center">
+          <RefreshCw className="w-8 h-8 animate-spin text-gray-300 mx-auto mb-3" />
+          <p className="text-sm text-gray-400">Memuat laporan...</p>
+        </div>
+      ) : !data ? (
+        <p className="text-center text-gray-400 py-12 text-sm">
+          Gagal memuat data
+        </p>
+      ) : (
+        <div className="space-y-6">
+          <SetoranBox
+            title="Hasil Penjualan & Pembayaran Titipan"
+            totalLabel="TOTAL DANA"
+            total={data.total_dana}
+          >
+            <SetoranRow
+              label={`Penjualan Bulan ${periode}`}
+              value={data.penjualan_bulan_ini}
+            />
+            {data.titipan_lama.map((t) => (
+              <SetoranRow
+                key={t.periode_asal}
+                label={`Titipan Bulan ${t.periode_asal}`}
+                value={t.jumlah}
+              />
+            ))}
+            {data.titipan_lama.length === 0 && (
+              <p className="text-xs text-gray-400 italic px-4 py-2">
+                Tidak ada pembayaran titipan lama bulan ini.
+              </p>
+            )}
+          </SetoranBox>
+
+          <SetoranBox
+            title="Pembayaran via Transfer"
+            totalLabel="TOTAL TRANSFER"
+            total={data.total_transfer}
+          >
+            <SetoranRow
+              label={`Penjualan Bulan ${periode}`}
+              value={data.transfer_penjualan}
+            />
+            {data.transfer_titipan.map((t, i) => (
+              <SetoranRow
+                key={i}
+                label={`${formatDate(t.tanggal_bayar)} — Titipan ${t.nama}`}
+                value={t.jumlah_transfer}
+              />
+            ))}
+            {data.transfer_titipan.length === 0 &&
+              data.transfer_penjualan === 0 && (
+                <p className="text-xs text-gray-400 italic px-4 py-2">
+                  Tidak ada pembayaran via transfer bulan ini.
+                </p>
+              )}
+          </SetoranBox>
+
+          <SetoranBox
+            title="Potongan"
+            totalLabel="TOTAL POTONGAN"
+            total={data.total_potongan}
+          >
+            {data.potongan.map((p) => (
+              <SetoranRow key={p.kategori} label={p.label} value={p.jumlah} />
+            ))}
+            {data.potongan.length === 0 && (
+              <p className="text-xs text-gray-400 italic px-4 py-2">
+                Tidak ada potongan bulan ini.
+              </p>
+            )}
+          </SetoranBox>
+
+          <SetoranBox
+            title={`Titipan/Bon Sales Bulan ${periode} (belum collect)`}
+            totalLabel="TOTAL"
+            total={data.total_titipan_sales}
+          >
+            {data.titipan_sales_bulan_ini.map((t) => (
+              <SetoranRow key={t.karyawan_id} label={t.nama} value={t.jumlah} />
+            ))}
+            {data.titipan_sales_bulan_ini.length === 0 && (
+              <p className="text-xs text-gray-400 italic px-4 py-2">
+                Tidak ada titipan/bon baru bulan ini.
+              </p>
+            )}
+          </SetoranBox>
+
+          {/* Insentif */}
+          <SetoranBox
+            title="Insentif"
+            totalLabel="TOTAL INSENTIF"
+            total={data.insentif.total_insentif}
+          >
+            <SetoranRow
+              label="Insentif Produksi"
+              value={data.insentif.total_produksi}
+            />
+            <SetoranRow
+              label="Fee Penjualan"
+              value={data.insentif.total_fee_penjualan}
+            />
+            <SetoranRow label="Handling" value={data.insentif.total_handling} />
+            <SetoranRow
+              label="Fee Rekapan"
+              value={data.insentif.total_fee_rekapan}
+            />
+            <SetoranRow
+              label="Bonus Target"
+              value={data.insentif.total_bonus_target}
+            />
+          </SetoranBox>
+
+          <div className="rounded-xl overflow-hidden border-2 border-green-300">
+            <div className="bg-green-500 text-white px-6 py-4 flex items-center justify-between">
+              <span className="font-bold text-lg">SISA DANA PENJUALAN</span>
+              <span className="font-bold text-xl">
+                {formatRp(data.sisa_dana_penjualan)}
+              </span>
+            </div>
+          </div>
+
+          <p className="text-xs text-gray-400 px-1">
+            Sisa Dana Penjualan = Total Dana − Potongan − Titipan/Bon baru bulan
+            ini (belum collect) − Total Insentif − Pembayaran via Transfer. Ini
+            proyeksi otomatis dari data yang sudah tersimpan, bukan pengganti
+            pencatatan setoran aktual di menu Potongan &amp; Setoran.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SetoranBox({
+  title,
+  totalLabel,
+  total,
+  children,
+}: {
+  title: string;
+  totalLabel: string;
+  total: number;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div className="border-b border-gray-200 px-4 py-3">
+        <h3 className="font-semibold text-gray-900 text-sm">{title}</h3>
+      </div>
+      <div className="divide-y divide-gray-100">{children}</div>
+      <div className="flex items-center justify-between px-4 py-3 bg-yellow-50 border-t border-yellow-200">
+        <span className="text-sm font-bold text-gray-800">{totalLabel}</span>
+        <span className="text-sm font-bold text-gray-900">
+          {formatRp(total)}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function SetoranRow({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="flex items-center justify-between px-4 py-2.5">
+      <span className="text-sm text-gray-600">{label}</span>
+      <span className="text-sm font-medium text-gray-900">
+        {formatRp(value)}
+      </span>
+    </div>
+  );
+}
+
+export function LaporanGlobal() {
+  const [activeTab, setActiveTab] = useState<"produk" | "setoran">("produk");
+
+  return (
+    <div className="p-8">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900 mb-1">
+          Laporan Global
+        </h1>
+        <p className="text-gray-600">
+          Rekap stok &amp; penjualan per produk, dan proyeksi sisa dana
+          penjualan per bulan
+        </p>
+      </div>
+
+      <div className="flex gap-1 mb-6 border-b border-gray-200">
+        {[
+          { id: "produk", label: "Rekap Produk" },
+          { id: "setoran", label: "Rekapan Setoran" },
+        ].map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id as "produk" | "setoran")}
+            className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors cursor-pointer ${
+              activeTab === tab.id
+                ? "border-blue-600 text-blue-600"
+                : "border-transparent text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {activeTab === "produk" ? <RekapProdukTab /> : <RekapanSetoranTab />}
     </div>
   );
 }
