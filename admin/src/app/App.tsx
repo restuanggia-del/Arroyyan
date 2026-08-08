@@ -227,7 +227,7 @@ export default function App() {
       <div className="flex h-screen items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-blue-200 border-t-blue-600" />
-          <p className="text-sm text-gray-600">Memeriksa sesi akun...</p>
+          <p className="text-sm text-gray-600">Memuat...</p>
         </div>
       </div>
     );
