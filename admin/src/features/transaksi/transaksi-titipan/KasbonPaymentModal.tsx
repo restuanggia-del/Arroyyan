@@ -24,6 +24,7 @@ export function KasbonPaymentModal({
   const [jumlahTransfer, setJumlahTransfer] = useState(0);
   const [jumlahCash, setJumlahCash] = useState(0);
   const [jumlahKeOwner, setJumlahKeOwner] = useState(0);
+  const [keterangan, setKeterangan] = useState("");
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -52,6 +53,7 @@ export function KasbonPaymentModal({
       jumlah_transfer: jumlahTransfer,
       jumlah_cash: jumlahCash,
       jumlah_ke_owner: jumlahKeOwner,
+      keterangan: keterangan || null,
     });
 
     if (error) {
@@ -179,6 +181,24 @@ export function KasbonPaymentModal({
             <p className="text-xs text-gray-400 mt-1">
               Bagian dari hasil pembayaran ini yang langsung disetor ke owner
               (pencatatan saja, tidak memengaruhi sisa tagihan).
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Catatan
+              <span className="text-gray-400 font-normal ml-1">(opsional)</span>
+            </label>
+            <input
+              type="text"
+              value={keterangan}
+              onChange={(e) => setKeterangan(e.target.value)}
+              placeholder="Contoh: tf ke rek BRI (nama penerima)"
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <p className="text-xs text-gray-400 mt-1">
+              Muncul di Laporan Penjualan bagian "Pembayaran via Transfer" kalau
+              nominal transfer diisi.
             </p>
           </div>
 

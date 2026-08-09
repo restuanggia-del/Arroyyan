@@ -162,7 +162,7 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
         },
         {
           id: "laporan-sales",
-          label: "Laporan Sales",
+          label: "Laporan Penjualan",
           icon: <HandCoins className="w-5 h-5" />,
         },
         {
