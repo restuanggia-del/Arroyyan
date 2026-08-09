@@ -15,6 +15,7 @@ export interface KasbonPayment {
     jumlah_ke_owner: number;
     sisa_dus: number;
     sisa_rp: number;
+    keterangan: string | null;
     created_at: string;
 }
 
@@ -128,6 +129,7 @@ export const addKasbonPayment = async (
         jumlah_transfer: number;
         jumlah_cash: number;
         jumlah_ke_owner: number;
+        keterangan?: string | null;
     },
 ) => {
     const { data: trx, error: trxErr } = await supabaseAdmin
@@ -174,6 +176,7 @@ export const addKasbonPayment = async (
             jumlah_ke_owner: payment.jumlah_ke_owner,
             sisa_dus: newSisaDus,
             sisa_rp: newSisaRp,
+            keterangan: payment.keterangan || null,
         }])
         .select()
         .single();
