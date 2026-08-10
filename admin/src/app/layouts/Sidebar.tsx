@@ -152,7 +152,7 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
       children: [
         {
           id: "laporan",
-          label: "Laporan Penjualan",
+          label: "Laporan Transaksi",
           icon: <FileText className="w-5 h-5" />,
         },
         {

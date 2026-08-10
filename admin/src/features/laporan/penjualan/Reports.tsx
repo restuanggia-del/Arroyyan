@@ -175,7 +175,7 @@ export function Reports() {
             "Total",
             "Pembayaran",
           ],
-          `laporan-penjualan-${startDate}-${endDate}`,
+          `ringkasan-transaksi-${startDate}-${endDate}`,
         );
       } else if (activeReport === "distribution") {
         await exportToExcel(
@@ -235,7 +235,7 @@ export function Reports() {
     try {
       if (activeReport === "sales") {
         await exportToPDF(
-          `Laporan Penjualan (${startDate} s/d ${endDate})`,
+          `Ringkasan Transaksi Penjualan (${startDate} s/d ${endDate})`,
           [
             "Tanggal",
             "No.",
@@ -254,7 +254,7 @@ export function Reports() {
             formatRp(r.total),
             r.payment,
           ]),
-          `laporan-penjualan-${startDate}-${endDate}`,
+          `ringkasan-transaksi-${startDate}-${endDate}`,
         );
       } else if (activeReport === "distribution") {
         await exportToPDF(
@@ -309,7 +309,7 @@ export function Reports() {
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="text-lg font-semibold text-gray-900">
-            Laporan Penjualan
+            Ringkasan Transaksi Penjualan
           </h3>
           <p className="text-sm text-gray-500">
             Periode: {startDate} s/d {endDate}
@@ -622,7 +622,7 @@ export function Reports() {
   const tabs = [
     {
       id: "sales" as ReportType,
-      label: "Laporan Penjualan",
+      label: "Ringkasan Transaksi",
       icon: ShoppingCart,
     },
     {
@@ -641,7 +641,9 @@ export function Reports() {
   return (
     <div className="p-8">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-1">Laporan</h1>
+        <h1 className="text-2xl font-bold text-gray-900 mb-1">
+          Laporan Transaksi
+        </h1>
         <p className="text-gray-600">
           Generate dan export laporan bisnis dari data nyata
         </p>
