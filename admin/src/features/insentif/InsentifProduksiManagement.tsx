@@ -23,6 +23,7 @@ import {
   getIncentivePayments,
   savePayments,
   deletePayment,
+  DEFAULT_RATE_FEE_PENJUALAN,
 } from "../../services/insentifService";
 
 const formatRp = (n: number) => `Rp ${n.toLocaleString("id-ID")}`;
@@ -33,7 +34,6 @@ const formatDate = (d: string) =>
     year: "numeric",
   });
 const currentPeriode = () => new Date().toISOString().slice(0, 7);
-const DEFAULT_RATE_FEE_PENJUALAN = 500;
 
 type PreviewRow = KaryawanAmount & {
   jumlah_dibayar: number;

@@ -13,6 +13,8 @@ export const RATE_DEFAULT_PER_KATEGORI: Record<ProduksiKategori, number> = {
     botol: 2000,
 };
 
+export const DEFAULT_RATE_FEE_PENJUALAN = 500;
+
 export const JENIS_LABEL: Record<IncentiveJenis, string> = {
     insentif_produksi: "Insentif Produksi",
     fee_penjualan: "Fee Penjualan",

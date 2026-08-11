@@ -280,6 +280,11 @@ export function LaporanTandaTerimaInsentif() {
               )}
               Hitung / Refresh Rekap
             </button>
+            <p className="text-xs text-gray-400 max-w-xs">
+              Produksi, Fee Penjualan, dan Bonus Target otomatis pakai hitungan
+              live dari data transaksi kalau belum pernah disimpan manual di
+              halaman masing-masing.
+            </p>
           </div>
           <div className="flex gap-2">
             <button
