@@ -115,7 +115,21 @@ export const toggleMaterialStatus = async (id: string, isActive: boolean) => {
 export const deleteMaterial = async (id: string, namaBahan: string) => {
     const { error } = await supabaseAdmin.from("materials").delete().eq("id", id);
 
-    if (error) return { error };
+    if (error) {
+        if ((error as any).code === "23503") {
+            return {
+                error: {
+                    message:
+                        `"${namaBahan}" sudah punya riwayat pergerakan stok (masuk/keluar/dll), ` +
+                        `jadi tidak bisa dihapus permanen. Nonaktifkan saja bahan ini lewat tombol ` +
+                        `status di tabel — riwayatnya tetap aman dan bahan otomatis hilang dari ` +
+                        `pilihan transaksi baru.`,
+                    code: "HAS_MOVEMENTS",
+                },
+            };
+        }
+        return { error };
+    }
 
     await supabaseAdmin.from("activity_logs").insert([
         {
