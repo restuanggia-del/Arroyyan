@@ -135,7 +135,7 @@ export function MaterialTransactionModal({
   const [formError, setFormError] = useState<string | null>(null);
 
   const [materialId, setMaterialId] = useState("");
-  const [quantity, setQuantity] = useState(1);
+  const [quantity, setQuantity] = useState(0);
   const [note, setNote] = useState("");
 
   useEffect(() => {
@@ -271,10 +271,10 @@ export function MaterialTransactionModal({
             <input
               type="text"
               required
-              value={quantity === 1 ? "" : quantity}
+              value={quantity === 0 ? "" : quantity}
               onChange={(e) => {
                 const v = e.target.value.replace(/\D/g, "");
-                setQuantity(v === "" ? 1 : parseInt(v, 10));
+                setQuantity(v === "" ? 0 : parseInt(v, 10));
                 setFormError(null);
               }}
               placeholder="0"
