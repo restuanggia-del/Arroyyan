@@ -686,7 +686,28 @@ export function MaterialManagement() {
       confirmDelete.name,
     );
     if (error) {
-      alert("Gagal menghapus bahan: " + error.message);
+      if ((error as any).code === "HAS_MOVEMENTS") {
+        const nonaktifkan = window.confirm(
+          error.message + "\n\nNonaktifkan bahan ini sekarang?",
+        );
+        if (nonaktifkan) {
+          const { error: toggleErr } = await toggleMaterialStatus(
+            confirmDelete.id,
+            false,
+          );
+          if (toggleErr) {
+            alert("Gagal menonaktifkan bahan: " + toggleErr.message);
+          } else {
+            setMaterials((prev) =>
+              prev.map((m) =>
+                m.id === confirmDelete.id ? { ...m, is_active: false } : m,
+              ),
+            );
+          }
+        }
+      } else {
+        alert("Gagal menghapus bahan: " + error.message);
+      }
     } else {
       setMaterials((prev) => prev.filter((m) => m.id !== confirmDelete.id));
     }
@@ -781,7 +802,9 @@ export function MaterialManagement() {
               <span className="font-medium">{confirmDelete.name}</span>
             </p>
             <p className="text-xs text-gray-400 text-center mb-6">
-              Bahan yang sudah dihapus tidak bisa dikembalikan.
+              Bahan yang sudah dihapus tidak bisa dikembalikan. Kalau bahan ini
+              sudah pernah dipakai (ada riwayat stok masuk/keluar), sistem akan
+              menawarkan nonaktifkan sebagai gantinya.
             </p>
             <div className="flex gap-3">
               <button
