@@ -392,7 +392,7 @@ export default function App() {
       case "distribusi":
         return <DistributionManagement currentUserId={currentUser?.id ?? ""} />;
       case "transaksi":
-        return <SalesTransaction role="admin" karyawanId={undefined} />;
+        return <SalesTransaction role="admin" />;
       case "titipan":
         return <TransaksiTitipan />;
       case "potongan-setoran":
