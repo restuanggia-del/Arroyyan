@@ -152,7 +152,7 @@ export function DistributionManagement({
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-3 mb-1 flex-wrap">
               <h3 className="font-semibold text-gray-900">
-                {dist.karyawan?.nama ?? "—"}
+                {dist.sales?.nama_sales ?? "—"}
               </h3>
               <span
                 className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${statusBadge[dist.status]}`}
@@ -162,10 +162,10 @@ export function DistributionManagement({
               </span>
             </div>
 
-            {dist.karyawan?.address && (
+            {dist.sales?.address && (
               <div className="flex items-center gap-1.5 text-sm text-gray-500 mb-3">
                 <MapPin className="w-3.5 h-3.5" />
-                <span>{dist.karyawan.address}</span>
+                <span>{dist.sales.address}</span>
               </div>
             )}
 
@@ -235,7 +235,7 @@ export function DistributionManagement({
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-3 mb-1 flex-wrap">
               <h3 className="font-semibold text-gray-900">
-                {ret.karyawan?.nama ?? "—"}
+                {ret.sales?.nama_sales ?? ret.karyawan?.nama ?? "—"}
               </h3>
               <span
                 className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${returnStatusBadge[ret.status]}`}
@@ -310,10 +310,10 @@ export function DistributionManagement({
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 mb-1">
-            Distribusi ke Karyawan
+            Distribusi ke Sales
           </h1>
           <p className="text-gray-600">
-            Kelola pengiriman barang dari pabrik ke karyawan
+            Kelola pengiriman barang dari pabrik ke sales
           </p>
         </div>
         <button
@@ -569,8 +569,7 @@ export function DistributionManagement({
               Tolak Pengajuan Return?
             </h3>
             <p className="text-sm text-gray-600 text-center mb-6">
-              Stok karyawan tidak akan berubah. Pastikan keputusan ini sudah
-              tepat.
+              Stok sales tidak akan berubah. Pastikan keputusan ini sudah tepat.
             </p>
             <div className="flex gap-3">
               <button

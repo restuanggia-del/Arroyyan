@@ -20,6 +20,7 @@ import { StockManagement } from "../features/manajemen/stok/StockManagement";
 import { MaterialManagement } from "../features/manajemen/bahan/MaterialManagement";
 import { DistributionManagement } from "../features/distribusi/DistributionManagement";
 import { KaryawanManagement } from "../features/manajemen/distributor-karyawan/KaryawanManagement";
+import { SalesManagement } from "../features/manajemen/sales/SalesManagement";
 import { SalesTransaction } from "../features/transaksi/transaksi-penjualan/SalesTransaction";
 import { TransaksiTitipan } from "../features/transaksi/transaksi-titipan/TransaksiTitipan";
 import { PotonganSetoranManagement } from "../features/potongan-setoran/PotonganSetoranManagement";
@@ -40,7 +41,11 @@ import { AuditLog } from "../features/pengaturan/AuditLog";
 import { SystemSettings } from "../features/pengaturan/SystemSettings";
 import { Login } from "../features/auth/Login";
 import { toast } from "sonner";
-import { loginUser, getCurrentUserRole } from "../services/authService";
+import {
+  loginUser,
+  getCurrentUserRole,
+  assertAdminAccess,
+} from "../services/authService";
 import {
   getDashboardStats,
   getMonthlySales,
@@ -181,21 +186,13 @@ export default function App() {
       return;
     }
 
-    if (userData.role === "distributor") {
+    const access = assertAdminAccess(userData);
+    if (!access.allowed) {
       await supabase.auth.signOut();
-      const message =
-        "Akun distributor tidak dapat masuk ke panel admin. " +
-        "Silakan gunakan aplikasi mobile distributor.";
-      setLoginError(message);
-      toast.error("Akses Ditolak", { description: message });
-      return;
-    }
-
-    if (userData.role !== "admin") {
-      await supabase.auth.signOut();
-      const message = "Akun Anda tidak memiliki akses ke panel admin ini.";
-      setLoginError(message);
-      toast.error("Akses Ditolak", { description: message });
+      setLoginError(access.message);
+      toast.error("Akses Ditolak", {
+        description: access.message ?? undefined,
+      });
       return;
     }
 
@@ -384,6 +381,8 @@ export default function App() {
     switch (activeMenu) {
       case "karyawan":
         return <KaryawanManagement />;
+      case "sales":
+        return <SalesManagement />;
       case "produk":
         return <ProductManagement />;
       case "stok":

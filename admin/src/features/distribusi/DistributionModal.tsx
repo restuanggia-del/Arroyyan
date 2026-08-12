@@ -8,10 +8,7 @@ import {
   Trash2,
   RefreshCw,
 } from "lucide-react";
-import {
-  getActiveKaryawan,
-  Karyawan,
-} from "../../services/karyawanService";
+import { getActiveSales, Sales } from "../../services/salesService";
 import { getActiveProducts, Product } from "../../services/productService";
 import { getCentralStock } from "../../services/stockService";
 import {
@@ -35,7 +32,7 @@ export function DistributionModal({
   onClose,
   onSaveSuccess,
 }: DistributionModalProps) {
-  const [karyawanList, setKaryawanList] = useState<Karyawan[]>([]);
+  const [salesList, setSalesList] = useState<Sales[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [centralStockMap, setCentralStockMap] = useState<
     Record<string, number>
@@ -44,7 +41,7 @@ export function DistributionModal({
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
-  const [karyawanId, setKaryawanId] = useState("");
+  const [salesId, setSalesId] = useState("");
   const [items, setItems] = useState<ItemRow[]>([
     { product_id: "", quantity: 1 },
   ]);
@@ -52,13 +49,13 @@ export function DistributionModal({
   useEffect(() => {
     const load = async () => {
       setLoadingData(true);
-      const [karyawanRes, prodRes, stockRes] = await Promise.all([
-        getActiveKaryawan("jual_antar"),
+      const [salesRes, prodRes, stockRes] = await Promise.all([
+        getActiveSales(),
         getActiveProducts(),
         getCentralStock(),
       ]);
 
-      setKaryawanList(karyawanRes.data ?? []);
+      setSalesList(salesRes.data ?? []);
       setProducts(prodRes.data ?? []);
 
       const map: Record<string, number> = {};
@@ -96,8 +93,8 @@ export function DistributionModal({
     e.preventDefault();
     setFormError(null);
 
-    if (!karyawanId) {
-      setFormError("Pilih karyawan terlebih dahulu.");
+    if (!salesId) {
+      setFormError("Pilih sales terlebih dahulu.");
       return;
     }
 
@@ -130,7 +127,7 @@ export function DistributionModal({
     }));
 
     const { error } = await createDistribution(
-      karyawanId,
+      salesId,
       currentUserId,
       distributionItems,
     );
@@ -178,8 +175,8 @@ export function DistributionModal({
             <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex gap-3">
               <Package className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
               <p className="text-sm text-blue-700">
-                Stok pusat akan otomatis berkurang dan stok karyawan akan
-                bertambah setelah distribusi dibuat.
+                Stok pusat akan otomatis berkurang dan stok sales akan bertambah
+                setelah distribusi dibuat.
               </p>
             </div>
 
@@ -192,28 +189,28 @@ export function DistributionModal({
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                Tujuan Karyawan <span className="text-red-500">*</span>
+                Tujuan Sales <span className="text-red-500">*</span>
               </label>
               <select
                 required
-                value={karyawanId}
+                value={salesId}
                 onChange={(e) => {
-                  setKaryawanId(e.target.value);
+                  setSalesId(e.target.value);
                   setFormError(null);
                 }}
                 className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
               >
-                <option value="">-- Pilih Karyawan --</option>
-                {karyawanList.map((k) => (
+                <option value="">-- Pilih Sales --</option>
+                {salesList.map((k) => (
                   <option key={k.id} value={k.id}>
-                    {k.nama}
+                    {k.nama_sales}
                     {k.address ? ` — ${k.address}` : ""}
                   </option>
                 ))}
               </select>
-              {karyawanList.length === 0 && (
+              {salesList.length === 0 && (
                 <p className="text-xs text-orange-600 mt-1">
-                  Belum ada karyawan aktif dengan peran jual/antar.
+                  Belum ada sales aktif. Tambahkan data sales terlebih dahulu.
                 </p>
               )}
             </div>

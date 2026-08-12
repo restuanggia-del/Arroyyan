@@ -22,6 +22,7 @@ import {
   ChevronRight,
   HandCoins,
   ClipboardCheck,
+  Briefcase,
 } from "lucide-react";
 
 interface MenuItem {
@@ -70,6 +71,11 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
           icon: <UserCheck className="w-5 h-5" />,
         },
         {
+          id: "sales",
+          label: "Manajemen Sales",
+          icon: <Briefcase className="w-5 h-5" />,
+        },
+        {
           id: "produk",
           label: "Manajemen Produk",
           icon: <Package className="w-5 h-5" />,
@@ -93,7 +99,7 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
     },
     {
       id: "distribusi",
-      label: "Distribusi",
+      label: "Distribusi ke Sales",
       icon: <Truck className="w-5 h-5" />,
     },
     {
