@@ -2,8 +2,9 @@ import { supabaseAdmin } from "../lib/supabaseAdmin";
 import { PotonganKategori, KATEGORI_POTONGAN_LABEL } from "./potonganSetoranService";
 
 export interface SalesColumn {
-    karyawan_id: string;
+    actor_id: string;
     nama: string;
+    tipe: "sales" | "karyawan";
 }
 
 export interface ProdukHarianRow {
@@ -70,11 +71,28 @@ export interface TitipanItemRow {
 }
 
 export interface TitipanPerSales {
-    karyawan_id: string;
+    actor_id: string;
     nama: string;
     items: TitipanItemRow[];
     total_dus: number;
     total_rp: number;
+}
+
+export interface KomisiSalesRow {
+    sales_id: string;
+    nama_sales: string;
+    total_dus_terjual: number;
+    total_omzet_pabrik: number;
+    total_omzet_jual: number;
+    total_komisi: number;
+}
+
+export interface SetoranSalesRow {
+    tanggal: string;
+    nama_sales: string;
+    jumlah_cash: number;
+    jumlah_transfer: number;
+    keterangan: string | null;
 }
 
 export interface LaporanPenjualanResult {
@@ -88,6 +106,15 @@ export interface LaporanPenjualanResult {
         per_sales: TitipanPerSales[];
         total_dus: number;
         total_rp: number;
+    };
+    komisi_sales: {
+        rows: KomisiSalesRow[];
+        total_komisi: number;
+    };
+    setoran_sales: {
+        items: SetoranSalesRow[];
+        total_cash: number;
+        total_transfer: number;
     };
     ringkasan: {
         total_penjualan_rp: number;
@@ -143,6 +170,7 @@ export const getLaporanPenjualan = async (
     const [
         productsRes,
         salesRes,
+        salesEntityRes,
         movementsRes,
         stocksRes,
         trxDetailRes,
@@ -151,6 +179,8 @@ export const getLaporanPenjualan = async (
         kasbonPaymentsRes,
         setoranRes,
         kasbonTrxRes,
+        salesDepositsRes,
+        salesTrxDetailRes,
     ] = await Promise.all([
         supabaseAdmin
             .from("products")
@@ -162,8 +192,12 @@ export const getLaporanPenjualan = async (
             .select("id, nama, is_active, karyawan_roles ( role )")
             .eq("is_active", true),
         supabaseAdmin
+            .from("sales")
+            .select("id, nama_sales, is_active")
+            .eq("is_active", true),
+        supabaseAdmin
             .from("stock_movements")
-            .select("product_id, karyawan_id, movement_type, quantity, created_at")
+            .select("product_id, karyawan_id, sales_id, movement_type, quantity, created_at")
             .gte("created_at", startDate)
             .lt("created_at", endDate),
         supabaseAdmin.from("stocks").select("product_id, stock_quantity"),
@@ -183,7 +217,7 @@ export const getLaporanPenjualan = async (
             .order("tanggal", { ascending: true }),
         supabaseAdmin
             .from("transactions")
-            .select("total_price, created_at, karyawan ( nama )")
+            .select("total_price, created_at, karyawan ( nama ), sales ( nama_sales )")
             .eq("payment_method", "transfer")
             .gte("created_at", startDate)
             .lt("created_at", endDate),
@@ -191,7 +225,7 @@ export const getLaporanPenjualan = async (
             .from("kasbon_payments")
             .select(`
         tanggal_bayar, jumlah_transfer, keterangan,
-        transactions!inner ( karyawan ( nama ), customers ( customer_name ) )
+        transactions!inner ( karyawan ( nama ), sales ( nama_sales ), customers ( customer_name ) )
       `)
             .gt("jumlah_transfer", 0)
             .gte("tanggal_bayar", startDateOnly)
@@ -205,19 +239,36 @@ export const getLaporanPenjualan = async (
         supabaseAdmin
             .from("transactions")
             .select(`
-        id, karyawan_id, total_price, created_at,
+        id, karyawan_id, sales_id, total_price, created_at,
         karyawan ( nama ),
+        sales ( nama_sales ),
         transaction_details ( quantity, products ( size, isi_per_dus ) )
       `)
             .eq("payment_method", "kasbon")
             .gte("created_at", startDate)
             .lt("created_at", endDate)
             .order("created_at", { ascending: true }),
+        supabaseAdmin
+            .from("sales_deposits")
+            .select("tanggal, jumlah_cash, jumlah_transfer, keterangan, sales ( nama_sales )")
+            .gte("tanggal", startDateOnly)
+            .lt("tanggal", endDateOnly)
+            .order("tanggal", { ascending: true }),
+        supabaseAdmin
+            .from("transactions")
+            .select(`
+        sales_id, sales ( nama_sales ),
+        transaction_details ( quantity, price, harga_pokok, products ( isi_per_dus ) )
+      `)
+            .not("sales_id", "is", null)
+            .gte("created_at", startDate)
+            .lt("created_at", endDate),
     ]);
 
     for (const res of [
         productsRes,
         salesRes,
+        salesEntityRes,
         movementsRes,
         stocksRes,
         trxDetailRes,
@@ -226,6 +277,8 @@ export const getLaporanPenjualan = async (
         kasbonPaymentsRes,
         setoranRes,
         kasbonTrxRes,
+        salesDepositsRes,
+        salesTrxDetailRes,
     ]) {
         if ((res as any).error) return { data: null, error: (res as any).error };
     }
@@ -239,9 +292,14 @@ export const getLaporanPenjualan = async (
         price: number;
     }[];
 
-    const salesColumns: SalesColumn[] = ((salesRes.data ?? []) as any[])
+    const karyawanJualAntarColumns: SalesColumn[] = ((salesRes.data ?? []) as any[])
         .filter((k) => (k.karyawan_roles ?? []).some((r: any) => r.role === "jual_antar"))
-        .map((k) => ({ karyawan_id: k.id, nama: k.nama }))
+        .map((k) => ({ actor_id: k.id, nama: k.nama, tipe: "karyawan" as const }));
+
+    const salesEntityColumns: SalesColumn[] = ((salesEntityRes.data ?? []) as any[])
+        .map((s) => ({ actor_id: s.id, nama: s.nama_sales, tipe: "sales" as const }));
+
+    const salesColumns: SalesColumn[] = [...salesEntityColumns, ...karyawanJualAntarColumns]
         .sort((a, b) => a.nama.localeCompare(b.nama));
 
     const isiPerDusMap = new Map(products.map((p) => [p.id, p.isi_per_dus || 0]));
@@ -267,8 +325,9 @@ export const getLaporanPenjualan = async (
             row.stok_awal_dus += dus;
         } else if (m.movement_type === "stock_in") {
             row.produksi_dus += dus;
-        } else if (m.movement_type === "distribution_out" && m.karyawan_id) {
-            row.distribusi[m.karyawan_id] = (row.distribusi[m.karyawan_id] ?? 0) + dus;
+        } else if (m.movement_type === "distribution_out" && (m.sales_id || m.karyawan_id)) {
+            const actorId = m.sales_id ?? m.karyawan_id;
+            row.distribusi[actorId] = (row.distribusi[actorId] ?? 0) + dus;
         } else if (m.movement_type === "sodaqoh_out") {
             row.sodaqoh_dus += dus;
         } else if (m.movement_type === "pribadi_out") {
@@ -395,14 +454,16 @@ export const getLaporanPenjualan = async (
 
     const transferItems: TransferItemRow[] = [];
     for (const t of (transferTrxRes.data ?? []) as any[]) {
+        const namaActor = t.sales?.nama_sales ?? t.karyawan?.nama;
         transferItems.push({
             tanggal: (t.created_at as string).slice(0, 10),
-            keterangan: `Penjualan transfer${t.karyawan?.nama ? " — " + t.karyawan.nama : ""}`,
+            keterangan: `Penjualan transfer${namaActor ? " — " + namaActor : ""}`,
             jumlah: Number(t.total_price),
         });
     }
     for (const kp of (kasbonPaymentsRes.data ?? []) as any[]) {
-        const namaSales = kp.transactions?.karyawan?.nama;
+        const namaSales =
+            kp.transactions?.sales?.nama_sales ?? kp.transactions?.karyawan?.nama;
         const namaToko = kp.transactions?.customers?.customer_name;
         transferItems.push({
             tanggal: kp.tanggal_bayar,
@@ -426,18 +487,20 @@ export const getLaporanPenjualan = async (
     const sizeLabelMap = new Map(products.map((p) => [p.id, p.size ?? p.product_name]));
     const titipanBySales = new Map<string, TitipanPerSales>();
     for (const t of (kasbonTrxRes.data ?? []) as any[]) {
-        if (!t.karyawan_id) continue;
-        const nama = t.karyawan?.nama ?? "(Karyawan tidak aktif)";
-        if (!titipanBySales.has(t.karyawan_id)) {
-            titipanBySales.set(t.karyawan_id, {
-                karyawan_id: t.karyawan_id,
+        const actorId = t.sales_id ?? t.karyawan_id;
+        if (!actorId) continue;
+        const nama =
+            t.sales?.nama_sales ?? t.karyawan?.nama ?? "(Sales tidak aktif)";
+        if (!titipanBySales.has(actorId)) {
+            titipanBySales.set(actorId, {
+                actor_id: actorId,
                 nama,
                 items: [],
                 total_dus: 0,
                 total_rp: 0,
             });
         }
-        const bucket = titipanBySales.get(t.karyawan_id)!;
+        const bucket = titipanBySales.get(actorId)!;
 
         const details = (t.transaction_details ?? []) as any[];
         const totalDus = details.reduce((s, d) => {
@@ -476,6 +539,47 @@ export const getLaporanPenjualan = async (
     const sisaPenjualanRp = totalPenjualanRp - totalPotonganSemua;
     const dibulatkanRp = Math.round(sisaPenjualanRp / 1000) * 1000;
 
+    const komisiBySales = new Map<string, KomisiSalesRow>();
+    for (const t of (salesTrxDetailRes.data ?? []) as any[]) {
+        const salesId = t.sales_id as string;
+        const namaSales = t.sales?.nama_sales ?? "—";
+        if (!komisiBySales.has(salesId)) {
+            komisiBySales.set(salesId, {
+                sales_id: salesId,
+                nama_sales: namaSales,
+                total_dus_terjual: 0,
+                total_omzet_pabrik: 0,
+                total_omzet_jual: 0,
+                total_komisi: 0,
+            });
+        }
+        const row = komisiBySales.get(salesId)!;
+        for (const d of (t.transaction_details ?? []) as any[]) {
+            const isi = d.products?.isi_per_dus || 0;
+            const dus = isi ? Number(d.quantity) / isi : 0;
+            row.total_dus_terjual += dus;
+            row.total_omzet_pabrik += Number(d.harga_pokok) * Number(d.quantity);
+            row.total_omzet_jual += Number(d.price) * Number(d.quantity);
+            row.total_komisi += (Number(d.price) - Number(d.harga_pokok)) * Number(d.quantity);
+        }
+    }
+    const komisiRows = Array.from(komisiBySales.values())
+        .map((r) => ({ ...r, total_dus_terjual: round2(r.total_dus_terjual) }))
+        .sort((a, b) => a.nama_sales.localeCompare(b.nama_sales));
+    const totalKomisi = komisiRows.reduce((s, r) => s + r.total_komisi, 0);
+
+    const setoranSalesItems: SetoranSalesRow[] = ((salesDepositsRes.data ?? []) as any[]).map(
+        (s) => ({
+            tanggal: s.tanggal,
+            nama_sales: s.sales?.nama_sales ?? "—",
+            jumlah_cash: Number(s.jumlah_cash),
+            jumlah_transfer: Number(s.jumlah_transfer),
+            keterangan: s.keterangan,
+        }),
+    );
+    const totalSetoranCash = setoranSalesItems.reduce((s, r) => s + r.jumlah_cash, 0);
+    const totalSetoranTransfer = setoranSalesItems.reduce((s, r) => s + r.jumlah_transfer, 0);
+
     return {
         data: {
             periode,
@@ -488,6 +592,15 @@ export const getLaporanPenjualan = async (
                 per_sales: titipanPerSales,
                 total_dus: round2(totalTitipanDus),
                 total_rp: totalTitipanRp,
+            },
+            komisi_sales: {
+                rows: komisiRows,
+                total_komisi: totalKomisi,
+            },
+            setoran_sales: {
+                items: setoranSalesItems,
+                total_cash: totalSetoranCash,
+                total_transfer: totalSetoranTransfer,
             },
             ringkasan: {
                 total_penjualan_rp: totalPenjualanRp,
