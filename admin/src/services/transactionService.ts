@@ -14,6 +14,7 @@ export interface TransactionItem {
 export interface Transaction {
     id: string;
     karyawan_id: string | null;
+    sales_id: string | null;
     customer_id: string | null;
     total_price: number;
     payment_method: "cash" | "transfer" | "kasbon";
@@ -24,10 +25,12 @@ export interface Transaction {
         product_id: string;
         quantity: number;
         price: number;
+        harga_pokok: number;
         subtotal: number;
         products?: { product_name: string; category: string } | null;
     }[];
     karyawan?: { nama: string } | null;
+    sales?: { nama_sales: string } | null;
 }
 
 export const getAllTransactions = async () => {
@@ -36,17 +39,20 @@ export const getAllTransactions = async () => {
         .select(`
       id,
       karyawan_id,
+      sales_id,
       customer_id,
       total_price,
       payment_method,
       created_at,
       customers ( customer_name, phone ),
       karyawan ( nama ),
+      sales ( nama_sales ),
       transaction_details (
         id,
         product_id,
         quantity,
         price,
+        harga_pokok,
         subtotal,
         products ( product_name, category )
       )
@@ -64,6 +70,7 @@ export const createTransaction = async (
     options:
         | { mode: "admin"; karyawanId?: string }
         | { mode: "karyawan"; karyawanId: string }
+        | { mode: "sales"; salesId: string }
 ) => {
     if (paymentMethod === "kasbon" && !customerId) {
         return {
@@ -77,19 +84,21 @@ export const createTransaction = async (
         0
     );
 
+    const ownerColumn: "karyawan_id" | "sales_id" | null =
+        options.mode === "sales" ? "sales_id" : options.mode === "karyawan" ? "karyawan_id" : null;
+    const ownerValue =
+        options.mode === "sales" ? options.salesId
+            : options.mode === "karyawan" ? options.karyawanId
+                : null;
+
+    const stockQuery = (productId: string) => {
+        const q = supabaseAdmin.from("stocks").select("id, stock_quantity").eq("product_id", productId);
+        if (ownerColumn) return q.eq(ownerColumn, ownerValue as string);
+        return q.is("karyawan_id", null).is("sales_id", null);
+    };
+
     for (const item of items) {
-        const query = supabaseAdmin
-            .from("stocks")
-            .select("id, stock_quantity")
-            .eq("product_id", item.product_id);
-
-        if (options.mode === "admin") {
-            query.is("karyawan_id", null);
-        } else {
-            query.eq("karyawan_id", options.karyawanId);
-        }
-
-        const { data: stock, error: stockErr } = await query.maybeSingle();
+        const { data: stock, error: stockErr } = await stockQuery(item.product_id).maybeSingle();
 
         if (stockErr) return { data: null, error: stockErr };
         if (!stock || stock.stock_quantity < item.quantity) {
@@ -102,13 +111,20 @@ export const createTransaction = async (
         }
     }
 
+    const productIds = items.map((i) => i.product_id);
+    const { data: products, error: productsErr } = await supabaseAdmin
+        .from("products")
+        .select("id, price")
+        .in("id", productIds);
+
+    if (productsErr) return { data: null, error: productsErr };
+    const hargaPokokMap = new Map((products ?? []).map((p) => [p.id, p.price as number]));
+
     const { data: trx, error: trxErr } = await supabaseAdmin
         .from("transactions")
         .insert([{
-            karyawan_id:
-                options.mode === "karyawan"
-                    ? options.karyawanId
-                    : options.karyawanId ?? null,
+            karyawan_id: options.mode === "karyawan" ? options.karyawanId : null,
+            sales_id: options.mode === "sales" ? options.salesId : null,
             customer_id: customerId,
             total_price: totalPrice,
             payment_method: paymentMethod,
@@ -126,6 +142,7 @@ export const createTransaction = async (
                 product_id: item.product_id,
                 quantity: item.quantity,
                 price: item.price,
+                harga_pokok: hargaPokokMap.get(item.product_id) ?? item.price,
                 subtotal: item.price * item.quantity,
             }))
         );
@@ -133,18 +150,7 @@ export const createTransaction = async (
     if (detailErr) return { data: null, error: detailErr };
 
     for (const item of items) {
-        const query = supabaseAdmin
-            .from("stocks")
-            .select("id, stock_quantity")
-            .eq("product_id", item.product_id);
-
-        if (options.mode === "admin") {
-            query.is("karyawan_id", null);
-        } else {
-            query.eq("karyawan_id", options.karyawanId);
-        }
-
-        const { data: stock } = await query.single();
+        const { data: stock } = await stockQuery(item.product_id).single();
 
         if (stock) {
             await supabaseAdmin
@@ -155,18 +161,24 @@ export const createTransaction = async (
 
         await supabaseAdmin.from("stock_movements").insert([{
             product_id: item.product_id,
-            karyawan_id:
-                options.mode === "karyawan" ? options.karyawanId : null,
+            karyawan_id: options.mode === "karyawan" ? options.karyawanId : null,
+            sales_id: options.mode === "sales" ? options.salesId : null,
             movement_type: "sale_out",
             quantity: item.quantity,
-            note: `Penjualan #${trx.id.slice(0, 8)} (${options.mode === "admin" ? "pabrik" : "karyawan"
+            note: `Penjualan #${trx.id.slice(0, 8)} (${options.mode === "admin" ? "pabrik" : options.mode === "sales" ? "sales" : "karyawan"
                 })`,
         }]);
     }
 
+    const komisi = items.reduce((sum, item) => {
+        const pokok = hargaPokokMap.get(item.product_id) ?? item.price;
+        return sum + (item.price - pokok) * item.quantity;
+    }, 0);
+
     await supabaseAdmin.from("activity_logs").insert([{
         activity_type: "create_transaction",
-        description: `Transaksi #${trx.id.slice(0, 8)} | Mode: ${options.mode} | Total: Rp ${totalPrice.toLocaleString("id-ID")}`,
+        description: `Transaksi #${trx.id.slice(0, 8)} | Mode: ${options.mode} | Total: Rp ${totalPrice.toLocaleString("id-ID")}` +
+            (options.mode === "sales" ? ` | Komisi: Rp ${komisi.toLocaleString("id-ID")}` : ""),
     }]);
 
     if (customerId) {

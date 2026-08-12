@@ -30,12 +30,9 @@ export interface KasbonTransaction extends Transaction {
 export const createKasbonTransaction = async (
     items: TransactionItem[],
     customerId: string,
-    karyawanId: string,
+    actor: { mode: "karyawan"; karyawanId: string } | { mode: "sales"; salesId: string },
 ) => {
-    return createTransaction(items, "kasbon", customerId, {
-        mode: "karyawan",
-        karyawanId,
-    });
+    return createTransaction(items, "kasbon", customerId, actor);
 };
 
 export const getKasbonTransactions = async () => {
