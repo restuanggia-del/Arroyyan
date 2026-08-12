@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import { X, RefreshCw, AlertCircle, Plus, Minus, Trash2 } from "lucide-react";
 import { getActiveProducts, Product } from "../../../services/productService";
 import { getAllCustomers, Customer } from "../../../services/customerService";
-import { getActiveKaryawan, Karyawan } from "../../../services/karyawanService";
-import { getKaryawanStock } from "../../../services/stockService";
+import { getActiveSales, Sales } from "../../../services/salesService";
+import { getSalesStock } from "../../../services/stockService";
 import {
   getAllActiveProductPrices,
   ProductPrice,
@@ -31,7 +31,7 @@ export function KasbonTransactionModal({
 }: KasbonTransactionModalProps) {
   const [products, setProducts] = useState<Product[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
-  const [karyawanList, setKaryawanList] = useState<Karyawan[]>([]);
+  const [salesList, setSalesList] = useState<Sales[]>([]);
   const [priceOptionsMap, setPriceOptionsMap] = useState<
     Record<string, ProductPrice[]>
   >({});
@@ -40,7 +40,7 @@ export function KasbonTransactionModal({
   const [loadingStock, setLoadingStock] = useState(false);
 
   const [customerId, setCustomerId] = useState("");
-  const [karyawanId, setKaryawanId] = useState("");
+  const [salesId, setSalesId] = useState("");
   const [cart, setCart] = useState<CartItem[]>([]);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -48,15 +48,15 @@ export function KasbonTransactionModal({
   useEffect(() => {
     const load = async () => {
       setLoadingData(true);
-      const [prodRes, custRes, karyawanRes, priceRes] = await Promise.all([
+      const [prodRes, custRes, salesRes, priceRes] = await Promise.all([
         getActiveProducts(),
         getAllCustomers(),
-        getActiveKaryawan("jual_antar"),
+        getActiveSales(),
         getAllActiveProductPrices(),
       ]);
       setProducts(prodRes.data ?? []);
       setCustomers(custRes.data ?? []);
-      setKaryawanList(karyawanRes.data ?? []);
+      setSalesList(salesRes.data ?? []);
 
       const pMap: Record<string, ProductPrice[]> = {};
       for (const p of priceRes.data ?? []) {
@@ -69,22 +69,22 @@ export function KasbonTransactionModal({
   }, []);
 
   useEffect(() => {
-    if (!karyawanId) {
+    if (!salesId) {
       setStockMap({});
       setCart([]);
       return;
     }
     const loadStock = async () => {
       setLoadingStock(true);
-      const { data } = await getKaryawanStock(karyawanId);
+      const { data } = await getSalesStock(salesId);
       const map: Record<string, number> = {};
       for (const s of data ?? []) map[s.product_id] = s.stock_quantity;
       setStockMap(map);
-      setCart([]); // reset keranjang saat ganti karyawan (stok beda sumber)
+      setCart([]);
       setLoadingStock(false);
     };
     loadStock();
-  }, [karyawanId]);
+  }, [salesId]);
 
   const addToCart = (product: Product) => {
     const max = stockMap[product.id] ?? 0;
@@ -123,7 +123,9 @@ export function KasbonTransactionModal({
   const updatePrice = (productId: string, newPrice: number) => {
     setCart((prev) =>
       prev.map((i) =>
-        i.product.id === productId ? { ...i, unitPrice: newPrice } : i,
+        i.product.id === productId
+          ? { ...i, unitPrice: Math.max(0, newPrice) }
+          : i,
       ),
     );
   };
@@ -134,6 +136,10 @@ export function KasbonTransactionModal({
 
   const totalDus = cart.reduce((s, i) => s + i.quantity, 0);
   const totalRp = cart.reduce((s, i) => s + i.unitPrice * i.quantity, 0);
+  const estimasiKomisi = cart.reduce(
+    (s, i) => s + (i.unitPrice - i.product.price) * i.quantity,
+    0,
+  );
 
   const handleSubmit = async () => {
     setFormError(null);
@@ -142,8 +148,8 @@ export function KasbonTransactionModal({
       setFormError("Pilih toko tujuan titipan terlebih dahulu.");
       return;
     }
-    if (!karyawanId) {
-      setFormError("Pilih karyawan penanggung jawab/sales terlebih dahulu.");
+    if (!salesId) {
+      setFormError("Pilih sales penanggung jawab terlebih dahulu.");
       return;
     }
     if (cart.length === 0) {
@@ -160,11 +166,10 @@ export function KasbonTransactionModal({
       price: i.unitPrice,
     }));
 
-    const { error } = await createKasbonTransaction(
-      items,
-      customerId,
-      karyawanId,
-    );
+    const { error } = await createKasbonTransaction(items, customerId, {
+      mode: "sales",
+      salesId,
+    });
 
     if (error) {
       setFormError("Gagal menyimpan titipan: " + (error as any).message);
@@ -227,38 +232,36 @@ export function KasbonTransactionModal({
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                    Karyawan Penanggung Jawab / Sales{" "}
+                    Sales Penanggung Jawab{" "}
                     <span className="text-red-500">*</span>
                   </label>
                   <select
-                    value={karyawanId}
-                    onChange={(e) => setKaryawanId(e.target.value)}
+                    value={salesId}
+                    onChange={(e) => setSalesId(e.target.value)}
                     className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
                   >
-                    <option value="">-- Pilih Karyawan --</option>
-                    {karyawanList.map((k) => (
-                      <option key={k.id} value={k.id}>
-                        {k.nama}
+                    <option value="">-- Pilih Sales --</option>
+                    {salesList.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.nama_sales}
                       </option>
                     ))}
                   </select>
                   <p className="text-xs text-gray-400 mt-1">
-                    Stok titipan diambil dari stok karyawan ini.
+                    Stok titipan diambil dari stok sales ini.
                   </p>
                 </div>
               </div>
 
-              {!karyawanId ? (
+              {!salesId ? (
                 <p className="text-sm text-gray-400 text-center py-10 border border-dashed border-gray-200 rounded-xl">
-                  Pilih karyawan terlebih dahulu untuk melihat produk & stok
-                  yang tersedia.
+                  Pilih sales terlebih dahulu untuk melihat produk & stok yang
+                  tersedia.
                 </p>
               ) : loadingStock ? (
                 <div className="py-10 text-center">
                   <RefreshCw className="w-6 h-6 text-gray-400 animate-spin mx-auto mb-2" />
-                  <p className="text-gray-500 text-sm">
-                    Memuat stok karyawan...
-                  </p>
+                  <p className="text-gray-500 text-sm">Memuat stok sales...</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -288,12 +291,9 @@ export function KasbonTransactionModal({
                             </p>
                             <p className="text-sm font-bold text-blue-600">
                               {formatRp(product.price)}
-                              {(priceOptionsMap[product.id]?.length ?? 0) >
-                                0 && (
-                                <span className="ml-1.5 align-middle text-[10px] font-medium text-cyan-700 bg-cyan-100 px-1.5 py-0.5 rounded-full">
-                                  +{priceOptionsMap[product.id].length} harga
-                                </span>
-                              )}
+                              <span className="ml-1.5 align-middle text-[10px] font-medium text-gray-400">
+                                harga pabrik
+                              </span>
                             </p>
                             <p className="text-xs text-gray-400 mt-1">
                               Stok: {stock}
@@ -334,29 +334,52 @@ export function KasbonTransactionModal({
                               </button>
                             </div>
 
-                            {(priceOptionsMap[item.product.id]?.length ?? 0) >
-                              0 && (
-                              <select
-                                value={item.unitPrice}
-                                onChange={(e) =>
-                                  updatePrice(
-                                    item.product.id,
-                                    Number(e.target.value),
-                                  )
-                                }
-                                className="w-full mb-2 px-2 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer bg-blue-50/50"
-                              >
-                                <option value={item.product.price}>
-                                  {formatRp(item.product.price)} (Harga Dasar)
-                                </option>
-                                {priceOptionsMap[item.product.id].map((p) => (
-                                  <option key={p.id} value={p.price}>
-                                    {formatRp(p.price)}
-                                    {p.label ? ` (${p.label})` : ""}
+                            <div className="flex items-center gap-2 mb-2">
+                              <div className="relative flex-1">
+                                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-400">
+                                  Rp
+                                </span>
+                                <input
+                                  type="number"
+                                  min={0}
+                                  value={item.unitPrice}
+                                  onChange={(e) =>
+                                    updatePrice(
+                                      item.product.id,
+                                      e.target.value === ""
+                                        ? 0
+                                        : Number(e.target.value),
+                                    )
+                                  }
+                                  className="w-full pl-7 pr-2 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                />
+                              </div>
+                              {(priceOptionsMap[item.product.id]?.length ?? 0) >
+                                0 && (
+                                <select
+                                  value=""
+                                  onChange={(e) => {
+                                    if (e.target.value)
+                                      updatePrice(
+                                        item.product.id,
+                                        Number(e.target.value),
+                                      );
+                                  }}
+                                  className="px-2 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer bg-blue-50/50"
+                                >
+                                  <option value="">Pilih...</option>
+                                  <option value={item.product.price}>
+                                    {formatRp(item.product.price)} (Dasar)
                                   </option>
-                                ))}
-                              </select>
-                            )}
+                                  {priceOptionsMap[item.product.id].map((p) => (
+                                    <option key={p.id} value={p.price}>
+                                      {formatRp(p.price)}
+                                      {p.label ? ` (${p.label})` : ""}
+                                    </option>
+                                  ))}
+                                </select>
+                              )}
+                            </div>
 
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-1.5">
@@ -403,6 +426,14 @@ export function KasbonTransactionModal({
               <p className="text-lg font-bold text-gray-900">
                 {formatRp(totalRp)}
               </p>
+              {estimasiKomisi !== 0 && (
+                <p
+                  className={`text-xs font-medium mt-0.5 ${estimasiKomisi > 0 ? "text-green-600" : "text-red-500"}`}
+                >
+                  Estimasi komisi sales: {estimasiKomisi > 0 ? "+" : ""}
+                  {formatRp(estimasiKomisi)} (cair setelah toko lunas)
+                </p>
+              )}
             </div>
           </div>
           <div className="flex items-center justify-end gap-3">

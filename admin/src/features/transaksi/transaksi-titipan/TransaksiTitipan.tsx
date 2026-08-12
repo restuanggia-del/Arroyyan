@@ -218,7 +218,7 @@ export function TransaksiTitipan() {
                         {t.customers?.customer_name ?? "—"}
                       </td>
                       <td className="py-3 px-4 text-sm text-gray-600">
-                        {t.karyawan?.nama ?? "—"}
+                        {t.sales?.nama_sales ?? t.karyawan?.nama ?? "—"}
                       </td>
                       <td className="py-3 px-4 text-sm text-gray-600 whitespace-nowrap">
                         {t.total_dus} unit / {formatRp(t.total_price)}

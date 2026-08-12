@@ -12,16 +12,14 @@ import {
   AlertCircle,
   Building2,
   Truck,
+  TrendingUp,
 } from "lucide-react";
 import { getActiveProducts, Product } from "../../../services/productService";
 import {
   getAllActiveProductPrices,
   ProductPrice,
 } from "../../../services/productPriceService";
-import {
-  getCentralStock,
-  getKaryawanStock,
-} from "../../../services/stockService";
+import { getCentralStock, getSalesStock } from "../../../services/stockService";
 import { getAllCustomers, Customer } from "../../../services/customerService";
 import {
   createTransaction,
@@ -41,13 +39,13 @@ interface CartItem {
 }
 
 interface SalesTransactionProps {
-  role: "admin" | "karyawan";
-  karyawanId?: string;
+  role: "admin" | "sales";
+  salesId?: string;
 }
 
 const formatRp = (n: number) => "Rp " + n.toLocaleString("id-ID");
 
-export function SalesTransaction({ role, karyawanId }: SalesTransactionProps) {
+export function SalesTransaction({ role, salesId }: SalesTransactionProps) {
   const [products, setProducts] = useState<Product[]>([]);
   const [priceOptionsMap, setPriceOptionsMap] = useState<
     Record<string, ProductPrice[]>
@@ -56,7 +54,6 @@ export function SalesTransaction({ role, karyawanId }: SalesTransactionProps) {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loadingData, setLoadingData] = useState(true);
 
-  // Settings struk dari DB
   const [receiptSettings, setReceiptSettings] = useState<SystemSettingsData>(
     DEFAULT_SYSTEM_SETTINGS,
   );
@@ -79,8 +76,8 @@ export function SalesTransaction({ role, karyawanId }: SalesTransactionProps) {
       getAllCustomers(),
       role === "admin"
         ? getCentralStock()
-        : karyawanId
-          ? getKaryawanStock(karyawanId)
+        : salesId
+          ? getSalesStock(salesId)
           : Promise.resolve({ data: [] }),
       getSystemSettings(),
     ]);
@@ -104,7 +101,7 @@ export function SalesTransaction({ role, karyawanId }: SalesTransactionProps) {
     setPriceOptionsMap(pMap);
 
     setLoadingData(false);
-  }, [role, karyawanId]);
+  }, [role, salesId]);
 
   useEffect(() => {
     loadData();
@@ -131,7 +128,9 @@ export function SalesTransaction({ role, karyawanId }: SalesTransactionProps) {
   const updatePrice = (productId: string, newPrice: number) => {
     setCart((prev) =>
       prev.map((i) =>
-        i.product.id === productId ? { ...i, unitPrice: newPrice } : i,
+        i.product.id === productId
+          ? { ...i, unitPrice: Math.max(0, newPrice) }
+          : i,
       ),
     );
   };
@@ -155,6 +154,11 @@ export function SalesTransaction({ role, karyawanId }: SalesTransactionProps) {
 
   const subtotal = cart.reduce((s, i) => s + i.unitPrice * i.quantity, 0);
 
+  const estimasiKomisi = cart.reduce(
+    (s, i) => s + (i.unitPrice - i.product.price) * i.quantity,
+    0,
+  );
+
   const handleCheckout = async () => {
     if (cart.length === 0) {
       setCheckoutError("Keranjang masih kosong!");
@@ -173,7 +177,7 @@ export function SalesTransaction({ role, karyawanId }: SalesTransactionProps) {
     const txOptions =
       role === "admin"
         ? { mode: "admin" as const }
-        : { mode: "karyawan" as const, karyawanId: karyawanId! };
+        : { mode: "sales" as const, salesId: salesId! };
 
     const { data, error } = await createTransaction(
       items,
@@ -192,7 +196,7 @@ export function SalesTransaction({ role, karyawanId }: SalesTransactionProps) {
     setLastTransaction({
       id: data.id.slice(0, 8).toUpperCase(),
       date: new Date().toLocaleString("id-ID"),
-      sumber: role === "admin" ? "Penjualan Pabrik" : "Penjualan Karyawan",
+      sumber: role === "admin" ? "Penjualan Pabrik" : "Penjualan Sales",
       customer: customer?.customer_name ?? "Umum",
       phone: customer?.phone ?? "",
       items: [...cart],
@@ -244,14 +248,14 @@ export function SalesTransaction({ role, karyawanId }: SalesTransactionProps) {
           >
             {role === "admin"
               ? "Mode Penjualan Pabrik"
-              : "Mode Penjualan Karyawan"}
+              : "Mode Penjualan Sales"}
           </p>
           <p
             className={`text-xs ${role === "admin" ? "text-blue-600" : "text-green-600"}`}
           >
             {role === "admin"
-              ? "Stok yang berkurang: stok pusat"
-              : "Stok yang berkurang: stok karyawan Anda"}
+              ? "Stok yang berkurang: stok pusat. Tidak ada komisi."
+              : "Stok yang berkurang: stok Anda. Harga jual bebas ditentukan — selisih dari harga pabrik jadi komisi Anda."}
           </p>
         </div>
       </div>
@@ -306,9 +310,9 @@ export function SalesTransaction({ role, karyawanId }: SalesTransactionProps) {
                         </div>
                         <p className="text-base font-bold text-blue-600 mb-1.5">
                           {formatRp(product.price)}
-                          {(priceOptionsMap[product.id]?.length ?? 0) > 0 && (
-                            <span className="ml-1.5 align-middle text-[10px] font-medium text-cyan-700 bg-cyan-100 px-1.5 py-0.5 rounded-full">
-                              +{priceOptionsMap[product.id].length} harga
+                          {role === "sales" && (
+                            <span className="ml-1.5 align-middle text-[10px] font-medium text-gray-400">
+                              harga pabrik
                             </span>
                           )}
                         </p>
@@ -376,71 +380,113 @@ export function SalesTransaction({ role, karyawanId }: SalesTransactionProps) {
                     Klik produk untuk menambahkan
                   </p>
                 ) : (
-                  cart.map((item) => (
-                    <div
-                      key={item.product.id}
-                      className="border border-gray-200 rounded-xl p-3"
-                    >
-                      <div className="flex items-start justify-between mb-2">
-                        <p className="text-sm font-medium text-gray-900 flex-1 leading-tight">
-                          {item.product.product_name}
-                          {item.product.size ? ` (${item.product.size})` : ""}
-                        </p>
-                        <button
-                          onClick={() => removeFromCart(item.product.id)}
-                          className="text-red-500 hover:bg-red-50 p-1 rounded cursor-pointer ml-1"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-
-                      {(priceOptionsMap[item.product.id]?.length ?? 0) > 0 && (
-                        <select
-                          value={item.unitPrice}
-                          onChange={(e) =>
-                            updatePrice(item.product.id, Number(e.target.value))
-                          }
-                          className="w-full mb-2 px-2 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer bg-blue-50/50"
-                        >
-                          <option value={item.product.price}>
-                            {formatRp(item.product.price)} (Harga Dasar)
-                          </option>
-                          {priceOptionsMap[item.product.id].map((p) => (
-                            <option key={p.id} value={p.price}>
-                              {formatRp(p.price)}
-                              {p.label ? ` (${p.label})` : ""}
-                            </option>
-                          ))}
-                        </select>
-                      )}
-
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1.5">
+                  cart.map((item) => {
+                    const komisiPerItem =
+                      (item.unitPrice - item.product.price) * item.quantity;
+                    return (
+                      <div
+                        key={item.product.id}
+                        className="border border-gray-200 rounded-xl p-3"
+                      >
+                        <div className="flex items-start justify-between mb-2">
+                          <p className="text-sm font-medium text-gray-900 flex-1 leading-tight">
+                            {item.product.product_name}
+                            {item.product.size ? ` (${item.product.size})` : ""}
+                          </p>
                           <button
-                            onClick={() => updateQty(item.product.id, -1)}
-                            className="w-7 h-7 border border-gray-300 rounded-lg flex items-center justify-center hover:bg-gray-50 cursor-pointer"
+                            onClick={() => removeFromCart(item.product.id)}
+                            className="text-red-500 hover:bg-red-50 p-1 rounded cursor-pointer ml-1"
                           >
-                            <Minus className="w-3.5 h-3.5" />
-                          </button>
-                          <span className="w-8 text-center text-sm font-semibold">
-                            {item.quantity}
-                          </span>
-                          <button
-                            onClick={() => updateQty(item.product.id, 1)}
-                            className="w-7 h-7 border border-gray-300 rounded-lg flex items-center justify-center hover:bg-gray-50 cursor-pointer"
-                          >
-                            <Plus className="w-3.5 h-3.5" />
+                            <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
-                        <p className="text-sm font-bold text-gray-900">
-                          {formatRp(item.unitPrice * item.quantity)}
-                        </p>
+
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="relative flex-1">
+                            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-400">
+                              Rp
+                            </span>
+                            <input
+                              type="number"
+                              min={0}
+                              value={item.unitPrice}
+                              onChange={(e) =>
+                                updatePrice(
+                                  item.product.id,
+                                  e.target.value === ""
+                                    ? 0
+                                    : Number(e.target.value),
+                                )
+                              }
+                              className="w-full pl-7 pr-2 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                          </div>
+                          {(priceOptionsMap[item.product.id]?.length ?? 0) >
+                            0 && (
+                            <select
+                              value=""
+                              onChange={(e) => {
+                                if (e.target.value)
+                                  updatePrice(
+                                    item.product.id,
+                                    Number(e.target.value),
+                                  );
+                              }}
+                              className="px-2 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer bg-blue-50/50"
+                              title="Pilih dari daftar harga"
+                            >
+                              <option value="">Pilih...</option>
+                              <option value={item.product.price}>
+                                {formatRp(item.product.price)} (Dasar)
+                              </option>
+                              {priceOptionsMap[item.product.id].map((p) => (
+                                <option key={p.id} value={p.price}>
+                                  {formatRp(p.price)}
+                                  {p.label ? ` (${p.label})` : ""}
+                                </option>
+                              ))}
+                            </select>
+                          )}
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              onClick={() => updateQty(item.product.id, -1)}
+                              className="w-7 h-7 border border-gray-300 rounded-lg flex items-center justify-center hover:bg-gray-50 cursor-pointer"
+                            >
+                              <Minus className="w-3.5 h-3.5" />
+                            </button>
+                            <span className="w-8 text-center text-sm font-semibold">
+                              {item.quantity}
+                            </span>
+                            <button
+                              onClick={() => updateQty(item.product.id, 1)}
+                              className="w-7 h-7 border border-gray-300 rounded-lg flex items-center justify-center hover:bg-gray-50 cursor-pointer"
+                            >
+                              <Plus className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                          <p className="text-sm font-bold text-gray-900">
+                            {formatRp(item.unitPrice * item.quantity)}
+                          </p>
+                        </div>
+                        <div className="flex items-center justify-between mt-1">
+                          <p className="text-xs text-gray-400">
+                            Maks: {item.maxStock} unit
+                          </p>
+                          {role === "sales" && komisiPerItem !== 0 && (
+                            <p
+                              className={`text-xs font-medium ${komisiPerItem > 0 ? "text-green-600" : "text-red-500"}`}
+                            >
+                              {komisiPerItem > 0 ? "+" : ""}
+                              {formatRp(komisiPerItem)} komisi
+                            </p>
+                          )}
+                        </div>
                       </div>
-                      <p className="text-xs text-gray-400 mt-1">
-                        Maks: {item.maxStock} unit
-                      </p>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
 
@@ -450,11 +496,26 @@ export function SalesTransaction({ role, karyawanId }: SalesTransactionProps) {
                   <span>{formatRp(subtotal)}</span>
                 </div>
                 <div className="flex justify-between font-bold text-gray-900">
-                  <span>Total</span>
+                  <span>Total Diterima dari Customer</span>
                   <span className="text-blue-600 text-lg">
                     {formatRp(subtotal)}
                   </span>
                 </div>
+                {role === "sales" && cart.length > 0 && (
+                  <div
+                    className={`flex items-center justify-between text-sm font-medium px-3 py-2 rounded-lg ${
+                      estimasiKomisi >= 0
+                        ? "bg-green-50 text-green-700"
+                        : "bg-red-50 text-red-600"
+                    }`}
+                  >
+                    <span className="flex items-center gap-1.5">
+                      <TrendingUp className="w-3.5 h-3.5" /> Estimasi Komisi
+                      Anda
+                    </span>
+                    <span>{formatRp(estimasiKomisi)}</span>
+                  </div>
+                )}
               </div>
 
               <p className="text-sm font-medium text-gray-700 mb-2">

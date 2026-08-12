@@ -162,14 +162,14 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
           icon: <FileText className="w-5 h-5" />,
         },
         {
-          id: "laporan-bonus",
-          label: "Laporan Bonus",
-          icon: <Award className="w-5 h-5" />,
-        },
-        {
           id: "laporan-sales",
           label: "Laporan Penjualan",
           icon: <HandCoins className="w-5 h-5" />,
+        },
+        {
+          id: "laporan-bonus",
+          label: "Laporan Bonus",
+          icon: <Award className="w-5 h-5" />,
         },
         {
           id: "laporan-handling-fee",
