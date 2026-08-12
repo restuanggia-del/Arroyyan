@@ -8,6 +8,9 @@ export interface Sales {
     address: string | null;
     is_active: boolean;
     created_at: string;
+    users?: {
+        is_approved: boolean;
+    } | null;
 }
 
 export interface SalesInput {
@@ -20,7 +23,7 @@ export interface SalesInput {
 export const getAllSales = async () => {
     const { data, error } = await supabaseAdmin
         .from("sales")
-        .select("*")
+        .select("*, users ( is_approved )")
         .order("created_at", { ascending: false });
 
     if (error) return { data: null, error };
