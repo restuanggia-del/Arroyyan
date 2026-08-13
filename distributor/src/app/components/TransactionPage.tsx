@@ -183,29 +183,29 @@ export default function TransactionPage({ salesId }: TransactionPageProps) {
   if (loadingData) {
     return (
       <div className="py-24 text-center">
-        <RefreshCw className="w-7 h-7 text-gray-300 animate-spin mx-auto mb-2" />
-        <p className="text-sm text-gray-400">Memuat produk...</p>
+        <RefreshCw className="w-7 h-7 text-[#111111]/25 animate-spin mx-auto mb-2" />
+        <p className="text-sm text-[#111111]/35">Memuat produk...</p>
       </div>
     );
   }
 
   return (
     <div className="pb-24">
-      <div className="p-4 sticky top-0 bg-gray-50 z-10">
+      <div className="p-4 sticky top-0 bg-[#F4F7FE] z-10">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#111111]/35" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Cari produk..."
-            className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+            className="w-full pl-9 pr-4 py-2.5 border border-black/5 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#0249E1]"
           />
         </div>
       </div>
 
       {error && !showCart && (
-        <div className="mx-4 mb-3 p-3 bg-red-50 border border-red-200 rounded-xl flex gap-2 text-sm text-red-700">
+        <div className="mx-4 mb-3 p-3 bg-[#EE3D5A]/10 border border-[#EE3D5A]/25 rounded-xl flex gap-2 text-sm text-[#EE3D5A]">
           <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
           {error}
         </div>
@@ -221,31 +221,31 @@ export default function TransactionPage({ salesId }: TransactionPageProps) {
               disabled={product.stock === 0}
               className={`text-left border-2 rounded-2xl p-3 relative transition-all ${
                 product.stock === 0
-                  ? "border-gray-100 bg-gray-50 opacity-50"
+                  ? "border-black/5 bg-[#F4F7FE] opacity-50"
                   : inCart
-                    ? "border-cyan-500 bg-cyan-50"
-                    : "border-gray-100 bg-white active:border-cyan-300"
+                    ? "border-[#0249E1] bg-[#0249E1]/10"
+                    : "border-black/5 bg-white active:border-[#80B0EC]"
               }`}
             >
               {inCart && (
-                <span className="absolute top-2 right-2 bg-cyan-600 text-white text-[10px] rounded-full w-5 h-5 flex items-center justify-center font-bold">
+                <span className="absolute top-2 right-2 bg-[#0249E1] text-white text-[10px] rounded-full w-5 h-5 flex items-center justify-center font-bold">
                   {inCart.quantity}
                 </span>
               )}
-              <p className="text-sm font-semibold text-gray-900 leading-tight mb-1">
+              <p className="text-sm font-semibold text-[#111111] leading-tight mb-1">
                 {product.name}
                 {product.size ? ` (${product.size})` : ""}
               </p>
-              <p className="text-sm font-bold text-cyan-700 mb-1.5">
+              <p className="text-sm font-bold text-[#0249E1] mb-1.5">
                 {formatRp(product.hargaPabrik)}
               </p>
               <span
                 className={`text-[10px] px-2 py-0.5 rounded-full ${
                   product.stock > product.minStock
-                    ? "bg-green-100 text-green-700"
+                    ? "bg-[#DAFB71]/25 text-[#0249E1]"
                     : product.stock > 0
-                      ? "bg-orange-100 text-orange-700"
-                      : "bg-red-100 text-red-700"
+                      ? "bg-[#EE3D5A]/12 text-[#EE3D5A]"
+                      : "bg-[#EE3D5A]/15 text-[#EE3D5A]"
                 }`}
               >
                 Stok: {product.stock} {product.unit}
@@ -255,11 +255,10 @@ export default function TransactionPage({ salesId }: TransactionPageProps) {
         })}
       </div>
 
-      {/* Floating cart button */}
       {cart.length > 0 && !showCart && (
         <button
           onClick={() => setShowCart(true)}
-          className="fixed bottom-[76px] left-4 right-4 bg-cyan-600 text-white rounded-2xl py-3.5 px-5 flex items-center justify-between shadow-lg shadow-cyan-500/30 cursor-pointer z-20"
+          className="fixed bottom-[76px] left-4 right-4 bg-[#0249E1] text-white rounded-2xl py-3.5 px-5 flex items-center justify-between shadow-lg shadow-[#0249E1]/30 cursor-pointer z-20"
         >
           <span className="flex items-center gap-2 font-semibold text-sm">
             <ShoppingCart className="w-4.5 h-4.5" />
@@ -269,23 +268,22 @@ export default function TransactionPage({ salesId }: TransactionPageProps) {
         </button>
       )}
 
-      {/* Cart / checkout sheet */}
       {showCart && (
         <div className="fixed inset-0 bg-black/50 z-40 flex items-end">
           <div className="bg-white rounded-t-3xl w-full max-h-[88vh] flex flex-col">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-              <h2 className="font-bold text-gray-900">Keranjang</h2>
+            <div className="flex items-center justify-between px-5 py-4 border-b border-black/5">
+              <h2 className="font-bold text-[#111111]">Keranjang</h2>
               <button
                 onClick={() => setShowCart(false)}
-                className="p-1.5 hover:bg-gray-100 rounded-lg cursor-pointer"
+                className="p-1.5 hover:bg-[#F4F7FE] rounded-lg cursor-pointer"
               >
-                <X className="w-5 h-5 text-gray-500" />
+                <X className="w-5 h-5 text-[#111111]/45" />
               </button>
             </div>
 
             <div className="overflow-y-auto flex-1 px-5 py-3 space-y-3">
               {error && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-xl flex gap-2 text-sm text-red-700">
+                <div className="p-3 bg-[#EE3D5A]/10 border border-[#EE3D5A]/25 rounded-xl flex gap-2 text-sm text-[#EE3D5A]">
                   <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
                   {error}
                 </div>
@@ -297,22 +295,22 @@ export default function TransactionPage({ salesId }: TransactionPageProps) {
                 return (
                   <div
                     key={item.product.id}
-                    className="border border-gray-100 rounded-xl p-3"
+                    className="border border-black/5 rounded-xl p-3"
                   >
                     <div className="flex items-start justify-between mb-2">
-                      <p className="text-sm font-semibold text-gray-900 flex-1">
+                      <p className="text-sm font-semibold text-[#111111] flex-1">
                         {item.product.name}
                       </p>
                       <button
                         onClick={() => removeFromCart(item.product.id)}
-                        className="text-red-500 p-1 -mt-1 -mr-1 cursor-pointer"
+                        className="text-[#EE3D5A] p-1 -mt-1 -mr-1 cursor-pointer"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
 
                     <div className="relative mb-2">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-[#111111]/35">
                         Rp
                       </span>
                       <input
@@ -325,7 +323,7 @@ export default function TransactionPage({ salesId }: TransactionPageProps) {
                             Number(e.target.value) || 0,
                           )
                         }
-                        className="w-full pl-8 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                        className="w-full pl-8 pr-3 py-2 border border-black/5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]"
                       />
                     </div>
 
@@ -333,7 +331,7 @@ export default function TransactionPage({ salesId }: TransactionPageProps) {
                       <div className="flex items-center gap-1.5">
                         <button
                           onClick={() => updateQty(item.product.id, -1)}
-                          className="w-7 h-7 border border-gray-200 rounded-lg flex items-center justify-center cursor-pointer"
+                          className="w-7 h-7 border border-black/5 rounded-lg flex items-center justify-center cursor-pointer"
                         >
                           <Minus className="w-3.5 h-3.5" />
                         </button>
@@ -342,18 +340,18 @@ export default function TransactionPage({ salesId }: TransactionPageProps) {
                         </span>
                         <button
                           onClick={() => updateQty(item.product.id, 1)}
-                          className="w-7 h-7 border border-gray-200 rounded-lg flex items-center justify-center cursor-pointer"
+                          className="w-7 h-7 border border-black/5 rounded-lg flex items-center justify-center cursor-pointer"
                         >
                           <Plus className="w-3.5 h-3.5" />
                         </button>
                       </div>
-                      <p className="text-sm font-bold text-gray-900">
+                      <p className="text-sm font-bold text-[#111111]">
                         {formatRp(item.hargaJual * item.quantity)}
                       </p>
                     </div>
                     {komisiItem !== 0 && (
                       <p
-                        className={`text-xs mt-1 text-right ${komisiItem > 0 ? "text-green-600" : "text-red-500"}`}
+                        className={`text-xs mt-1 text-right ${komisiItem > 0 ? "text-[#0249E1]" : "text-[#EE3D5A]"}`}
                       >
                         {komisiItem > 0 ? "+" : ""}
                         {formatRp(komisiItem)} komisi
@@ -364,14 +362,14 @@ export default function TransactionPage({ salesId }: TransactionPageProps) {
               })}
 
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1.5">
+                <label className="block text-xs font-medium text-[#111111]/45 mb-1.5">
                   Pelanggan (opsional)
                 </label>
                 <div className="flex gap-2">
                   <select
                     value={customerId}
                     onChange={(e) => setCustomerId(e.target.value)}
-                    className="flex-1 px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                    className="flex-1 px-3 py-2.5 border border-black/5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]"
                   >
                     <option value="">Umum (tanpa data)</option>
                     {customers.map((c) => (
@@ -383,7 +381,7 @@ export default function TransactionPage({ salesId }: TransactionPageProps) {
                   </select>
                   <button
                     onClick={() => setShowNewCustomer(true)}
-                    className="px-3 border border-gray-200 rounded-xl text-cyan-600 cursor-pointer flex-shrink-0"
+                    className="px-3 border border-black/5 rounded-xl text-[#0249E1] cursor-pointer flex-shrink-0"
                     title="Tambah toko baru"
                   >
                     <UserPlus className="w-4 h-4" />
@@ -392,7 +390,7 @@ export default function TransactionPage({ salesId }: TransactionPageProps) {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1.5">
+                <label className="block text-xs font-medium text-[#111111]/45 mb-1.5">
                   Metode Pembayaran
                 </label>
                 <div className="grid grid-cols-3 gap-2">
@@ -408,8 +406,8 @@ export default function TransactionPage({ salesId }: TransactionPageProps) {
                       onClick={() => setPaymentMethod(m.key)}
                       className={`flex flex-col items-center gap-1 py-2.5 rounded-xl border-2 text-xs font-medium cursor-pointer ${
                         paymentMethod === m.key
-                          ? "border-cyan-500 bg-cyan-50 text-cyan-700"
-                          : "border-gray-200 text-gray-600"
+                          ? "border-[#0249E1] bg-[#0249E1]/10 text-[#0249E1]"
+                          : "border-black/5 text-[#111111]/60"
                       }`}
                     >
                       <m.icon className="w-4 h-4" />
@@ -418,15 +416,15 @@ export default function TransactionPage({ salesId }: TransactionPageProps) {
                   ))}
                 </div>
                 {paymentMethod === "kasbon" && (
-                  <p className="text-[11px] text-amber-600 mt-1.5">
+                  <p className="text-[11px] text-[#EE3D5A] mt-1.5">
                     Kasbon = titipan/piutang, wajib pilih toko tujuan di atas.
                   </p>
                 )}
               </div>
             </div>
 
-            <div className="border-t border-gray-100 px-5 py-4 space-y-2">
-              <div className="flex justify-between text-sm text-gray-600">
+            <div className="border-t border-black/5 px-5 py-4 space-y-2">
+              <div className="flex justify-between text-sm text-[#111111]/60">
                 <span>Subtotal</span>
                 <span>{formatRp(subtotal)}</span>
               </div>
@@ -434,8 +432,8 @@ export default function TransactionPage({ salesId }: TransactionPageProps) {
                 <div
                   className={`flex items-center justify-between text-sm font-medium px-3 py-2 rounded-lg ${
                     estimasiKomisi >= 0
-                      ? "bg-green-50 text-green-700"
-                      : "bg-red-50 text-red-600"
+                      ? "bg-[#DAFB71]/20 text-[#0249E1]"
+                      : "bg-[#EE3D5A]/10 text-[#EE3D5A]"
                   }`}
                 >
                   <span className="flex items-center gap-1.5">
@@ -447,7 +445,7 @@ export default function TransactionPage({ salesId }: TransactionPageProps) {
               <button
                 onClick={handleCheckout}
                 disabled={saving || cart.length === 0}
-                className="w-full bg-cyan-600 text-white py-3.5 rounded-xl font-semibold disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full bg-[#0249E1] text-white py-3.5 rounded-xl font-semibold disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
               >
                 {saving && <RefreshCw className="w-4 h-4 animate-spin" />}
                 {saving ? "Memproses..." : `Bayar ${formatRp(subtotal)}`}
@@ -517,59 +515,59 @@ function NewCustomerModal({
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
       <div className="bg-white rounded-t-3xl w-full">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-          <h2 className="font-bold text-gray-900">Tambah Toko Baru</h2>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-black/5">
+          <h2 className="font-bold text-[#111111]">Tambah Toko Baru</h2>
           <button
             onClick={onClose}
-            className="p-1.5 hover:bg-gray-100 rounded-lg cursor-pointer"
+            className="p-1.5 hover:bg-[#F4F7FE] rounded-lg cursor-pointer"
           >
-            <X className="w-5 h-5 text-gray-500" />
+            <X className="w-5 h-5 text-[#111111]/45" />
           </button>
         </div>
         <div className="px-5 py-4 space-y-3">
           {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-xl flex gap-2 text-sm text-red-700">
+            <div className="p-3 bg-[#EE3D5A]/10 border border-[#EE3D5A]/25 rounded-xl flex gap-2 text-sm text-[#EE3D5A]">
               <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
               {error}
             </div>
           )}
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1.5">
+            <label className="block text-xs font-medium text-[#111111]/45 mb-1.5">
               Nama Toko/Pelanggan
             </label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
+              className="w-full px-3 py-2.5 border border-black/5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]"
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1.5">
+            <label className="block text-xs font-medium text-[#111111]/45 mb-1.5">
               No. HP
             </label>
             <input
               type="text"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
+              className="w-full px-3 py-2.5 border border-black/5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]"
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1.5">
+            <label className="block text-xs font-medium text-[#111111]/45 mb-1.5">
               Alamat
             </label>
             <textarea
               value={address}
               onChange={(e) => setAddress(e.target.value)}
               rows={2}
-              className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
+              className="w-full px-3 py-2 border border-black/5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]"
             />
           </div>
           <button
             onClick={handleSubmit}
             disabled={saving}
-            className="w-full bg-cyan-600 text-white py-3.5 rounded-xl font-semibold disabled:opacity-60 flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full bg-[#0249E1] text-white py-3.5 rounded-xl font-semibold disabled:opacity-60 flex items-center justify-center gap-2 cursor-pointer"
           >
             {saving && <RefreshCw className="w-4 h-4 animate-spin" />}
             {saving ? "Menyimpan..." : "Simpan Toko"}

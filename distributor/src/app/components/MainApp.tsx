@@ -7,6 +7,7 @@ import {
   User,
   LogOut,
   Wallet,
+  Plus,
 } from "lucide-react";
 import { SalesUser } from "../services/SalesAppService";
 import DashboardPage from "./DashboardPage";
@@ -30,13 +31,31 @@ type TabKey =
   | "setoran"
   | "profile";
 
-const TABS: { key: TabKey; label: string; icon: typeof LayoutDashboard }[] = [
+const SIDE_TABS_LEFT: {
+  key: TabKey;
+  label: string;
+  icon: typeof LayoutDashboard;
+}[] = [
   { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { key: "transaction", label: "Jual", icon: ShoppingCart },
   { key: "stock", label: "Stok", icon: Package },
+];
+const SIDE_TABS_RIGHT: {
+  key: TabKey;
+  label: string;
+  icon: typeof LayoutDashboard;
+}[] = [
   { key: "distribution", label: "Distribusi", icon: Truck },
   { key: "setoran", label: "Setoran", icon: Wallet },
 ];
+
+const titleMap: Record<TabKey, string> = {
+  dashboard: "Dashboard",
+  transaction: "Transaksi Baru",
+  stock: "Stok Saya",
+  distribution: "Distribusi",
+  setoran: "Setoran",
+  profile: "Profil",
+};
 
 export default function MainApp({
   user,
@@ -58,11 +77,6 @@ export default function MainApp({
     .slice(0, 2)
     .join("")
     .toUpperCase();
-
-  const currentLabel =
-    activeTab === "profile"
-      ? "Profil"
-      : (TABS.find((t) => t.key === activeTab)?.label ?? "Dashboard");
 
   const renderPage = () => {
     switch (activeTab) {
@@ -95,17 +109,14 @@ export default function MainApp({
   };
 
   return (
-    <div className="h-[100dvh] flex flex-col bg-gray-50 overflow-hidden relative">
-      {/* Top bar */}
-      <header className="fixed top-0 left-0 right-0 z-30 h-14 bg-gradient-to-r from-blue-900 to-cyan-600 flex items-center px-4 gap-3">
-        <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
-          <LayoutDashboard className="w-4.5 h-4.5 text-white" />
-        </div>
+    <div className="h-[100dvh] flex flex-col bg-[#F4F7FE] overflow-hidden relative">
+      {/* Top bar — gradient identitas Portal Sales */}
+      <header className="fixed top-0 left-0 right-0 z-30 h-16 bg-gradient-to-r from-[#0249E1] to-[#80B0EC] rounded-b-[28px] flex items-center px-5 gap-3 shadow-lg shadow-[#0249E1]/15">
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-bold text-white leading-tight truncate">
-            {currentLabel}
+          <p className="text-[15px] font-extrabold text-white leading-tight truncate">
+            {titleMap[activeTab]}
           </p>
-          <p className="text-[11px] text-white/75 leading-tight truncate">
+          <p className="text-[11px] text-white/80 font-medium leading-tight truncate">
             {localUser.namaSales}
           </p>
         </div>
@@ -113,7 +124,7 @@ export default function MainApp({
         <div className="relative">
           <button
             onClick={() => setShowMenu((s) => !s)}
-            className="w-8.5 h-8.5 rounded-full bg-white/25 border-2 border-white/40 flex items-center justify-center text-white text-xs font-bold cursor-pointer"
+            className="w-9 h-9 rounded-2xl bg-[#111111] flex items-center justify-center text-[#DAFB71] text-xs font-extrabold cursor-pointer"
           >
             {initials}
           </button>
@@ -124,12 +135,12 @@ export default function MainApp({
                 className="fixed inset-0 z-30"
                 onClick={() => setShowMenu(false)}
               />
-              <div className="absolute right-0 top-11 w-52 bg-white rounded-xl shadow-xl border border-gray-100 z-40 overflow-hidden">
-                <div className="px-4 py-3 border-b border-gray-100">
-                  <p className="text-sm font-bold text-gray-900 truncate">
+              <div className="absolute right-0 top-11 w-52 bg-white rounded-2xl shadow-xl border border-black/5 z-40 overflow-hidden">
+                <div className="px-4 py-3 border-b border-black/5">
+                  <p className="text-sm font-bold text-[#111111] truncate">
                     {localUser.namaSales}
                   </p>
-                  <p className="text-xs text-gray-500 truncate">
+                  <p className="text-xs text-[#111111]/50 truncate">
                     {localUser.email}
                   </p>
                 </div>
@@ -138,17 +149,17 @@ export default function MainApp({
                     setShowMenu(false);
                     setActiveTab("profile");
                   }}
-                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium text-[#111111] hover:bg-[#F4F7FE] cursor-pointer"
                 >
                   <User className="w-4 h-4" /> Profil Saya
                 </button>
-                <div className="border-t border-gray-100" />
+                <div className="border-t border-black/5" />
                 <button
                   onClick={() => {
                     setShowMenu(false);
                     onLogout();
                   }}
-                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 cursor-pointer"
+                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium text-[#EE3D5A] hover:bg-[#EE3D5A]/5 cursor-pointer"
                 >
                   <LogOut className="w-4 h-4" /> Keluar
                 </button>
@@ -158,36 +169,72 @@ export default function MainApp({
         </div>
       </header>
 
-      {/* Content */}
       <main
-        className="flex-1 overflow-y-auto overflow-x-hidden mt-14 mb-[60px]"
+        className="flex-1 overflow-y-auto overflow-x-hidden mt-16 mb-[84px]"
         style={{ WebkitOverflowScrolling: "touch" }}
       >
         {renderPage()}
       </main>
 
-      {/* Bottom nav */}
-      <nav className="fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-gray-200 flex items-stretch h-[60px] pb-[env(safe-area-inset-bottom)]">
-        {TABS.map((tab) => {
-          const Icon = tab.icon;
-          const active = activeTab === tab.key;
-          return (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              className={`flex-1 flex flex-col items-center justify-center gap-0.5 cursor-pointer transition-colors ${
-                active ? "text-cyan-600" : "text-gray-400"
-              }`}
-            >
-              <Icon className="w-5 h-5" />
-              <span
-                className={`text-[10px] ${active ? "font-semibold" : "font-medium"}`}
+      <nav className="fixed bottom-0 left-0 right-0 z-30 pb-[calc(env(safe-area-inset-bottom)+14px)] pt-2 px-4">
+        <div className="relative bg-white rounded-[28px] shadow-xl shadow-black/10 h-[64px] flex items-stretch px-2">
+          {SIDE_TABS_LEFT.map((tab) => {
+            const Icon = tab.icon;
+            const active = activeTab === tab.key;
+            return (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className="flex-1 flex flex-col items-center justify-center gap-1 cursor-pointer"
               >
-                {tab.label}
-              </span>
+                <Icon
+                  className={`w-5 h-5 ${active ? "text-[#0249E1]" : "text-[#111111]/35"}`}
+                />
+                <span
+                  className={`text-[10px] ${active ? "font-bold text-[#0249E1]" : "font-medium text-[#111111]/35"}`}
+                >
+                  {tab.label}
+                </span>
+              </button>
+            );
+          })}
+
+          <div className="w-16 flex-shrink-0" />
+
+          {SIDE_TABS_RIGHT.map((tab) => {
+            const Icon = tab.icon;
+            const active = activeTab === tab.key;
+            return (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className="flex-1 flex flex-col items-center justify-center gap-1 cursor-pointer"
+              >
+                <Icon
+                  className={`w-5 h-5 ${active ? "text-[#0249E1]" : "text-[#111111]/35"}`}
+                />
+                <span
+                  className={`text-[10px] ${active ? "font-bold text-[#0249E1]" : "font-medium text-[#111111]/35"}`}
+                >
+                  {tab.label}
+                </span>
+              </button>
+            );
+          })}
+
+          <div className="absolute left-1/2 -translate-x-1/2 -top-5 flex flex-col items-center gap-1">
+            <button
+              onClick={() => setActiveTab("transaction")}
+              className="w-16 h-16 rounded-full bg-[#111111] shadow-lg shadow-black/25 flex items-center justify-center cursor-pointer active:scale-95 transition-transform"
+            >
+              {activeTab === "transaction" ? (
+                <ShoppingCart className="w-6 h-6 text-[#DAFB71]" />
+              ) : (
+                <Plus className="w-6 h-6 text-[#DAFB71]" />
+              )}
             </button>
-          );
-        })}
+          </div>
+        </div>
       </nav>
     </div>
   );
