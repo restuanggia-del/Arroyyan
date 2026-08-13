@@ -1,21 +1,9 @@
 import { useState } from "react";
-import {
-  Box,
-  TextField,
-  Button,
-  Typography,
-  Paper,
-  Alert,
-  InputAdornment,
-  IconButton,
-  CircularProgress,
-} from "@mui/material";
-import { Visibility, VisibilityOff } from "@mui/icons-material";
-import { Droplet } from "lucide-react";
-import { loginDistributor, DistributorUser } from "../../utils/supabaseClient";
+import { Droplet, Eye, EyeOff, Loader2, AlertCircle } from "lucide-react";
+import { loginSales, SalesUser } from "../services/SalesAppService";
 
 interface LoginPageProps {
-  onLogin: (user: DistributorUser, distributorId: string) => void;
+  onLogin: (user: SalesUser) => void;
 }
 
 export default function LoginPage({ onLogin }: LoginPageProps) {
@@ -34,194 +22,117 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
     setError("");
     setLoading(true);
 
-    try {
-      const { user, distributorId } = await loginDistributor(email, password);
-      onLogin(user, distributorId);
-    } catch (err: any) {
-      setError(err.message ?? "Login gagal. Periksa email dan password Anda.");
-    } finally {
+    const { data, error: loginError } = await loginSales(
+      email.trim(),
+      password,
+    );
+    if (loginError || !data) {
+      setError(
+        loginError?.message ?? "Login gagal. Periksa email dan password Anda.",
+      );
       setLoading(false);
+      return;
     }
+
+    onLogin(data);
   };
 
   return (
-    <Box
-      sx={{
-        minHeight: "100vh",
-        background:
-          "linear-gradient(135deg, #1e3a8a 0%, #0891b2 50%, #06b6d4 100%)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        p: 2,
-        position: "relative",
-        overflow: "hidden",
-        "&::before": {
-          content: '""',
-          position: "absolute",
-          width: 300,
-          height: 300,
-          borderRadius: "50%",
-          background: "rgba(255,255,255,0.05)",
-          top: -80,
-          right: -80,
-        },
-        "&::after": {
-          content: '""',
-          position: "absolute",
-          width: 200,
-          height: 200,
-          borderRadius: "50%",
-          background: "rgba(255,255,255,0.05)",
-          bottom: -50,
-          left: -50,
-        },
-      }}
-    >
-      <Paper
-        elevation={12}
-        sx={{
-          p: { xs: 3, sm: 4 },
-          maxWidth: 420,
-          width: "100%",
-          borderRadius: 4,
-          position: "relative",
-          zIndex: 1,
-        }}
-      >
-        <Box sx={{ textAlign: "center", mb: 4 }}>
-          <Box
-            sx={{
-              width: 72,
-              height: 72,
-              background: "linear-gradient(135deg, #1e3a8a, #0891b2)",
-              borderRadius: 3,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              mx: "auto",
-              mb: 2,
-              boxShadow: "0 8px 24px rgba(8,145,178,0.4)",
-            }}
-          >
-            <Droplet size={38} color="white" fill="white" />
-          </Box>
-          <Typography
-            variant="h5"
-            fontWeight="bold"
-            sx={{
-              background: "linear-gradient(135deg, #1e3a8a, #0891b2)",
-              backgroundClip: "text",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-            }}
-          >
+    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-cyan-700 to-cyan-500 flex items-center justify-center p-4 relative overflow-hidden">
+      <div className="absolute w-72 h-72 rounded-full bg-white/5 -top-20 -right-20" />
+      <div className="absolute w-48 h-48 rounded-full bg-white/5 -bottom-12 -left-12" />
+
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-7 relative z-10">
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 bg-gradient-to-br from-blue-900 to-cyan-600 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg shadow-cyan-500/30">
+            <Droplet className="w-8 h-8 text-white fill-white" />
+          </div>
+          <h1 className="text-xl font-bold bg-gradient-to-br from-blue-900 to-cyan-600 bg-clip-text text-transparent">
             ARROYYAN99
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-            Portal Distributor
-          </Typography>
-          <Typography variant="caption" color="text.disabled">
+          </h1>
+          <p className="text-sm text-gray-500 mt-0.5">Portal Sales</p>
+          <p className="text-xs text-gray-400">
             Bogatama, Tulang Bawang, Lampung
-          </Typography>
-        </Box>
+          </p>
+        </div>
 
         {error && (
-          <Alert
-            severity="error"
-            onClose={() => setError("")}
-            sx={{ mb: 2.5, borderRadius: 2, fontSize: "0.8rem" }}
-          >
-            {error}
-          </Alert>
+          <div className="mb-5 p-3 bg-red-50 border border-red-200 rounded-xl flex items-start gap-2">
+            <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
+            <p className="text-sm text-red-700">{error}</p>
+          </div>
         )}
 
-        <Box component="form" onSubmit={handleSubmit}>
-          <TextField
-            fullWidth
-            label="Email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            disabled={loading}
-            autoComplete="email"
-            autoFocus
-            sx={{ mb: 2 }}
-            size="medium"
-          />
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Email
+            </label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              disabled={loading}
+              autoFocus
+              autoComplete="email"
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
+              placeholder="nama@email.com"
+            />
+          </div>
 
-          <TextField
-            fullWidth
-            label="Password"
-            type={showPass ? "text" : "password"}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            disabled={loading}
-            autoComplete="current-password"
-            sx={{ mb: 3 }}
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton
-                    onClick={() => setShowPass(!showPass)}
-                    edge="end"
-                    disabled={loading}
-                    size="small"
-                  >
-                    {showPass ? (
-                      <VisibilityOff fontSize="small" />
-                    ) : (
-                      <Visibility fontSize="small" />
-                    )}
-                  </IconButton>
-                </InputAdornment>
-              ),
-            }}
-          />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Password
+            </label>
+            <div className="relative">
+              <input
+                type={showPass ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                disabled={loading}
+                autoComplete="current-password"
+                className="w-full px-4 py-3 pr-11 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                placeholder="••••••••"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPass(!showPass)}
+                disabled={loading}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+              >
+                {showPass ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
+              </button>
+            </div>
+          </div>
 
-          <Button
+          <button
             type="submit"
-            variant="contained"
-            fullWidth
-            size="large"
             disabled={loading}
-            sx={{
-              py: 1.6,
-              borderRadius: 2.5,
-              fontWeight: "bold",
-              fontSize: "1rem",
-              background: "linear-gradient(135deg, #1e3a8a, #0891b2)",
-              boxShadow: "0 4px 16px rgba(8,145,178,0.35)",
-              "&:hover": {
-                background: "linear-gradient(135deg, #1e40af, #0e7490)",
-                boxShadow: "0 6px 20px rgba(8,145,178,0.45)",
-              },
-              transition: "all 0.2s",
-            }}
+            className="w-full py-3.5 rounded-xl font-semibold text-white bg-gradient-to-br from-blue-900 to-cyan-600 shadow-lg shadow-cyan-500/30 hover:shadow-xl transition-all disabled:opacity-60 flex items-center justify-center gap-2 cursor-pointer"
           >
             {loading ? (
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <CircularProgress size={20} color="inherit" />
-                <span>Memverifikasi...</span>
-              </Box>
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                Memverifikasi...
+              </>
             ) : (
               "Masuk"
             )}
-          </Button>
-        </Box>
+          </button>
+        </form>
 
-        <Typography
-          variant="caption"
-          color="text.disabled"
-          sx={{ mt: 3, display: "block", textAlign: "center", lineHeight: 1.6 }}
-        >
-          Belum punya akun distributor?
+        <p className="text-xs text-gray-400 text-center leading-relaxed mt-6">
+          Belum punya akun sales?
           <br />
           Hubungi administrator pabrik untuk pendaftaran.
-        </Typography>
-      </Paper>
-    </Box>
+        </p>
+      </div>
+    </div>
   );
 }

@@ -1,527 +1,165 @@
-import { useState, useEffect, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
-  Box,
-  Typography,
-  Card,
-  CardContent,
-  Grid,
-  Alert,
-  Chip,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemIcon,
-  Divider,
-  IconButton,
-  Skeleton,
-} from "@mui/material";
-import {
+  Wallet,
+  ShoppingBag,
   TrendingUp,
-  Receipt,
-  Inventory,
-  Warning,
-  Star,
-  Refresh,
-  CheckCircle,
-  WaterDrop,
-  LocalShipping,
-} from "@mui/icons-material";
-import { getDashboardStats, DistributorUser } from "../../utils/supabaseClient";
+  Package,
+  AlertTriangle,
+  RefreshCw,
+  ArrowRight,
+} from "lucide-react";
+import { getDashboardStats, SalesUser } from "../services/SalesAppService";
 
 interface DashboardPageProps {
-  user: DistributorUser;
-  distributorId: string;
+  user: SalesUser;
+  onNavigate: (tab: string) => void;
 }
 
-const formatRp = (n: number) =>
-  new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    minimumFractionDigits: 0,
-  }).format(n);
-
-const today = new Date().toLocaleDateString("id-ID", {
-  weekday: "long",
-  day: "numeric",
-  month: "long",
-  year: "numeric",
-});
-
-function StatCard({
-  icon,
-  label,
-  sublabel,
-  value,
-  color,
-  warning,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  sublabel: string;
-  value: React.ReactNode;
-  color: string;
-  warning?: boolean;
-}) {
-  return (
-    <Card
-      elevation={0}
-      sx={{
-        borderRadius: 3,
-        border: "1px solid",
-        borderColor: warning ? "warning.light" : "divider",
-        bgcolor: warning ? "#fffbeb" : "white",
-        height: "100%",
-        transition: "box-shadow 0.2s",
-        "&:hover": { boxShadow: "0 4px 20px rgba(0,0,0,0.08)" },
-      }}
-    >
-      <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-            mb: 1.5,
-          }}
-        >
-          <Box
-            sx={{
-              width: 38,
-              height: 38,
-              borderRadius: 2,
-              bgcolor: `${color}18`,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: color,
-            }}
-          >
-            {icon}
-          </Box>
-          <Typography variant="caption" color="text.disabled" fontWeight={500}>
-            {sublabel}
-          </Typography>
-        </Box>
-        <Typography
-          variant="h6"
-          fontWeight="bold"
-          lineHeight={1.2}
-          color={warning ? "warning.dark" : "text.primary"}
-        >
-          {value}
-        </Typography>
-        <Typography
-          variant="caption"
-          color="text.secondary"
-          sx={{ mt: 0.5, display: "block" }}
-        >
-          {label}
-        </Typography>
-      </CardContent>
-    </Card>
-  );
-}
+const formatRp = (n: number) => "Rp " + Math.round(n).toLocaleString("id-ID");
 
 export default function DashboardPage({
   user,
-  distributorId,
+  onNavigate,
 }: DashboardPageProps) {
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<Awaited<
+    ReturnType<typeof getDashboardStats>
+  > | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const fetchStats = useCallback(async () => {
-    if (!distributorId) return;
+  const load = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
-      const data = await getDashboardStats(distributorId);
+      const data = await getDashboardStats(user.salesId);
       setStats(data);
     } catch (err: any) {
-      setError(err.message ?? "Gagal memuat data dashboard.");
+      setError(err.message ?? "Gagal memuat dashboard.");
     } finally {
       setLoading(false);
     }
-  }, [distributorId]);
+  }, [user.salesId]);
 
   useEffect(() => {
-    fetchStats();
-  }, [fetchStats]);
-
-  const hour = new Date().getHours();
-  const greeting =
-    hour < 11
-      ? "Selamat pagi"
-      : hour < 15
-        ? "Selamat siang"
-        : hour < 18
-          ? "Selamat sore"
-          : "Selamat malam";
-
-  const hasStock = stats?.hasStock ?? false;
-  const hasLowStock = (stats?.lowStockProducts?.length ?? 0) > 0;
-
-  const renderStockStatus = () => {
-    if (loading) {
-      return (
-        <Skeleton variant="rounded" height={80} sx={{ borderRadius: 3 }} />
-      );
-    }
-
-    if (!hasStock) {
-      return (
-        <Card
-          elevation={0}
-          sx={{
-            borderRadius: 3,
-            border: "1px solid #bfdbfe",
-            bgcolor: "#eff6ff",
-          }}
-        >
-          <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-              <LocalShipping sx={{ color: "#2563eb", fontSize: 28 }} />
-              <Box>
-                <Typography variant="body2" fontWeight={600} color="#1d4ed8">
-                  Menunggu Kiriman Stok
-                </Typography>
-                <Typography variant="caption" color="#3b82f6">
-                  Belum ada stok yang dikirim dari pabrik. Hubungi admin.
-                </Typography>
-              </Box>
-            </Box>
-          </CardContent>
-        </Card>
-      );
-    }
-
-    if (hasLowStock) {
-      return (
-        <Card
-          elevation={0}
-          sx={{
-            borderRadius: 3,
-            border: "1px solid #fbbf24",
-            bgcolor: "#fffbeb",
-          }}
-        >
-          <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
-            <Box
-              sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}
-            >
-              <Warning sx={{ color: "#d97706", fontSize: 20 }} />
-              <Typography variant="subtitle2" fontWeight="bold" color="#92400e">
-                Peringatan Stok
-              </Typography>
-              <Chip
-                label={`${stats.lowStockProducts.length} produk`}
-                size="small"
-                sx={{
-                  bgcolor: "#d97706",
-                  color: "white",
-                  ml: "auto",
-                  fontWeight: "bold",
-                  fontSize: "0.65rem",
-                }}
-              />
-            </Box>
-            <List dense disablePadding>
-              {stats.lowStockProducts.map((product: any, index: number) => (
-                <Box key={index}>
-                  {index > 0 && <Divider sx={{ my: 0.5 }} />}
-                  <ListItem disableGutters sx={{ py: 0.5 }}>
-                    <ListItemIcon sx={{ minWidth: 28 }}>
-                      <Warning sx={{ fontSize: 14, color: "#d97706" }} />
-                    </ListItemIcon>
-                    <ListItemText
-                      primary={
-                        <Typography
-                          variant="body2"
-                          fontWeight={600}
-                          color="#92400e"
-                        >
-                          {product.name}
-                        </Typography>
-                      }
-                      secondary={
-                        <Typography variant="caption" color="#b45309">
-                          Sisa {product.stock} {product.unit} · Min.{" "}
-                          {product.minStock}
-                        </Typography>
-                      }
-                    />
-                    <Chip
-                      label="LOW"
-                      size="small"
-                      sx={{
-                        bgcolor: "#fbbf24",
-                        color: "#78350f",
-                        fontWeight: "bold",
-                        fontSize: "0.6rem",
-                        height: 20,
-                      }}
-                    />
-                  </ListItem>
-                </Box>
-              ))}
-            </List>
-          </CardContent>
-        </Card>
-      );
-    }
-
-    return (
-      <Card
-        elevation={0}
-        sx={{
-          borderRadius: 3,
-          border: "1px solid #bbf7d0",
-          bgcolor: "#f0fdf4",
-        }}
-      >
-        <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-            <CheckCircle sx={{ color: "#16a34a", fontSize: 28 }} />
-            <Box>
-              <Typography variant="body2" fontWeight={600} color="#15803d">
-                Stok Aman
-              </Typography>
-              <Typography variant="caption" color="#16a34a">
-                Semua produk memiliki stok yang cukup ✓
-              </Typography>
-            </Box>
-          </Box>
-        </CardContent>
-      </Card>
-    );
-  };
+    load();
+  }, [load]);
 
   return (
-    <Box sx={{ p: 2, pb: 3 }}>
-      {/* Header */}
-      <Box
-        sx={{
-          background: "linear-gradient(135deg, #1e3a8a 0%, #0891b2 100%)",
-          borderRadius: 3,
-          p: 2.5,
-          mb: 2.5,
-          color: "white",
-          position: "relative",
-          overflow: "hidden",
-          "&::after": {
-            content: '""',
-            position: "absolute",
-            width: 120,
-            height: 120,
-            borderRadius: "50%",
-            background: "rgba(255,255,255,0.07)",
-            top: -30,
-            right: -30,
-          },
-        }}
-      >
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-          }}
-        >
-          <Box sx={{ flex: 1 }}>
-            <Box
-              sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 0.5 }}
-            >
-              <WaterDrop
-                sx={{ fontSize: 16, color: "rgba(255,255,255,0.8)" }}
-              />
-              <Typography
-                variant="caption"
-                sx={{ color: "rgba(255,255,255,0.8)", fontWeight: 500 }}
-              >
-                ARROYYAN99
-              </Typography>
-            </Box>
-            <Typography variant="h6" fontWeight="bold" lineHeight={1.3}>
-              {greeting}, {user.distributor_name.split(" ")[0]}! 👋
-            </Typography>
-            <Typography
-              variant="caption"
-              sx={{
-                color: "rgba(255,255,255,0.75)",
-                mt: 0.3,
-                display: "block",
-              }}
-            >
-              {today}
-            </Typography>
-          </Box>
-          <IconButton
-            onClick={fetchStats}
-            disabled={loading}
-            size="small"
-            sx={{
-              color: "rgba(255,255,255,0.8)",
-              bgcolor: "rgba(255,255,255,0.15)",
-              "&:hover": { bgcolor: "rgba(255,255,255,0.25)" },
-              zIndex: 1,
-            }}
-          >
-            <Refresh
-              fontSize="small"
-              sx={{ animation: loading ? "spin 1s linear infinite" : "none" }}
-            />
-          </IconButton>
-        </Box>
-      </Box>
+    <div className="p-4 space-y-4">
+      <div className="bg-gradient-to-br from-blue-900 to-cyan-600 rounded-2xl p-5 text-white">
+        <p className="text-sm text-white/80">Selamat datang,</p>
+        <p className="text-lg font-bold">{user.namaSales}</p>
+      </div>
 
-      {/* Error */}
       {error && (
-        <Alert
-          severity="error"
-          sx={{ mb: 2, borderRadius: 2 }}
-          onClose={() => setError("")}
-        >
-          {error}
-        </Alert>
+        <div className="p-3 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2">
+          <AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0" />
+          <p className="text-sm text-red-700">{error}</p>
+        </div>
       )}
 
-      {/* Stat cards */}
-      <Grid container spacing={1.5} sx={{ mb: 2.5 }}>
-        <Grid item xs={6}>
-          {loading ? (
-            <Skeleton variant="rounded" height={100} sx={{ borderRadius: 3 }} />
-          ) : (
-            <StatCard
-              icon={<TrendingUp fontSize="small" />}
-              label="Penjualan Hari Ini"
-              sublabel="Hari ini"
-              value={
-                <Typography variant="body1" fontWeight="bold" color="#0891b2">
-                  {formatRp(stats?.totalSalesToday ?? 0)}
-                </Typography>
-              }
-              color="#0891b2"
-            />
-          )}
-        </Grid>
-
-        <Grid item xs={6}>
-          {loading ? (
-            <Skeleton variant="rounded" height={100} sx={{ borderRadius: 3 }} />
-          ) : (
-            <StatCard
-              icon={<Receipt fontSize="small" />}
-              label="Transaksi"
-              sublabel="Hari ini"
-              value={stats?.totalTransactionsToday ?? 0}
-              color="#7c3aed"
-            />
-          )}
-        </Grid>
-
-        <Grid item xs={6}>
-          {loading ? (
-            <Skeleton variant="rounded" height={100} sx={{ borderRadius: 3 }} />
-          ) : (
-            <StatCard
-              icon={<Inventory fontSize="small" />}
-              label="Total Unit Stok"
-              sublabel="Saat ini"
-              value={
-                hasStock
-                  ? `${(stats?.totalStock ?? 0).toLocaleString("id-ID")} unit`
-                  : "—"
-              }
-              color="#059669"
-            />
-          )}
-        </Grid>
-
-        <Grid item xs={6}>
-          {loading ? (
-            <Skeleton variant="rounded" height={100} sx={{ borderRadius: 3 }} />
-          ) : (
-            <StatCard
-              icon={<Warning fontSize="small" />}
-              label="Stok Menipis"
-              sublabel="Perlu perhatian"
-              value={hasStock ? (stats?.lowStockCount ?? 0) : "—"}
-              color="#d97706"
-              warning={hasStock && (stats?.lowStockCount ?? 0) > 0}
-            />
-          )}
-        </Grid>
-      </Grid>
-
-      {/* Top produk */}
       {loading ? (
-        <Skeleton
-          variant="rounded"
-          height={80}
-          sx={{ borderRadius: 3, mb: 2 }}
-        />
-      ) : stats?.topProduct ? (
-        <Card
-          elevation={0}
-          sx={{
-            mb: 2,
-            borderRadius: 3,
-            border: "1px solid",
-            borderColor: "divider",
-            background: "linear-gradient(135deg, #fefce8 0%, #fef9c3 100%)",
-          }}
-        >
-          <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
-            <Box
-              sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}
-            >
-              <Star sx={{ color: "#d97706", fontSize: 20 }} />
-              <Typography
-                variant="subtitle2"
-                fontWeight="bold"
-                color="text.primary"
+        <div className="py-16 text-center">
+          <RefreshCw className="w-7 h-7 text-gray-300 animate-spin mx-auto mb-2" />
+          <p className="text-sm text-gray-400">Memuat data...</p>
+        </div>
+      ) : stats ? (
+        <>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-white rounded-2xl border border-gray-100 p-4">
+              <div className="w-9 h-9 bg-green-100 rounded-xl flex items-center justify-center mb-2">
+                <ShoppingBag className="w-4.5 h-4.5 text-green-600" />
+              </div>
+              <p className="text-xs text-gray-500">Penjualan Hari Ini</p>
+              <p className="text-base font-bold text-gray-900">
+                {formatRp(stats.totalSalesToday)}
+              </p>
+              <p className="text-[11px] text-gray-400">
+                {stats.totalTransactionsToday} transaksi
+              </p>
+            </div>
+
+            <div className="bg-white rounded-2xl border border-gray-100 p-4">
+              <div className="w-9 h-9 bg-cyan-100 rounded-xl flex items-center justify-center mb-2">
+                <TrendingUp className="w-4.5 h-4.5 text-cyan-600" />
+              </div>
+              <p className="text-xs text-gray-500">Komisi Hari Ini</p>
+              <p
+                className={`text-base font-bold ${stats.komisiToday >= 0 ? "text-cyan-700" : "text-red-600"}`}
               >
-                Produk Terlaris
-              </Typography>
-            </Box>
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
+                {formatRp(stats.komisiToday)}
+              </p>
+            </div>
+
+            <div className="bg-white rounded-2xl border border-gray-100 p-4">
+              <div className="w-9 h-9 bg-blue-100 rounded-xl flex items-center justify-center mb-2">
+                <Package className="w-4.5 h-4.5 text-blue-600" />
+              </div>
+              <p className="text-xs text-gray-500">Total Stok Anda</p>
+              <p className="text-base font-bold text-gray-900">
+                {stats.totalStock} unit
+              </p>
+            </div>
+
+            <button
+              onClick={() => onNavigate("setoran")}
+              className="bg-white rounded-2xl border border-gray-100 p-4 text-left cursor-pointer hover:border-orange-200 transition-colors"
             >
-              <Box>
-                <Typography variant="body2" fontWeight={600}>
-                  {stats.topProduct.name}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  Terlaris bulan ini
-                </Typography>
-              </Box>
-              <Chip
-                label={`${stats.topProduct.totalSold} terjual`}
-                size="small"
-                sx={{
-                  bgcolor: "#d97706",
-                  color: "white",
-                  fontWeight: "bold",
-                  fontSize: "0.7rem",
-                }}
-              />
-            </Box>
-          </CardContent>
-        </Card>
+              <div className="w-9 h-9 bg-orange-100 rounded-xl flex items-center justify-center mb-2">
+                <Wallet className="w-4.5 h-4.5 text-orange-600" />
+              </div>
+              <p className="text-xs text-gray-500">Belum Disetor</p>
+              <p className="text-base font-bold text-orange-700">
+                {formatRp(stats.belumDisetorToday)}
+              </p>
+            </button>
+          </div>
+
+          {stats.lowStockCount > 0 && (
+            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <AlertTriangle className="w-4.5 h-4.5 text-amber-600" />
+                <p className="text-sm font-semibold text-amber-800">
+                  {stats.lowStockCount} produk stok menipis
+                </p>
+              </div>
+              <div className="space-y-1.5">
+                {stats.lowStockProducts.slice(0, 4).map((p, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center justify-between text-xs text-amber-700"
+                  >
+                    <span>{p.name}</span>
+                    <span className="font-semibold">
+                      {p.stock} {p.unit}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <button
+            onClick={() => onNavigate("transaction")}
+            className="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl p-4 hover:border-cyan-300 transition-colors cursor-pointer"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 bg-cyan-600 rounded-xl flex items-center justify-center">
+                <ShoppingBag className="w-4.5 h-4.5 text-white" />
+              </div>
+              <div className="text-left">
+                <p className="text-sm font-semibold text-gray-900">
+                  Mulai Transaksi Baru
+                </p>
+                <p className="text-xs text-gray-500">
+                  Catat penjualan ke customer
+                </p>
+              </div>
+            </div>
+            <ArrowRight className="w-4 h-4 text-gray-400" />
+          </button>
+        </>
       ) : null}
-
-      {renderStockStatus()}
-
-      <style>{`
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
-    </Box>
+    </div>
   );
 }

@@ -1,1046 +1,581 @@
 import { useState, useEffect, useCallback } from "react";
 import {
-  Box,
-  Typography,
-  Card,
-  CardContent,
-  Button,
-  IconButton,
-  List,
-  ListItem,
-  ListItemText,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Chip,
-  Divider,
-  Alert,
-  Grid,
-  CircularProgress,
-  Skeleton,
-} from "@mui/material";
-import {
-  Add,
-  Remove,
   ShoppingCart,
-  Delete,
-  Receipt,
-  Close,
-  History as HistoryIcon,
-  WaterDrop,
-  AttachMoney,
-  AccountBalance,
-  ArrowBack,
-  CheckCircle,
-} from "@mui/icons-material";
-import { toast } from "sonner";
+  Plus,
+  Minus,
+  Trash2,
+  Banknote,
+  CreditCard,
+  Wallet,
+  RefreshCw,
+  AlertCircle,
+  TrendingUp,
+  X,
+  Search,
+  UserPlus,
+} from "lucide-react";
 import {
-  getProductsWithDistributorStock,
+  getProductsWithSalesStock,
   getCustomers,
-  createTransaction,
-  getTransactionHistory,
-} from "../../utils/supabaseClient";
+  createSalesTransaction,
+  createCustomer,
+  SalesProduct,
+  TxItemInput,
+} from "../services/SalesAppService";
+import ReceiptDialog from "./ReceiptDialog";
 
 interface TransactionPageProps {
-  distributorId: string; // bukan "user"
+  salesId: string;
 }
 
 interface CartItem {
-  productId: string;
-  productName: string;
-  price: number;
+  product: SalesProduct;
   quantity: number;
-  maxStock: number;
-  unit: string;
+  hargaJual: number;
 }
 
-const formatRp = (n: number) =>
-  new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    minimumFractionDigits: 0,
-  }).format(n);
+const formatRp = (n: number) => "Rp " + Math.round(n).toLocaleString("id-ID");
 
-const formatDate = (d: string) =>
-  new Intl.DateTimeFormat("id-ID", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(d));
-
-interface ReceiptDialogProps {
-  open: boolean;
-  transaction: any;
-  cartSnapshot: CartItem[];
-  paymentMethod: "cash" | "transfer";
-  customerName: string;
-  onNewTransaction: () => void;
-}
-
-function ReceiptDialog({
-  open,
-  transaction,
-  cartSnapshot,
-  paymentMethod,
-  customerName,
-  onNewTransaction,
-}: ReceiptDialogProps) {
-  const total = cartSnapshot.reduce((s, i) => s + i.price * i.quantity, 0);
-
-  return (
-    <Dialog open={open} fullWidth maxWidth="xs">
-      <DialogTitle>
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <CheckCircle color="success" />
-            <Typography fontWeight="bold">Transaksi Berhasil!</Typography>
-          </Box>
-        </Box>
-      </DialogTitle>
-
-      <DialogContent dividers>
-        <Box sx={{ fontFamily: "monospace", fontSize: 12 }}>
-          <Box sx={{ textAlign: "center", mb: 2 }}>
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                gap: 0.5,
-                mb: 0.5,
-              }}
-            >
-              <WaterDrop sx={{ fontSize: 14, color: "primary.main" }} />
-              <Typography fontSize={16} fontWeight="bold" color="primary.main">
-                ARROYYAN99
-              </Typography>
-            </Box>
-            <Typography fontSize={11} color="text.secondary">
-              Air Minum Dalam Kemasan
-            </Typography>
-            <Typography fontSize={11} color="text.secondary">
-              Bogatama, Tulang Bawang, Lampung
-            </Typography>
-          </Box>
-
-          <Divider sx={{ borderStyle: "dashed", my: 1.5 }} />
-
-          {[
-            {
-              label: "No",
-              value: `#${transaction?.id?.slice(0, 8).toUpperCase() ?? "—"}`,
-            },
-            { label: "Tanggal", value: new Date().toLocaleString("id-ID") },
-            { label: "Sumber", value: "Penjualan Distributor" },
-            { label: "Pelanggan", value: customerName || "Umum" },
-          ].map(({ label, value }) => (
-            <Box
-              key={label}
-              sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}
-            >
-              <Typography fontSize={11} color="text.secondary">
-                {label}
-              </Typography>
-              <Typography fontSize={11} fontWeight={500}>
-                {value}
-              </Typography>
-            </Box>
-          ))}
-
-          <Divider sx={{ borderStyle: "dashed", my: 1.5 }} />
-
-          {cartSnapshot.map((item) => (
-            <Box key={item.productId} sx={{ mb: 1 }}>
-              <Typography fontSize={11} fontWeight={600}>
-                {item.productName}
-              </Typography>
-              <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-                <Typography fontSize={11} color="text.secondary">
-                  {item.quantity} {item.unit} × {formatRp(item.price)}
-                </Typography>
-                <Typography fontSize={11} fontWeight="bold">
-                  {formatRp(item.price * item.quantity)}
-                </Typography>
-              </Box>
-            </Box>
-          ))}
-
-          <Divider sx={{ borderStyle: "dashed", my: 1.5 }} />
-
-          <Box
-            sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}
-          >
-            <Typography fontSize={14} fontWeight="bold">
-              TOTAL
-            </Typography>
-            <Typography fontSize={14} fontWeight="bold" color="primary.main">
-              {formatRp(total)}
-            </Typography>
-          </Box>
-          <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-            <Typography fontSize={11} color="text.secondary">
-              Pembayaran
-            </Typography>
-            <Typography fontSize={11} fontWeight="bold">
-              {paymentMethod === "cash" ? "TUNAI" : "TRANSFER"}
-            </Typography>
-          </Box>
-
-          <Divider sx={{ borderStyle: "dashed", my: 1.5 }} />
-          <Typography fontSize={11} textAlign="center" color="text.secondary">
-            Terima kasih atas pembelian Anda! 💧
-          </Typography>
-        </Box>
-      </DialogContent>
-
-      <DialogActions sx={{ gap: 1, p: 2 }}>
-        <Button
-          onClick={() => window.print()}
-          variant="outlined"
-          size="small"
-          fullWidth
-          sx={{ borderRadius: 2 }}
-        >
-          Cetak Struk
-        </Button>
-        <Button
-          onClick={onNewTransaction}
-          variant="contained"
-          size="small"
-          fullWidth
-          sx={{ borderRadius: 2 }}
-        >
-          Transaksi Baru
-        </Button>
-      </DialogActions>
-    </Dialog>
-  );
-}
-
-function TransactionHistory({
-  distributorId,
-  onBack,
-}: {
-  distributorId: string;
-  onBack: () => void;
-}) {
-  const [history, setHistory] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    getTransactionHistory(distributorId)
-      .then(setHistory)
-      .catch((e) => toast.error(e.message))
-      .finally(() => setLoading(false));
-  }, [distributorId]);
-
-  return (
-    <Box sx={{ p: 2, pb: 3 }}>
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 3 }}>
-        <IconButton onClick={onBack} size="small" sx={{ bgcolor: "grey.100" }}>
-          <ArrowBack fontSize="small" />
-        </IconButton>
-        <Typography variant="h6" fontWeight="bold">
-          Riwayat Transaksi
-        </Typography>
-      </Box>
-
-      {loading ? (
-        <Box>
-          {[1, 2, 3].map((i) => (
-            <Skeleton
-              key={i}
-              variant="rounded"
-              height={120}
-              sx={{ mb: 1.5, borderRadius: 3 }}
-            />
-          ))}
-        </Box>
-      ) : history.length === 0 ? (
-        <Box sx={{ textAlign: "center", py: 8 }}>
-          <HistoryIcon sx={{ fontSize: 48, color: "text.disabled", mb: 1 }} />
-          <Typography color="text.secondary">
-            Belum ada riwayat transaksi
-          </Typography>
-        </Box>
-      ) : (
-        history.map((trx: any) => (
-          <Card
-            key={trx.id}
-            elevation={0}
-            sx={{
-              mb: 1.5,
-              borderRadius: 3,
-              border: "1px solid",
-              borderColor: "divider",
-              "&:hover": { boxShadow: "0 2px 12px rgba(0,0,0,0.08)" },
-              transition: "box-shadow 0.2s",
-            }}
-          >
-            <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
-              <Box
-                sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}
-              >
-                <Box>
-                  <Typography
-                    variant="body2"
-                    fontWeight="bold"
-                    fontFamily="monospace"
-                    color="primary.main"
-                  >
-                    #{trx.id.slice(0, 8).toUpperCase()}
-                  </Typography>
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    display="block"
-                  >
-                    {formatDate(trx.created_at)}
-                  </Typography>
-                  {trx.customers && (
-                    <Typography variant="caption" color="text.secondary">
-                      👤 {trx.customers.customer_name}
-                    </Typography>
-                  )}
-                </Box>
-                <Box sx={{ textAlign: "right" }}>
-                  <Typography
-                    variant="subtitle2"
-                    fontWeight="bold"
-                    color="primary.main"
-                  >
-                    {formatRp(trx.total_price)}
-                  </Typography>
-                  <Chip
-                    label={trx.payment_method === "cash" ? "Cash" : "Transfer"}
-                    size="small"
-                    icon={
-                      trx.payment_method === "cash" ? (
-                        <AttachMoney sx={{ fontSize: "14px !important" }} />
-                      ) : (
-                        <AccountBalance sx={{ fontSize: "14px !important" }} />
-                      )
-                    }
-                    sx={{
-                      mt: 0.5,
-                      fontSize: "0.65rem",
-                      height: 22,
-                      bgcolor:
-                        trx.payment_method === "cash" ? "#dcfce7" : "#dbeafe",
-                      color:
-                        trx.payment_method === "cash" ? "#166534" : "#1e40af",
-                    }}
-                  />
-                </Box>
-              </Box>
-
-              <Divider sx={{ my: 1 }} />
-
-              {(trx.transaction_details ?? []).map((d: any, i: number) => (
-                <Box
-                  key={i}
-                  sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    py: 0.25,
-                  }}
-                >
-                  <Typography variant="caption" color="text.secondary">
-                    {d.products?.product_name} × {d.quantity}
-                  </Typography>
-                  <Typography variant="caption" fontWeight="bold">
-                    {formatRp(d.subtotal)}
-                  </Typography>
-                </Box>
-              ))}
-            </CardContent>
-          </Card>
-        ))
-      )}
-    </Box>
-  );
-}
-
-function ProductPickerDialog({
-  open,
-  products,
-  cart,
-  onAdd,
-  onClose,
-}: {
-  open: boolean;
-  products: any[];
-  cart: CartItem[];
-  onAdd: (product: any) => void;
-  onClose: () => void;
-}) {
-  return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle>
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          <Typography variant="h6" fontWeight="bold">
-            Pilih Produk
-          </Typography>
-          <IconButton onClick={onClose} size="small">
-            <Close />
-          </IconButton>
-        </Box>
-      </DialogTitle>
-
-      <DialogContent dividers sx={{ p: 0 }}>
-        {products.length === 0 ? (
-          <Alert severity="info" sx={{ m: 2 }}>
-            Belum ada produk tersedia
-          </Alert>
-        ) : (
-          <List disablePadding>
-            {products.map((product, idx) => {
-              const inCart = cart.find((i) => i.productId === product.id);
-              const isOutOfStock = product.stock <= 0;
-              return (
-                <Box key={product.id}>
-                  {idx > 0 && <Divider />}
-                  <ListItem
-                    onClick={() => !isOutOfStock && onAdd(product)}
-                    sx={{
-                      py: 1.5,
-                      px: 2,
-                      cursor: isOutOfStock ? "not-allowed" : "pointer",
-                      opacity: isOutOfStock ? 0.5 : 1,
-                      "&:hover": !isOutOfStock ? { bgcolor: "primary.50" } : {},
-                      transition: "background 0.15s",
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        width: 40,
-                        height: 40,
-                        borderRadius: 2,
-                        bgcolor:
-                          product.category === "cup" ? "#dbeafe" : "#ede9fe",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        mr: 1.5,
-                        fontSize: 20,
-                        flexShrink: 0,
-                      }}
-                    >
-                      {product.category === "cup" ? "🥤" : "🍶"}
-                    </Box>
-
-                    <ListItemText
-                      primary={
-                        <Typography variant="body2" fontWeight={600}>
-                          {product.name}
-                          {product.size ? ` (${product.size})` : ""}
-                        </Typography>
-                      }
-                      secondary={
-                        <Box
-                          sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 1,
-                            mt: 0.25,
-                          }}
-                        >
-                          <Typography
-                            variant="caption"
-                            color="primary.main"
-                            fontWeight={600}
-                          >
-                            {formatRp(product.price)}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            · Stok: {product.stock} {product.unit}
-                          </Typography>
-                        </Box>
-                      }
-                    />
-
-                    <Box
-                      sx={{
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "flex-end",
-                        gap: 0.5,
-                      }}
-                    >
-                      {inCart && (
-                        <Chip
-                          label={`× ${inCart.quantity}`}
-                          size="small"
-                          color="primary"
-                          sx={{ height: 20, fontSize: "0.65rem" }}
-                        />
-                      )}
-                      {isOutOfStock ? (
-                        <Chip
-                          label="Habis"
-                          color="error"
-                          size="small"
-                          sx={{ height: 20, fontSize: "0.65rem" }}
-                        />
-                      ) : product.stock <= 50 ? (
-                        <Chip
-                          label="Low"
-                          color="warning"
-                          size="small"
-                          sx={{ height: 20, fontSize: "0.65rem" }}
-                        />
-                      ) : null}
-                    </Box>
-                  </ListItem>
-                </Box>
-              );
-            })}
-          </List>
-        )}
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-export default function TransactionPage({
-  distributorId,
-}: TransactionPageProps) {
-  const [view, setView] = useState<"new" | "history">("new");
-  const [products, setProducts] = useState<any[]>([]);
-  const [customers, setCustomers] = useState<any[]>([]);
-  const [cart, setCart] = useState<CartItem[]>([]);
-  const [cartSnapshot, setCartSnapshot] = useState<CartItem[]>([]); // Snapshot untuk struk
-  const [selectedCustomerId, setSelectedCustomerId] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState<"cash" | "transfer">(
-    "cash",
-  );
-  const [openProductDialog, setOpenProductDialog] = useState(false);
-  const [receiptOpen, setReceiptOpen] = useState(false);
-  const [completedTrx, setCompletedTrx] = useState<any>(null);
-  const [completedCustomerName, setCompletedCustomerName] = useState("");
-  const [completedPaymentMethod, setCompletedPaymentMethod] = useState<
-    "cash" | "transfer"
-  >("cash");
-  const [submitting, setSubmitting] = useState(false);
+export default function TransactionPage({ salesId }: TransactionPageProps) {
+  const [products, setProducts] = useState<SalesProduct[]>([]);
+  const [customers, setCustomers] = useState<
+    { id: string; name: string; phone: string }[]
+  >([]);
   const [loadingData, setLoadingData] = useState(true);
+  const [search, setSearch] = useState("");
 
-  const loadData = useCallback(async () => {
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [showCart, setShowCart] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<
+    "cash" | "transfer" | "kasbon"
+  >("cash");
+  const [customerId, setCustomerId] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [receipt, setReceipt] = useState<any>(null);
+  const [showNewCustomer, setShowNewCustomer] = useState(false);
+
+  const load = useCallback(async () => {
     setLoadingData(true);
     try {
-      const [prods, custs] = await Promise.all([
-        getProductsWithDistributorStock(distributorId),
+      const [prodData, custData] = await Promise.all([
+        getProductsWithSalesStock(salesId),
         getCustomers(),
       ]);
-      setProducts(prods);
-      setCustomers(custs);
-    } catch (e: any) {
-      toast.error(e.message ?? "Gagal memuat data");
+      setProducts(prodData);
+      setCustomers(custData);
+    } catch (err: any) {
+      setError(err.message ?? "Gagal memuat data.");
     } finally {
       setLoadingData(false);
     }
-  }, [distributorId]);
+  }, [salesId]);
 
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    load();
+  }, [load]);
 
-  const addToCart = (product: any) => {
-    if (product.stock <= 0) {
-      toast.error("Stok habis");
-      return;
-    }
+  const addToCart = (product: SalesProduct) => {
+    if (product.stock === 0) return;
     setCart((prev) => {
-      const existing = prev.find((i) => i.productId === product.id);
+      const existing = prev.find((i) => i.product.id === product.id);
       if (existing) {
-        if (existing.quantity >= product.stock) {
-          toast.error(`Maksimal ${product.stock} ${product.unit}`);
-          return prev;
-        }
+        if (existing.quantity >= product.stock) return prev;
         return prev.map((i) =>
-          i.productId === product.id ? { ...i, quantity: i.quantity + 1 } : i,
+          i.product.id === product.id ? { ...i, quantity: i.quantity + 1 } : i,
         );
       }
       return [
         ...prev,
-        {
-          productId: product.id,
-          productName:
-            product.name + (product.size ? ` (${product.size})` : ""),
-          price: product.price,
-          quantity: 1,
-          maxStock: product.stock,
-          unit: product.unit,
-        },
+        { product, quantity: 1, hargaJual: product.hargaPabrik },
       ];
     });
-    setOpenProductDialog(false);
   };
 
-  const updateQty = (productId: string, newQty: number) => {
-    if (newQty <= 0) {
-      setCart((prev) => prev.filter((i) => i.productId !== productId));
-      return;
-    }
+  const updateQty = (productId: string, delta: number) => {
+    setCart((prev) =>
+      prev
+        .map((i) => {
+          if (i.product.id !== productId) return i;
+          const newQty = i.quantity + delta;
+          if (newQty <= 0) return null as any;
+          if (newQty > i.product.stock) return i;
+          return { ...i, quantity: newQty };
+        })
+        .filter(Boolean),
+    );
+  };
+
+  const updatePrice = (productId: string, price: number) => {
     setCart((prev) =>
       prev.map((i) =>
-        i.productId === productId
-          ? { ...i, quantity: Math.min(newQty, i.maxStock) }
+        i.product.id === productId
+          ? { ...i, hargaJual: Math.max(0, price) }
           : i,
       ),
     );
   };
 
-  const total = cart.reduce((s, i) => s + i.price * i.quantity, 0);
-  const totalItems = cart.reduce((s, i) => s + i.quantity, 0);
+  const removeFromCart = (productId: string) =>
+    setCart((prev) => prev.filter((i) => i.product.id !== productId));
 
-  const handleSubmit = async () => {
-    if (cart.length === 0) {
-      toast.error("Keranjang masih kosong");
+  const totalQty = cart.reduce((s, i) => s + i.quantity, 0);
+  const subtotal = cart.reduce((s, i) => s + i.hargaJual * i.quantity, 0);
+  const estimasiKomisi = cart.reduce(
+    (s, i) => s + (i.hargaJual - i.product.hargaPabrik) * i.quantity,
+    0,
+  );
+
+  const filteredProducts = products.filter((p) =>
+    p.name.toLowerCase().includes(search.toLowerCase()),
+  );
+
+  const handleCheckout = async () => {
+    if (cart.length === 0) return;
+    if (paymentMethod === "kasbon" && !customerId) {
+      setError("Transaksi kasbon wajib memilih toko/pelanggan tujuan.");
       return;
     }
-    setSubmitting(true);
+    setError("");
+    setSaving(true);
+
+    const items: TxItemInput[] = cart.map((i) => ({
+      productId: i.product.id,
+      productName: i.product.name,
+      hargaPabrik: i.product.hargaPabrik,
+      hargaJual: i.hargaJual,
+      quantity: i.quantity,
+    }));
+
     try {
-      const snapshot = [...cart];
-      const custName =
-        customers.find((c) => c.id === selectedCustomerId)?.customer_name ?? "";
-
-      const trx = await createTransaction(
-        distributorId,
-        cart.map((i) => ({
-          productId: i.productId,
-          productName: i.productName,
-          price: i.price,
-          quantity: i.quantity,
-        })),
+      const trx = await createSalesTransaction(
+        salesId,
+        items,
         paymentMethod,
-        selectedCustomerId || null,
+        customerId || null,
       );
-
-      setCartSnapshot(snapshot);
-      setCompletedTrx(trx);
-      setCompletedCustomerName(custName);
-      setCompletedPaymentMethod(paymentMethod);
+      const customer = customers.find((c) => c.id === customerId);
+      setReceipt({
+        id: trx.id.slice(0, 8).toUpperCase(),
+        date: new Date().toLocaleString("id-ID"),
+        customer: customer?.name ?? "Umum",
+        items: cart.map((i) => ({
+          name: i.product.name,
+          quantity: i.quantity,
+          price: i.hargaJual,
+          subtotal: i.hargaJual * i.quantity,
+        })),
+        subtotal,
+        paymentMethod,
+      });
       setCart([]);
-      setSelectedCustomerId("");
+      setCustomerId("");
       setPaymentMethod("cash");
-      setReceiptOpen(true);
-      toast.success("Transaksi berhasil!");
-
-      loadData();
+      setShowCart(false);
+      load();
     } catch (err: any) {
-      toast.error(err.message ?? "Gagal membuat transaksi");
+      setError(err.message ?? "Gagal memproses transaksi.");
     } finally {
-      setSubmitting(false);
+      setSaving(false);
     }
   };
-
-  const handleNewTransaction = () => {
-    setReceiptOpen(false);
-    setCompletedTrx(null);
-    setCartSnapshot([]);
-    setCompletedCustomerName("");
-  };
-
-  if (view === "history") {
-    return (
-      <TransactionHistory
-        distributorId={distributorId}
-        onBack={() => setView("new")}
-      />
-    );
-  }
 
   if (loadingData) {
     return (
-      <Box sx={{ p: 2 }}>
-        {[1, 2, 3].map((i) => (
-          <Skeleton
-            key={i}
-            variant="rounded"
-            height={90}
-            sx={{ mb: 1.5, borderRadius: 3 }}
-          />
-        ))}
-      </Box>
+      <div className="py-24 text-center">
+        <RefreshCw className="w-7 h-7 text-gray-300 animate-spin mx-auto mb-2" />
+        <p className="text-sm text-gray-400">Memuat produk...</p>
+      </div>
     );
   }
 
   return (
-    <Box sx={{ p: 2, pb: 4 }}>
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          mb: 2.5,
-        }}
-      >
-        <Box>
-          <Typography variant="h6" fontWeight="bold">
-            Transaksi Baru
-          </Typography>
-          <Typography variant="caption" color="text.secondary">
-            Point of Sales · Distributor
-          </Typography>
-        </Box>
-        <Button
-          variant="outlined"
-          size="small"
-          startIcon={<HistoryIcon />}
-          onClick={() => setView("history")}
-          sx={{ borderRadius: 2 }}
-        >
-          Riwayat
-        </Button>
-      </Box>
+    <div className="pb-24">
+      <div className="p-4 sticky top-0 bg-gray-50 z-10">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Cari produk..."
+            className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+          />
+        </div>
+      </div>
 
-      <Card
-        elevation={0}
-        sx={{
-          mb: 2,
-          borderRadius: 3,
-          border: "1px solid",
-          borderColor: "divider",
-        }}
-      >
-        <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
-          <Typography
-            variant="caption"
-            fontWeight={600}
-            color="text.secondary"
-            sx={{ mb: 1, display: "block" }}
-          >
-            PELANGGAN
-          </Typography>
-          <FormControl fullWidth size="small">
-            <Select
-              value={selectedCustomerId}
-              onChange={(e) => setSelectedCustomerId(e.target.value)}
-              displayEmpty
-              sx={{ borderRadius: 2 }}
-            >
-              <MenuItem value="">
-                <Typography variant="body2" color="text.secondary">
-                  👤 Pelanggan Umum
-                </Typography>
-              </MenuItem>
-              {customers.map((c) => (
-                <MenuItem key={c.id} value={c.id}>
-                  <Box>
-                    <Typography variant="body2" fontWeight={500}>
-                      {c.customer_name} {c.is_subscribed ? "⭐" : ""}
-                    </Typography>
-                    {c.phone && (
-                      <Typography variant="caption" color="text.secondary">
-                        {c.phone}
-                      </Typography>
-                    )}
-                  </Box>
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </CardContent>
-      </Card>
-
-      <Card
-        elevation={0}
-        sx={{
-          mb: 2,
-          borderRadius: 3,
-          border: "1px solid",
-          borderColor: "divider",
-        }}
-      >
-        <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              mb: 1.5,
-            }}
-          >
-            <Typography variant="subtitle2" fontWeight="bold">
-              Keranjang
-            </Typography>
-            {cart.length > 0 && (
-              <Chip
-                icon={<ShoppingCart sx={{ fontSize: "14px !important" }} />}
-                label={`${totalItems} item`}
-                color="primary"
-                size="small"
-                sx={{ height: 22, fontSize: "0.7rem" }}
-              />
-            )}
-          </Box>
-
-          {cart.length === 0 ? (
-            <Box
-              onClick={() => setOpenProductDialog(true)}
-              sx={{
-                border: "2px dashed",
-                borderColor: "primary.light",
-                borderRadius: 2,
-                p: 3,
-                textAlign: "center",
-                cursor: "pointer",
-                "&:hover": {
-                  bgcolor: "primary.50",
-                  borderColor: "primary.main",
-                },
-                transition: "all 0.15s",
-              }}
-            >
-              <ShoppingCart sx={{ color: "primary.light", mb: 0.5 }} />
-              <Typography variant="body2" color="text.secondary">
-                Ketuk untuk menambah produk
-              </Typography>
-            </Box>
-          ) : (
-            <List dense disablePadding>
-              {cart.map((item, idx) => (
-                <Box key={item.productId}>
-                  {idx > 0 && <Divider />}
-                  <ListItem
-                    disableGutters
-                    sx={{ py: 1 }}
-                    secondaryAction={
-                      <IconButton
-                        edge="end"
-                        onClick={() =>
-                          setCart((prev) =>
-                            prev.filter((i) => i.productId !== item.productId),
-                          )
-                        }
-                        size="small"
-                        sx={{ color: "error.light" }}
-                      >
-                        <Delete fontSize="small" />
-                      </IconButton>
-                    }
-                  >
-                    <ListItemText
-                      primary={
-                        <Typography
-                          variant="body2"
-                          fontWeight={600}
-                          noWrap
-                          sx={{ maxWidth: 140 }}
-                        >
-                          {item.productName}
-                        </Typography>
-                      }
-                      secondary={
-                        <Typography
-                          variant="caption"
-                          color="primary.main"
-                          fontWeight={500}
-                        >
-                          {formatRp(item.price * item.quantity)}
-                        </Typography>
-                      }
-                    />
-
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 0.5,
-                        mr: 3,
-                      }}
-                    >
-                      <IconButton
-                        size="small"
-                        onClick={() =>
-                          updateQty(item.productId, item.quantity - 1)
-                        }
-                        sx={{
-                          width: 28,
-                          height: 28,
-                          bgcolor: "grey.100",
-                          "&:hover": { bgcolor: "grey.200" },
-                        }}
-                      >
-                        <Remove sx={{ fontSize: 14 }} />
-                      </IconButton>
-                      <Typography
-                        variant="body2"
-                        fontWeight="bold"
-                        sx={{ minWidth: 24, textAlign: "center" }}
-                      >
-                        {item.quantity}
-                      </Typography>
-                      <IconButton
-                        size="small"
-                        onClick={() =>
-                          updateQty(item.productId, item.quantity + 1)
-                        }
-                        disabled={item.quantity >= item.maxStock}
-                        sx={{
-                          width: 28,
-                          height: 28,
-                          bgcolor:
-                            item.quantity >= item.maxStock
-                              ? "grey.50"
-                              : "primary.50",
-                          color: "primary.main",
-                          "&:hover": { bgcolor: "primary.100" },
-                        }}
-                      >
-                        <Add sx={{ fontSize: 14 }} />
-                      </IconButton>
-                    </Box>
-                  </ListItem>
-                  <Typography
-                    variant="caption"
-                    color="text.disabled"
-                    sx={{ pl: 0, pb: 0.5, display: "block" }}
-                  >
-                    Maks. {item.maxStock} {item.unit}
-                  </Typography>
-                </Box>
-              ))}
-            </List>
-          )}
-
-          {cart.length > 0 && (
-            <Button
-              variant="outlined"
-              fullWidth
-              startIcon={<Add />}
-              onClick={() => setOpenProductDialog(true)}
-              sx={{ mt: 1.5, borderRadius: 2, borderStyle: "dashed" }}
-              size="small"
-            >
-              Tambah Produk Lain
-            </Button>
-          )}
-        </CardContent>
-      </Card>
-
-      {cart.length > 0 && (
-        <Card
-          elevation={0}
-          sx={{
-            mb: 2,
-            borderRadius: 3,
-            border: "1px solid",
-            borderColor: "divider",
-          }}
-        >
-          <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
-            <Typography
-              variant="caption"
-              fontWeight={600}
-              color="text.secondary"
-              sx={{ mb: 1.5, display: "block" }}
-            >
-              METODE PEMBAYARAN
-            </Typography>
-            <Grid container spacing={1} sx={{ mb: 2.5 }}>
-              {(["cash", "transfer"] as const).map((method) => (
-                <Grid item xs={6} key={method}>
-                  <Button
-                    variant={
-                      paymentMethod === method ? "contained" : "outlined"
-                    }
-                    fullWidth
-                    onClick={() => setPaymentMethod(method)}
-                    startIcon={
-                      method === "cash" ? <AttachMoney /> : <AccountBalance />
-                    }
-                    sx={{
-                      borderRadius: 2,
-                      py: 1.2,
-                      fontWeight: paymentMethod === method ? "bold" : "normal",
-                    }}
-                  >
-                    {method === "cash" ? "Tunai" : "Transfer"}
-                  </Button>
-                </Grid>
-              ))}
-            </Grid>
-
-            <Divider sx={{ mb: 2 }} />
-
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                mb: 2,
-              }}
-            >
-              <Typography variant="subtitle1" fontWeight="bold">
-                Total
-              </Typography>
-              <Typography variant="h6" fontWeight="bold" color="primary.main">
-                {formatRp(total)}
-              </Typography>
-            </Box>
-
-            <Button
-              variant="contained"
-              fullWidth
-              size="large"
-              startIcon={submitting ? undefined : <Receipt />}
-              onClick={handleSubmit}
-              disabled={submitting || cart.length === 0}
-              sx={{
-                borderRadius: 2.5,
-                py: 1.6,
-                fontWeight: "bold",
-                background: "linear-gradient(135deg, #1e3a8a, #0891b2)",
-                boxShadow: "0 4px 16px rgba(8,145,178,0.3)",
-                "&:hover": { boxShadow: "0 6px 20px rgba(8,145,178,0.4)" },
-              }}
-            >
-              {submitting ? (
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <CircularProgress size={18} color="inherit" />
-                  <span>Memproses...</span>
-                </Box>
-              ) : (
-                "Selesaikan Transaksi"
-              )}
-            </Button>
-          </CardContent>
-        </Card>
+      {error && !showCart && (
+        <div className="mx-4 mb-3 p-3 bg-red-50 border border-red-200 rounded-xl flex gap-2 text-sm text-red-700">
+          <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+          {error}
+        </div>
       )}
 
-      <ProductPickerDialog
-        open={openProductDialog}
-        products={products}
-        cart={cart}
-        onAdd={addToCart}
-        onClose={() => setOpenProductDialog(false)}
-      />
+      <div className="px-4 grid grid-cols-2 gap-3">
+        {filteredProducts.map((product) => {
+          const inCart = cart.find((i) => i.product.id === product.id);
+          return (
+            <button
+              key={product.id}
+              onClick={() => addToCart(product)}
+              disabled={product.stock === 0}
+              className={`text-left border-2 rounded-2xl p-3 relative transition-all ${
+                product.stock === 0
+                  ? "border-gray-100 bg-gray-50 opacity-50"
+                  : inCart
+                    ? "border-cyan-500 bg-cyan-50"
+                    : "border-gray-100 bg-white active:border-cyan-300"
+              }`}
+            >
+              {inCart && (
+                <span className="absolute top-2 right-2 bg-cyan-600 text-white text-[10px] rounded-full w-5 h-5 flex items-center justify-center font-bold">
+                  {inCart.quantity}
+                </span>
+              )}
+              <p className="text-sm font-semibold text-gray-900 leading-tight mb-1">
+                {product.name}
+                {product.size ? ` (${product.size})` : ""}
+              </p>
+              <p className="text-sm font-bold text-cyan-700 mb-1.5">
+                {formatRp(product.hargaPabrik)}
+              </p>
+              <span
+                className={`text-[10px] px-2 py-0.5 rounded-full ${
+                  product.stock > product.minStock
+                    ? "bg-green-100 text-green-700"
+                    : product.stock > 0
+                      ? "bg-orange-100 text-orange-700"
+                      : "bg-red-100 text-red-700"
+                }`}
+              >
+                Stok: {product.stock} {product.unit}
+              </span>
+            </button>
+          );
+        })}
+      </div>
 
-      <ReceiptDialog
-        open={receiptOpen}
-        transaction={completedTrx}
-        cartSnapshot={cartSnapshot}
-        paymentMethod={completedPaymentMethod}
-        customerName={completedCustomerName}
-        onNewTransaction={handleNewTransaction}
-      />
-    </Box>
+      {/* Floating cart button */}
+      {cart.length > 0 && !showCart && (
+        <button
+          onClick={() => setShowCart(true)}
+          className="fixed bottom-[76px] left-4 right-4 bg-cyan-600 text-white rounded-2xl py-3.5 px-5 flex items-center justify-between shadow-lg shadow-cyan-500/30 cursor-pointer z-20"
+        >
+          <span className="flex items-center gap-2 font-semibold text-sm">
+            <ShoppingCart className="w-4.5 h-4.5" />
+            {totalQty} item
+          </span>
+          <span className="font-bold">{formatRp(subtotal)}</span>
+        </button>
+      )}
+
+      {/* Cart / checkout sheet */}
+      {showCart && (
+        <div className="fixed inset-0 bg-black/50 z-40 flex items-end">
+          <div className="bg-white rounded-t-3xl w-full max-h-[88vh] flex flex-col">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+              <h2 className="font-bold text-gray-900">Keranjang</h2>
+              <button
+                onClick={() => setShowCart(false)}
+                className="p-1.5 hover:bg-gray-100 rounded-lg cursor-pointer"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+
+            <div className="overflow-y-auto flex-1 px-5 py-3 space-y-3">
+              {error && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-xl flex gap-2 text-sm text-red-700">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                  {error}
+                </div>
+              )}
+
+              {cart.map((item) => {
+                const komisiItem =
+                  (item.hargaJual - item.product.hargaPabrik) * item.quantity;
+                return (
+                  <div
+                    key={item.product.id}
+                    className="border border-gray-100 rounded-xl p-3"
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <p className="text-sm font-semibold text-gray-900 flex-1">
+                        {item.product.name}
+                      </p>
+                      <button
+                        onClick={() => removeFromCart(item.product.id)}
+                        className="text-red-500 p-1 -mt-1 -mr-1 cursor-pointer"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    <div className="relative mb-2">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">
+                        Rp
+                      </span>
+                      <input
+                        type="number"
+                        min={0}
+                        value={item.hargaJual}
+                        onChange={(e) =>
+                          updatePrice(
+                            item.product.id,
+                            Number(e.target.value) || 0,
+                          )
+                        }
+                        className="w-full pl-8 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={() => updateQty(item.product.id, -1)}
+                          className="w-7 h-7 border border-gray-200 rounded-lg flex items-center justify-center cursor-pointer"
+                        >
+                          <Minus className="w-3.5 h-3.5" />
+                        </button>
+                        <span className="w-7 text-center text-sm font-semibold">
+                          {item.quantity}
+                        </span>
+                        <button
+                          onClick={() => updateQty(item.product.id, 1)}
+                          className="w-7 h-7 border border-gray-200 rounded-lg flex items-center justify-center cursor-pointer"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                      <p className="text-sm font-bold text-gray-900">
+                        {formatRp(item.hargaJual * item.quantity)}
+                      </p>
+                    </div>
+                    {komisiItem !== 0 && (
+                      <p
+                        className={`text-xs mt-1 text-right ${komisiItem > 0 ? "text-green-600" : "text-red-500"}`}
+                      >
+                        {komisiItem > 0 ? "+" : ""}
+                        {formatRp(komisiItem)} komisi
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
+
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">
+                  Pelanggan (opsional)
+                </label>
+                <div className="flex gap-2">
+                  <select
+                    value={customerId}
+                    onChange={(e) => setCustomerId(e.target.value)}
+                    className="flex-1 px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                  >
+                    <option value="">Umum (tanpa data)</option>
+                    {customers.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                        {c.phone ? ` — ${c.phone}` : ""}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    onClick={() => setShowNewCustomer(true)}
+                    className="px-3 border border-gray-200 rounded-xl text-cyan-600 cursor-pointer flex-shrink-0"
+                    title="Tambah toko baru"
+                  >
+                    <UserPlus className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">
+                  Metode Pembayaran
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {(
+                    [
+                      { key: "cash", label: "Cash", icon: Banknote },
+                      { key: "transfer", label: "Transfer", icon: CreditCard },
+                      { key: "kasbon", label: "Kasbon", icon: Wallet },
+                    ] as const
+                  ).map((m) => (
+                    <button
+                      key={m.key}
+                      onClick={() => setPaymentMethod(m.key)}
+                      className={`flex flex-col items-center gap-1 py-2.5 rounded-xl border-2 text-xs font-medium cursor-pointer ${
+                        paymentMethod === m.key
+                          ? "border-cyan-500 bg-cyan-50 text-cyan-700"
+                          : "border-gray-200 text-gray-600"
+                      }`}
+                    >
+                      <m.icon className="w-4 h-4" />
+                      {m.label}
+                    </button>
+                  ))}
+                </div>
+                {paymentMethod === "kasbon" && (
+                  <p className="text-[11px] text-amber-600 mt-1.5">
+                    Kasbon = titipan/piutang, wajib pilih toko tujuan di atas.
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="border-t border-gray-100 px-5 py-4 space-y-2">
+              <div className="flex justify-between text-sm text-gray-600">
+                <span>Subtotal</span>
+                <span>{formatRp(subtotal)}</span>
+              </div>
+              {estimasiKomisi !== 0 && (
+                <div
+                  className={`flex items-center justify-between text-sm font-medium px-3 py-2 rounded-lg ${
+                    estimasiKomisi >= 0
+                      ? "bg-green-50 text-green-700"
+                      : "bg-red-50 text-red-600"
+                  }`}
+                >
+                  <span className="flex items-center gap-1.5">
+                    <TrendingUp className="w-3.5 h-3.5" /> Estimasi Komisi
+                  </span>
+                  <span>{formatRp(estimasiKomisi)}</span>
+                </div>
+              )}
+              <button
+                onClick={handleCheckout}
+                disabled={saving || cart.length === 0}
+                className="w-full bg-cyan-600 text-white py-3.5 rounded-xl font-semibold disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
+              >
+                {saving && <RefreshCw className="w-4 h-4 animate-spin" />}
+                {saving ? "Memproses..." : `Bayar ${formatRp(subtotal)}`}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {receipt && (
+        <ReceiptDialog transaction={receipt} onClose={() => setReceipt(null)} />
+      )}
+
+      {showNewCustomer && (
+        <NewCustomerModal
+          onClose={() => setShowNewCustomer(false)}
+          onCreated={(newCust) => {
+            setCustomers((prev) =>
+              [...prev, newCust].sort((a, b) => a.name.localeCompare(b.name)),
+            );
+            setCustomerId(newCust.id);
+            setShowNewCustomer(false);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function NewCustomerModal({
+  onClose,
+  onCreated,
+}: {
+  onClose: () => void;
+  onCreated: (customer: { id: string; name: string; phone: string }) => void;
+}) {
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSubmit = async () => {
+    if (!name.trim()) {
+      setError("Nama toko/pelanggan wajib diisi.");
+      return;
+    }
+    setSaving(true);
+    setError("");
+    try {
+      const created = await createCustomer({
+        customer_name: name.trim(),
+        phone: phone.trim(),
+        address: address.trim(),
+      });
+      onCreated({
+        id: created.id,
+        name: created.customer_name,
+        phone: created.phone ?? "",
+      });
+    } catch (err: any) {
+      setError(err.message ?? "Gagal menambah toko baru.");
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
+      <div className="bg-white rounded-t-3xl w-full">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <h2 className="font-bold text-gray-900">Tambah Toko Baru</h2>
+          <button
+            onClick={onClose}
+            className="p-1.5 hover:bg-gray-100 rounded-lg cursor-pointer"
+          >
+            <X className="w-5 h-5 text-gray-500" />
+          </button>
+        </div>
+        <div className="px-5 py-4 space-y-3">
+          {error && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-xl flex gap-2 text-sm text-red-700">
+              <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+              {error}
+            </div>
+          )}
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1.5">
+              Nama Toko/Pelanggan
+            </label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1.5">
+              No. HP
+            </label>
+            <input
+              type="text"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1.5">
+              Alamat
+            </label>
+            <textarea
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              rows={2}
+              className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
+            />
+          </div>
+          <button
+            onClick={handleSubmit}
+            disabled={saving}
+            className="w-full bg-cyan-600 text-white py-3.5 rounded-xl font-semibold disabled:opacity-60 flex items-center justify-center gap-2 cursor-pointer"
+          >
+            {saving && <RefreshCw className="w-4 h-4 animate-spin" />}
+            {saving ? "Menyimpan..." : "Simpan Toko"}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }

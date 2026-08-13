@@ -1,187 +1,108 @@
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  Box,
-  Typography,
-  Divider,
-  List,
-  ListItem,
-  ListItemText,
-} from "@mui/material";
-import { Receipt, Share } from "@mui/icons-material";
-import { toast } from "sonner";
+import { X, CheckCircle2 } from "lucide-react";
 
 interface ReceiptDialogProps {
-  open: boolean;
+  transaction: {
+    id: string;
+    date: string;
+    customer: string;
+    items: {
+      name: string;
+      quantity: number;
+      price: number;
+      subtotal: number;
+    }[];
+    subtotal: number;
+    paymentMethod: "cash" | "transfer" | "kasbon";
+  };
   onClose: () => void;
-  transaction: any;
 }
 
+const formatRp = (n: number) => "Rp " + Math.round(n).toLocaleString("id-ID");
+
+const paymentLabel: Record<string, string> = {
+  cash: "TUNAI",
+  transfer: "TRANSFER",
+  kasbon: "KASBON / TITIPAN",
+};
+
 export default function ReceiptDialog({
-  open,
-  onClose,
   transaction,
+  onClose,
 }: ReceiptDialogProps) {
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
-      minimumFractionDigits: 0,
-    }).format(amount);
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat("id-ID", {
-      dateStyle: "long",
-      timeStyle: "short",
-    }).format(date);
-  };
-
-  const handleShare = () => {
-    const receiptText = generateReceiptText();
-
-    if (navigator.share) {
-      navigator
-        .share({
-          title: "Struk Transaksi",
-          text: receiptText,
-        })
-        .then(() => {
-          toast.success("Struk berhasil dibagikan");
-        })
-        .catch((error) => {
-          console.error("Error sharing:", error);
-        });
-    } else {
-      navigator.clipboard.writeText(receiptText).then(() => {
-        toast.success("Struk disalin ke clipboard");
-      });
-    }
-  };
-
-  const generateReceiptText = () => {
-    let text = "========================================\n";
-    text += "        ARROYYAN99 AMDK\n";
-    text += "     Bogatama, Tulang Bawang\n";
-    text += "========================================\n\n";
-    text += `No. Transaksi: ${transaction.id}\n`;
-    text += `Tanggal: ${formatDate(transaction.date)}\n`;
-    text += `Pembayaran: ${transaction.paymentMethod.toUpperCase()}\n\n`;
-    text += "----------------------------------------\n";
-
-    transaction.items.forEach((item: any) => {
-      text += `${item.productName}\n`;
-      text += `  ${item.quantity} x ${formatCurrency(item.price)} = ${formatCurrency(item.subtotal)}\n`;
-    });
-
-    text += "----------------------------------------\n";
-    text += `TOTAL: ${formatCurrency(transaction.total)}\n`;
-    text += "========================================\n";
-    text += "\n      Terima Kasih!\n";
-
-    return text;
-  };
-
-  if (!transaction) return null;
-
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle>
-        <Box className="flex items-center gap-2">
-          <Receipt color="primary" />
-          <Typography variant="h6">Struk Transaksi</Typography>
-        </Box>
-      </DialogTitle>
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl w-full max-w-sm max-h-[85vh] overflow-y-auto">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <h2 className="font-bold text-gray-900 flex items-center gap-2">
+            <CheckCircle2 className="w-5 h-5 text-green-600" />
+            Transaksi Berhasil
+          </h2>
+          <button
+            onClick={onClose}
+            className="p-1.5 hover:bg-gray-100 rounded-lg cursor-pointer"
+          >
+            <X className="w-5 h-5 text-gray-500" />
+          </button>
+        </div>
 
-      <DialogContent>
-        <Box sx={{ textAlign: "center", mb: 3 }}>
-          <Typography variant="h6" fontWeight="bold">
-            ARROYYAN99 AMDK
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Bogatama, Tulang Bawang, Lampung
-          </Typography>
-        </Box>
+        <div className="p-5 font-mono text-xs">
+          <div className="border-b border-dashed border-gray-300 pb-3 mb-3 space-y-1">
+            <div className="flex justify-between">
+              <span>No</span>
+              <span>#{transaction.id}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Tanggal</span>
+              <span>{transaction.date}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Pelanggan</span>
+              <span>{transaction.customer}</span>
+            </div>
+          </div>
 
-        <Divider sx={{ mb: 2 }} />
+          <table className="w-full mb-3">
+            <thead>
+              <tr className="border-b border-gray-300">
+                <th className="text-left py-1">Item</th>
+                <th className="text-center py-1">Qty</th>
+                <th className="text-right py-1">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {transaction.items.map((item, i) => (
+                <tr key={i} className="border-b border-gray-100">
+                  <td className="py-1">{item.name}</td>
+                  <td className="text-center py-1">{item.quantity}</td>
+                  <td className="text-right py-1">
+                    {item.subtotal.toLocaleString("id-ID")}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
 
-        <Box sx={{ mb: 2 }}>
-          <Typography variant="body2" color="text.secondary">
-            No. Transaksi
-          </Typography>
-          <Typography variant="body1" fontWeight="bold">
-            {transaction.id}
-          </Typography>
-        </Box>
+          <div className="border-t border-gray-300 pt-2 flex justify-between font-bold text-sm">
+            <span>TOTAL</span>
+            <span>{formatRp(transaction.subtotal)}</span>
+          </div>
+          <div className="flex justify-between mt-2 text-xs">
+            <span>Pembayaran</span>
+            <span className="font-bold">
+              {paymentLabel[transaction.paymentMethod]}
+            </span>
+          </div>
+        </div>
 
-        <Box sx={{ mb: 2 }}>
-          <Typography variant="body2" color="text.secondary">
-            Tanggal
-          </Typography>
-          <Typography variant="body1">
-            {formatDate(transaction.date)}
-          </Typography>
-        </Box>
-
-        <Box sx={{ mb: 2 }}>
-          <Typography variant="body2" color="text.secondary">
-            Metode Pembayaran
-          </Typography>
-          <Typography variant="body1" textTransform="uppercase">
-            {transaction.paymentMethod}
-          </Typography>
-        </Box>
-
-        <Divider sx={{ my: 2 }} />
-
-        <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 1 }}>
-          Detail Pembelian
-        </Typography>
-
-        <List dense>
-          {transaction.items.map((item: any, index: number) => (
-            <ListItem key={index} sx={{ px: 0 }}>
-              <ListItemText
-                primary={item.productName}
-                secondary={`${item.quantity} x ${formatCurrency(item.price)}`}
-              />
-              <Typography variant="body2" fontWeight="bold">
-                {formatCurrency(item.subtotal)}
-              </Typography>
-            </ListItem>
-          ))}
-        </List>
-
-        <Divider sx={{ my: 2 }} />
-
-        <Box className="flex items-center justify-between">
-          <Typography variant="h6" fontWeight="bold">
-            TOTAL
-          </Typography>
-          <Typography variant="h5" fontWeight="bold" color="primary">
-            {formatCurrency(transaction.total)}
-          </Typography>
-        </Box>
-
-        <Box sx={{ textAlign: "center", mt: 3 }}>
-          <Typography variant="body2" color="text.secondary">
-            Terima kasih atas pembelian Anda!
-          </Typography>
-        </Box>
-      </DialogContent>
-
-      <DialogActions>
-        <Button onClick={handleShare} startIcon={<Share />}>
-          Bagikan
-        </Button>
-        <Button onClick={onClose} variant="contained">
-          Tutup
-        </Button>
-      </DialogActions>
-    </Dialog>
+        <div className="px-5 pb-5">
+          <button
+            onClick={onClose}
+            className="w-full bg-cyan-600 text-white py-3 rounded-xl font-semibold cursor-pointer"
+          >
+            Transaksi Baru
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }

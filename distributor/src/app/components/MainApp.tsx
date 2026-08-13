@@ -1,40 +1,25 @@
-import { JSX, useState } from "react";
+import { useState } from "react";
 import {
-  Box,
-  BottomNavigation,
-  BottomNavigationAction,
-  Paper,
-  AppBar,
-  Toolbar,
-  Typography,
-  IconButton,
-  Avatar,
-  Menu,
-  MenuItem,
-  ListItemIcon,
-  Divider,
-} from "@mui/material";
-import {
-  Dashboard as DashboardIcon,
-  ShoppingCart as TransactionIcon,
-  LocalShipping as DistributionIcon,
-  Inventory as StockIcon,
-  Person as ProfileIcon,
-  Logout as LogoutIcon,
-} from "@mui/icons-material";
-import { DistributorUser } from "../../utils/supabaseClient";
+  LayoutDashboard,
+  ShoppingCart,
+  Truck,
+  Package,
+  User,
+  LogOut,
+  Wallet,
+} from "lucide-react";
+import { SalesUser } from "../services/SalesAppService";
 import DashboardPage from "./DashboardPage";
 import TransactionPage from "./TransactionPage";
 import StockPage from "./StockPage";
 import DistributionPage from "./DistributionPage";
+import SetoranPage from "./SetoranPage";
 import ProfilePage from "./ProfilePage";
 
 interface MainAppProps {
-  user: DistributorUser;
-  distributorId: string;
+  user: SalesUser;
   onLogout: () => void;
-  // ← tambahan: callback ke App.tsx supaya state user di root ikut update
-  onProfileUpdated?: (updated: Partial<DistributorUser>) => void;
+  onProfileUpdated?: (updated: Partial<SalesUser>) => void;
 }
 
 type TabKey =
@@ -42,61 +27,60 @@ type TabKey =
   | "transaction"
   | "stock"
   | "distribution"
+  | "setoran"
   | "profile";
 
-const TABS: { key: TabKey; label: string; icon: JSX.Element }[] = [
-  { key: "dashboard", label: "Dashboard", icon: <DashboardIcon /> },
-  { key: "transaction", label: "Transaksi", icon: <TransactionIcon /> },
-  { key: "stock", label: "Stok", icon: <StockIcon /> },
-  { key: "distribution", label: "Distribusi", icon: <DistributionIcon /> },
-  { key: "profile", label: "Profil", icon: <ProfileIcon /> },
+const TABS: { key: TabKey; label: string; icon: typeof LayoutDashboard }[] = [
+  { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { key: "transaction", label: "Jual", icon: ShoppingCart },
+  { key: "stock", label: "Stok", icon: Package },
+  { key: "distribution", label: "Distribusi", icon: Truck },
+  { key: "setoran", label: "Setoran", icon: Wallet },
 ];
-
-const APPBAR_HEIGHT = 56;
-const BOTTOMNAV_HEIGHT = 60;
 
 export default function MainApp({
   user,
-  distributorId,
   onLogout,
   onProfileUpdated,
 }: MainAppProps) {
   const [activeTab, setActiveTab] = useState<TabKey>("dashboard");
-  const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
-  const [localUser, setLocalUser] = useState<DistributorUser>(user);
+  const [showMenu, setShowMenu] = useState(false);
+  const [localUser, setLocalUser] = useState<SalesUser>(user);
 
-  const tabIndex = TABS.findIndex((t) => t.key === activeTab);
-
-  const handleMenuOpen = (e: React.MouseEvent<HTMLElement>) =>
-    setMenuAnchor(e.currentTarget);
-  const handleMenuClose = () => setMenuAnchor(null);
-  const handleLogout = () => {
-    handleMenuClose();
-    onLogout();
-  };
-
-  const handleProfileUpdated = (updated: Partial<DistributorUser>) => {
+  const handleProfileUpdated = (updated: Partial<SalesUser>) => {
     setLocalUser((prev) => ({ ...prev, ...updated }));
     onProfileUpdated?.(updated);
   };
 
-  const initials = localUser.distributor_name
+  const initials = localUser.namaSales
     .split(" ")
     .map((w) => w[0])
     .slice(0, 2)
     .join("")
     .toUpperCase();
 
+  const currentLabel =
+    activeTab === "profile"
+      ? "Profil"
+      : (TABS.find((t) => t.key === activeTab)?.label ?? "Dashboard");
+
   const renderPage = () => {
     switch (activeTab) {
       case "dashboard":
-        return <DashboardPage user={localUser} distributorId={distributorId} />;
+        return (
+          <DashboardPage
+            user={localUser}
+            onNavigate={(t) => setActiveTab(t as TabKey)}
+          />
+        );
       case "transaction":
-        return <TransactionPage distributorId={distributorId} />;
+        return <TransactionPage salesId={localUser.salesId} />;
       case "stock":
-        return <StockPage distributorId={distributorId} />;
+        return <StockPage salesId={localUser.salesId} />;
       case "distribution":
-        return <DistributionPage distributorId={distributorId} />;
+        return <DistributionPage salesId={localUser.salesId} />;
+      case "setoran":
+        return <SetoranPage salesId={localUser.salesId} />;
       case "profile":
         return (
           <ProfilePage
@@ -111,170 +95,100 @@ export default function MainApp({
   };
 
   return (
-    <Box
-      sx={{
-        height: "100dvh",
-        "@supports not (height: 100dvh)": { height: "100vh" },
-        display: "flex",
-        flexDirection: "column",
-        bgcolor: "#f5f7fa",
-        overflow: "hidden",
-        position: "relative",
-      }}
-    >
-      <AppBar
-        position="fixed"
-        elevation={0}
-        sx={{
-          top: 0,
-          left: 0,
-          right: 0,
-          zIndex: 1200,
-          background: "linear-gradient(135deg, #1e3a8a 0%, #0891b2 100%)",
-          height: APPBAR_HEIGHT,
-        }}
-      >
-        <Toolbar sx={{ minHeight: `${APPBAR_HEIGHT}px !important`, px: 2 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1, flex: 1 }}>
-            <Box
-              sx={{
-                width: 32,
-                height: 32,
-                bgcolor: "rgba(255,255,255,0.2)",
-                borderRadius: 1.5,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <DashboardIcon sx={{ fontSize: 18, color: "white" }} />
-            </Box>
-            <Box>
-              <Typography
-                variant="subtitle2"
-                fontWeight="bold"
-                color="white"
-                lineHeight={1.2}
-              >
-                {TABS.find((t) => t.key === activeTab)?.label ?? "Dashboard"}
-              </Typography>
-              <Typography
-                variant="caption"
-                sx={{ color: "rgba(255,255,255,0.75)", fontSize: "0.65rem" }}
-              >
-                {localUser.distributor_name}
-              </Typography>
-            </Box>
-          </Box>
+    <div className="h-[100dvh] flex flex-col bg-gray-50 overflow-hidden relative">
+      {/* Top bar */}
+      <header className="fixed top-0 left-0 right-0 z-30 h-14 bg-gradient-to-r from-blue-900 to-cyan-600 flex items-center px-4 gap-3">
+        <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
+          <LayoutDashboard className="w-4.5 h-4.5 text-white" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-bold text-white leading-tight truncate">
+            {currentLabel}
+          </p>
+          <p className="text-[11px] text-white/75 leading-tight truncate">
+            {localUser.namaSales}
+          </p>
+        </div>
 
-          <IconButton onClick={handleMenuOpen} size="small" sx={{ p: 0 }}>
-            <Avatar
-              sx={{
-                width: 34,
-                height: 34,
-                bgcolor: "rgba(255,255,255,0.25)",
-                fontSize: "0.8rem",
-                fontWeight: "bold",
-                border: "2px solid rgba(255,255,255,0.4)",
-              }}
-            >
-              {initials}
-            </Avatar>
-          </IconButton>
-
-          <Menu
-            anchorEl={menuAnchor}
-            open={Boolean(menuAnchor)}
-            onClose={handleMenuClose}
-            PaperProps={{ sx: { borderRadius: 2, minWidth: 200, mt: 1 } }}
-            transformOrigin={{ horizontal: "right", vertical: "top" }}
-            anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
+        <div className="relative">
+          <button
+            onClick={() => setShowMenu((s) => !s)}
+            className="w-8.5 h-8.5 rounded-full bg-white/25 border-2 border-white/40 flex items-center justify-center text-white text-xs font-bold cursor-pointer"
           >
-            <Box sx={{ px: 2, py: 1.5 }}>
-              <Typography variant="subtitle2" fontWeight="bold">
-                {localUser.distributor_name}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                {localUser.email}
-              </Typography>
-            </Box>
-            <Divider />
-            <MenuItem
-              onClick={() => {
-                handleMenuClose();
-                setActiveTab("profile");
-              }}
-              sx={{ py: 1.2 }}
-            >
-              <ListItemIcon>
-                <ProfileIcon fontSize="small" />
-              </ListItemIcon>
-              Profil Saya
-            </MenuItem>
-            <Divider />
-            <MenuItem
-              onClick={handleLogout}
-              sx={{ py: 1.2, color: "error.main" }}
-            >
-              <ListItemIcon>
-                <LogoutIcon fontSize="small" color="error" />
-              </ListItemIcon>
-              Keluar
-            </MenuItem>
-          </Menu>
-        </Toolbar>
-      </AppBar>
+            {initials}
+          </button>
 
-      <Box
-        sx={{
-          marginTop: `${APPBAR_HEIGHT}px`,
-          marginBottom: `${BOTTOMNAV_HEIGHT}px`,
-          overflowY: "auto",
-          overflowX: "hidden",
-          flex: 1,
-          WebkitOverflowScrolling: "touch",
-          paddingBottom: "env(safe-area-inset-bottom)",
-        }}
+          {showMenu && (
+            <>
+              <div
+                className="fixed inset-0 z-30"
+                onClick={() => setShowMenu(false)}
+              />
+              <div className="absolute right-0 top-11 w-52 bg-white rounded-xl shadow-xl border border-gray-100 z-40 overflow-hidden">
+                <div className="px-4 py-3 border-b border-gray-100">
+                  <p className="text-sm font-bold text-gray-900 truncate">
+                    {localUser.namaSales}
+                  </p>
+                  <p className="text-xs text-gray-500 truncate">
+                    {localUser.email}
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowMenu(false);
+                    setActiveTab("profile");
+                  }}
+                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+                >
+                  <User className="w-4 h-4" /> Profil Saya
+                </button>
+                <div className="border-t border-gray-100" />
+                <button
+                  onClick={() => {
+                    setShowMenu(false);
+                    onLogout();
+                  }}
+                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 cursor-pointer"
+                >
+                  <LogOut className="w-4 h-4" /> Keluar
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </header>
+
+      {/* Content */}
+      <main
+        className="flex-1 overflow-y-auto overflow-x-hidden mt-14 mb-[60px]"
+        style={{ WebkitOverflowScrolling: "touch" }}
       >
         {renderPage()}
-      </Box>
+      </main>
 
-      <Paper
-        elevation={8}
-        sx={{
-          position: "fixed",
-          bottom: 0,
-          left: 0,
-          right: 0,
-          zIndex: 1200,
-          borderTop: "1px solid",
-          borderColor: "divider",
-          borderRadius: 0,
-          paddingBottom: "env(safe-area-inset-bottom)",
-        }}
-      >
-        <BottomNavigation
-          value={tabIndex}
-          onChange={(_, newIndex) => setActiveTab(TABS[newIndex].key)}
-          sx={{ height: BOTTOMNAV_HEIGHT }}
-        >
-          {TABS.map((tab) => (
-            <BottomNavigationAction
+      {/* Bottom nav */}
+      <nav className="fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-gray-200 flex items-stretch h-[60px] pb-[env(safe-area-inset-bottom)]">
+        {TABS.map((tab) => {
+          const Icon = tab.icon;
+          const active = activeTab === tab.key;
+          return (
+            <button
               key={tab.key}
-              label={tab.label}
-              icon={tab.icon}
-              sx={{
-                minWidth: 0,
-                "&.Mui-selected": { color: "#0891b2" },
-                "& .MuiBottomNavigationAction-label": {
-                  fontSize: "0.65rem",
-                  "&.Mui-selected": { fontSize: "0.7rem" },
-                },
-              }}
-            />
-          ))}
-        </BottomNavigation>
-      </Paper>
-    </Box>
+              onClick={() => setActiveTab(tab.key)}
+              className={`flex-1 flex flex-col items-center justify-center gap-0.5 cursor-pointer transition-colors ${
+                active ? "text-cyan-600" : "text-gray-400"
+              }`}
+            >
+              <Icon className="w-5 h-5" />
+              <span
+                className={`text-[10px] ${active ? "font-semibold" : "font-medium"}`}
+              >
+                {tab.label}
+              </span>
+            </button>
+          );
+        })}
+      </nav>
+    </div>
   );
 }

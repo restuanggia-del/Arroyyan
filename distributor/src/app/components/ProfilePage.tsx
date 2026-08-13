@@ -1,861 +1,394 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
-  Box,
-  Typography,
-  Card,
-  CardContent,
-  Button,
-  List,
-  ListItem,
-  ListItemText,
-  Divider,
-  Avatar,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Tabs,
-  Tab,
-  CircularProgress,
-  Alert,
-  Chip,
-  TextField,
-  IconButton,
-} from "@mui/material";
-import {
-  Person,
-  Logout,
-  Assessment,
-  Email,
+  User,
   Phone,
-  LocationOn,
-  Star,
+  MapPin,
+  LogOut,
+  Pencil,
+  RefreshCw,
+  AlertCircle,
+  CheckCircle2,
+  History,
   TrendingUp,
+  X,
   Receipt,
-  Edit,
-  Save,
-  Close,
-  CheckCircle,
-} from "@mui/icons-material";
+} from "lucide-react";
 import {
+  SalesUser,
+  updateSalesProfile,
   getTransactionHistory,
-  getProductsWithDistributorStock,
-  DistributorUser,
-  supabaseAdmin,
-  updateDistributorProfile,
-} from "../../utils/supabaseClient";
+  getKomisiSummary,
+} from "../services/SalesAppService";
 
 interface ProfilePageProps {
-  user: DistributorUser;
+  user: SalesUser;
   onLogout: () => void;
-  onProfileUpdated?: (updated: Partial<DistributorUser>) => void;
+  onProfileUpdated: (updated: Partial<SalesUser>) => void;
 }
 
-const formatRp = (n: number) =>
-  new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    minimumFractionDigits: 0,
-  }).format(n);
+type TxRow = Awaited<ReturnType<typeof getTransactionHistory>>[number];
 
-const getInitials = (name: string) =>
-  (name ?? "D")
-    .split(" ")
-    .map((w) => w[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
+const formatRp = (n: number) => "Rp " + Math.round(n).toLocaleString("id-ID");
 
 export default function ProfilePage({
   user,
   onLogout,
   onProfileUpdated,
 }: ProfilePageProps) {
-  const [logoutDialog, setLogoutDialog] = useState(false);
-  const [activeTab, setActiveTab] = useState(0);
+  const [tab, setTab] = useState<"profil" | "riwayat" | "komisi">("profil");
+  const [showEdit, setShowEdit] = useState(false);
 
-  // ── Edit state ─────────────────────────────────────────────────────────────
-  const [editForm, setEditForm] = useState({
-    distributor_name: user.distributor_name ?? "",
-    name: user.name ?? "",
-    email: user.email ?? "",
-    phone: user.phone ?? "",
-    address: user.address ?? "",
-  });
-  const [saving, setSaving] = useState(false);
-  const [saveError, setSaveError] = useState("");
-  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [history, setHistory] = useState<TxRow[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
 
-  const [loadingReport, setLoadingReport] = useState(false);
-  const [dailySales, setDailySales] = useState(0);
-  const [dailyTrx, setDailyTrx] = useState(0);
-  const [monthlySales, setMonthlySales] = useState(0);
-  const [monthlyTrx, setMonthlyTrx] = useState(0);
-  const [topProducts, setTopProducts] = useState<
-    { name: string; totalSold: number; revenue: number }[]
-  >([]);
-  const [reportError, setReportError] = useState("");
+  const [komisi, setKomisi] = useState<Awaited<
+    ReturnType<typeof getKomisiSummary>
+  > | null>(null);
+  const [loadingKomisi, setLoadingKomisi] = useState(false);
+  const [error, setError] = useState("");
 
-  useEffect(() => {
-    if (activeTab === 2) fetchReports();
-  }, [activeTab]);
-
-  useEffect(() => {
-    setEditForm({
-      distributor_name: user.distributor_name ?? "",
-      name: user.name ?? "",
-      email: user.email ?? "",
-      phone: user.phone ?? "",
-      address: user.address ?? "",
-    });
-  }, [user]);
-
-  const fetchReports = async () => {
-    setLoadingReport(true);
-    setReportError("");
+  const loadHistory = useCallback(async () => {
+    setLoadingHistory(true);
+    setError("");
     try {
-      const todayStr = new Date().toISOString().split("T")[0];
-      const now = new Date();
-      const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
-
-      const [todayRes, monthRes, detailRes] = await Promise.all([
-        supabaseAdmin
-          .from("transactions")
-          .select("total_price")
-          .eq("distributor_id", user.distributor_id)
-          .gte("created_at", `${todayStr}T00:00:00`)
-          .lte("created_at", `${todayStr}T23:59:59`),
-        supabaseAdmin
-          .from("transactions")
-          .select("total_price")
-          .eq("distributor_id", user.distributor_id)
-          .gte("created_at", `${monthStart}T00:00:00`),
-        supabaseAdmin
-          .from("transaction_details")
-          .select(
-            "product_id, quantity, subtotal, products(product_name), transactions!inner(distributor_id)",
-          )
-          .eq("transactions.distributor_id", user.distributor_id),
-      ]);
-
-      const todayData = todayRes.data ?? [];
-      setDailySales(
-        todayData.reduce((s, t: any) => s + (t.total_price ?? 0), 0),
-      );
-      setDailyTrx(todayData.length);
-
-      const monthData = monthRes.data ?? [];
-      setMonthlySales(
-        monthData.reduce((s, t: any) => s + (t.total_price ?? 0), 0),
-      );
-      setMonthlyTrx(monthData.length);
-
-      const map: Record<
-        string,
-        { name: string; totalSold: number; revenue: number }
-      > = {};
-      for (const row of (detailRes.data ?? []) as any[]) {
-        const pid = row.product_id;
-        if (!map[pid])
-          map[pid] = {
-            name: row.products?.product_name ?? "—",
-            totalSold: 0,
-            revenue: 0,
-          };
-        map[pid].totalSold += row.quantity ?? 0;
-        map[pid].revenue += row.subtotal ?? 0;
-      }
-      setTopProducts(
-        Object.values(map)
-          .sort((a, b) => b.totalSold - a.totalSold)
-          .slice(0, 5),
-      );
+      const data = await getTransactionHistory(user.salesId);
+      setHistory(data);
     } catch (err: any) {
-      setReportError(err.message ?? "Gagal memuat laporan.");
+      setError(err.message ?? "Gagal memuat riwayat.");
     } finally {
-      setLoadingReport(false);
+      setLoadingHistory(false);
     }
-  };
+  }, [user.salesId]);
 
-  const handleSave = async () => {
+  const loadKomisi = useCallback(async () => {
+    setLoadingKomisi(true);
+    setError("");
+    try {
+      const now = new Date();
+      const start = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        1,
+      ).toISOString();
+      const end = new Date(
+        now.getFullYear(),
+        now.getMonth() + 1,
+        0,
+        23,
+        59,
+        59,
+      ).toISOString();
+      const data = await getKomisiSummary(user.salesId, start, end);
+      setKomisi(data);
+    } catch (err: any) {
+      setError(err.message ?? "Gagal memuat komisi.");
+    } finally {
+      setLoadingKomisi(false);
+    }
+  }, [user.salesId]);
+
+  useEffect(() => {
+    if (tab === "riwayat" && history.length === 0) loadHistory();
+    if (tab === "komisi" && !komisi) loadKomisi();
+  }, [tab]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const formatDate = (d: string) =>
+    new Date(d).toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+  return (
+    <div className="p-4">
+      <div className="bg-gradient-to-br from-blue-900 to-cyan-600 rounded-2xl p-5 text-white mb-4 relative">
+        <button
+          onClick={() => setShowEdit(true)}
+          className="absolute top-4 right-4 w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center cursor-pointer"
+        >
+          <Pencil className="w-4 h-4" />
+        </button>
+        <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center mb-3 text-lg font-bold">
+          {user.namaSales.charAt(0).toUpperCase()}
+        </div>
+        <p className="font-bold text-lg">{user.namaSales}</p>
+        <p className="text-sm text-white/80">{user.email}</p>
+        {user.phone && (
+          <div className="flex items-center gap-1.5 text-xs text-white/75 mt-2">
+            <Phone className="w-3.5 h-3.5" /> {user.phone}
+          </div>
+        )}
+        {user.address && (
+          <div className="flex items-center gap-1.5 text-xs text-white/75 mt-1">
+            <MapPin className="w-3.5 h-3.5" /> {user.address}
+          </div>
+        )}
+      </div>
+
+      <div className="flex gap-1 mb-4 bg-gray-100 rounded-xl p-1">
+        {(
+          [
+            { key: "profil", label: "Akun" },
+            { key: "riwayat", label: "Riwayat" },
+            { key: "komisi", label: "Komisi" },
+          ] as const
+        ).map((t) => (
+          <button
+            key={t.key}
+            onClick={() => setTab(t.key)}
+            className={`flex-1 py-2 rounded-lg text-sm font-medium cursor-pointer transition-colors ${
+              tab === t.key
+                ? "bg-white text-cyan-700 shadow-sm"
+                : "text-gray-500"
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {error && (
+        <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-xl flex gap-2 text-sm text-red-700">
+          <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+          {error}
+        </div>
+      )}
+
+      {tab === "profil" && (
+        <button
+          onClick={onLogout}
+          className="w-full flex items-center justify-center gap-2 bg-red-50 text-red-600 py-3.5 rounded-xl font-semibold cursor-pointer"
+        >
+          <LogOut className="w-4 h-4" /> Keluar
+        </button>
+      )}
+
+      {tab === "riwayat" &&
+        (loadingHistory ? (
+          <div className="py-16 text-center">
+            <RefreshCw className="w-7 h-7 text-gray-300 animate-spin mx-auto mb-2" />
+            <p className="text-sm text-gray-400">Memuat riwayat...</p>
+          </div>
+        ) : history.length === 0 ? (
+          <div className="text-center py-16">
+            <History className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+            <p className="text-sm text-gray-400">Belum ada transaksi.</p>
+          </div>
+        ) : (
+          <div className="space-y-2.5">
+            {history.map((t) => (
+              <div
+                key={t.fullId}
+                className="bg-white border border-gray-100 rounded-xl p-3.5"
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs text-gray-400">
+                    #{t.id} · {formatDate(t.createdAt)}
+                  </span>
+                  <span
+                    className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
+                      t.paymentMethod === "kasbon"
+                        ? "bg-amber-100 text-amber-700"
+                        : t.paymentMethod === "cash"
+                          ? "bg-green-100 text-green-700"
+                          : "bg-blue-100 text-blue-700"
+                    }`}
+                  >
+                    {t.paymentMethod.toUpperCase()}
+                  </span>
+                </div>
+                <p className="text-sm text-gray-600 mb-1">{t.customer}</p>
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-bold text-gray-900">
+                    {formatRp(t.total)}
+                  </p>
+                  {t.komisi !== 0 && (
+                    <p
+                      className={`text-xs font-medium ${t.komisi > 0 ? "text-green-600" : "text-red-500"}`}
+                    >
+                      {t.komisi > 0 ? "+" : ""}
+                      {formatRp(t.komisi)} komisi
+                    </p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        ))}
+
+      {tab === "komisi" &&
+        (loadingKomisi ? (
+          <div className="py-16 text-center">
+            <RefreshCw className="w-7 h-7 text-gray-300 animate-spin mx-auto mb-2" />
+            <p className="text-sm text-gray-400">Memuat komisi...</p>
+          </div>
+        ) : komisi ? (
+          <div className="space-y-3">
+            <div className="bg-gradient-to-br from-green-600 to-emerald-500 rounded-2xl p-5 text-white">
+              <div className="flex items-center gap-2 mb-1">
+                <TrendingUp className="w-4 h-4" />
+                <p className="text-sm text-white/85">Komisi Bulan Ini</p>
+              </div>
+              <p className="text-2xl font-bold">
+                {formatRp(komisi.totalKomisi)}
+              </p>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-white border border-gray-100 rounded-xl p-3.5">
+                <p className="text-xs text-gray-500 mb-1">Dus Terjual</p>
+                <p className="text-base font-bold text-gray-900">
+                  {komisi.totalDus}
+                </p>
+              </div>
+              <div className="bg-white border border-gray-100 rounded-xl p-3.5">
+                <p className="text-xs text-gray-500 mb-1">Omzet Harga Jual</p>
+                <p className="text-base font-bold text-gray-900">
+                  {formatRp(komisi.totalOmzetJual)}
+                </p>
+              </div>
+            </div>
+            <div className="bg-gray-50 border border-gray-200 rounded-xl p-3.5">
+              <p className="text-xs text-gray-500 flex items-center gap-1.5">
+                <Receipt className="w-3.5 h-3.5" />
+                Omzet harga pabrik (dipakai laporan resmi):{" "}
+                {formatRp(komisi.totalOmzetPabrik)}
+              </p>
+            </div>
+          </div>
+        ) : null)}
+
+      {showEdit && (
+        <EditProfileModal
+          user={user}
+          onClose={() => setShowEdit(false)}
+          onSaved={(updated) => {
+            setShowEdit(false);
+            onProfileUpdated(updated);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function EditProfileModal({
+  user,
+  onClose,
+  onSaved,
+}: {
+  user: SalesUser;
+  onClose: () => void;
+  onSaved: (updated: Partial<SalesUser>) => void;
+}) {
+  const [namaSales, setNamaSales] = useState(user.namaSales);
+  const [phone, setPhone] = useState(user.phone ?? "");
+  const [address, setAddress] = useState(user.address ?? "");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [done, setDone] = useState(false);
+
+  const handleSubmit = async () => {
+    if (!namaSales.trim()) {
+      setError("Nama tidak boleh kosong.");
+      return;
+    }
     setSaving(true);
-    setSaveError("");
-    setSaveSuccess(false);
-
-    const trimmed = {
-      distributor_name: editForm.distributor_name.trim(),
-      name: editForm.name.trim(),
-      email: editForm.email.trim(),
-      phone: editForm.phone.trim(),
-      address: editForm.address.trim(),
-    };
-
-    if (!trimmed.distributor_name) {
-      setSaveError("Nama distributor tidak boleh kosong.");
+    setError("");
+    const { error: saveError } = await updateSalesProfile(
+      user.salesId,
+      user.userId,
+      {
+        nama_sales: namaSales.trim(),
+        phone: phone.trim(),
+        address: address.trim(),
+      },
+    );
+    if (saveError) {
+      setError((saveError as any).message ?? "Gagal menyimpan profil.");
       setSaving(false);
       return;
     }
-
-    try {
-      await updateDistributorProfile(
-        user.distributor_id,
-        user.id,
-        trimmed,
-        user.distributor_name,
-      );
-      setSaveSuccess(true);
-      onProfileUpdated?.({
-        distributor_name: trimmed.distributor_name,
-        name: trimmed.name,
-        email: trimmed.email,
-        phone: trimmed.phone,
-        address: trimmed.address,
+    setDone(true);
+    setTimeout(() => {
+      onSaved({
+        namaSales: namaSales.trim(),
+        phone: phone.trim(),
+        address: address.trim(),
       });
-      setTimeout(() => setSaveSuccess(false), 3000);
-    } catch (err: any) {
-      setSaveError(err.message ?? "Gagal menyimpan perubahan.");
-    } finally {
-      setSaving(false);
-    }
+    }, 700);
   };
 
-  const fieldSx = { mb: 2, "& .MuiOutlinedInput-root": { borderRadius: 2 } };
-
   return (
-    <Box sx={{ p: 2, pb: 4 }}>
-      <Card
-        elevation={0}
-        sx={{
-          mb: 2,
-          borderRadius: 3,
-          border: "1px solid",
-          borderColor: "divider",
-        }}
-      >
-        <Tabs
-          value={activeTab}
-          onChange={(_, v) => setActiveTab(v)}
-          variant="fullWidth"
-          sx={{ "& .MuiTab-root": { fontWeight: 600, fontSize: "0.75rem" } }}
-        >
-          <Tab
-            icon={<Person fontSize="small" />}
-            label="Profil"
-            iconPosition="start"
-          />
-          <Tab
-            icon={<Edit fontSize="small" />}
-            label="Edit Profil"
-            iconPosition="start"
-          />
-          <Tab
-            icon={<Assessment fontSize="small" />}
-            label="Laporan"
-            iconPosition="start"
-          />
-        </Tabs>
-      </Card>
-
-      {activeTab === 0 && (
-        <Box>
-          <Card
-            elevation={0}
-            sx={{
-              mb: 2,
-              borderRadius: 3,
-              border: "1px solid",
-              borderColor: "divider",
-              background: "linear-gradient(135deg, #eff6ff 0%, #e0f2fe 100%)",
-            }}
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
+      <div className="bg-white rounded-t-3xl w-full">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <h2 className="font-bold text-gray-900">Edit Profil</h2>
+          <button
+            onClick={onClose}
+            className="p-1.5 hover:bg-gray-100 rounded-lg cursor-pointer"
           >
-            <CardContent sx={{ textAlign: "center", py: 3 }}>
-              <Avatar
-                sx={{
-                  width: 72,
-                  height: 72,
-                  bgcolor: "#0891b2",
-                  fontSize: "1.6rem",
-                  fontWeight: "bold",
-                  mx: "auto",
-                  mb: 1.5,
-                  boxShadow: "0 4px 16px rgba(8,145,178,0.35)",
-                }}
-              >
-                {getInitials(user.distributor_name)}
-              </Avatar>
-              <Typography variant="h6" fontWeight="bold">
-                {user.distributor_name}
-              </Typography>
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 0.5,
-                  mt: 0.5,
-                }}
-              >
-                <Email sx={{ fontSize: 14, color: "text.secondary" }} />
-                <Typography variant="caption" color="text.secondary">
-                  {user.email}
-                </Typography>
-              </Box>
-              <Box
-                sx={{
-                  display: "flex",
-                  gap: 1,
-                  justifyContent: "center",
-                  mt: 1.5,
-                }}
-              >
-                <Chip
-                  label="Distributor"
-                  color="primary"
-                  size="small"
-                  sx={{ fontWeight: "bold" }}
-                />
-                {user.is_approved && (
-                  <Chip
-                    label="✓ Approved"
-                    color="success"
-                    size="small"
-                    sx={{ fontWeight: "bold" }}
-                  />
-                )}
-              </Box>
-            </CardContent>
-          </Card>
+            <X className="w-5 h-5 text-gray-500" />
+          </button>
+        </div>
 
-          <Card
-            elevation={0}
-            sx={{
-              mb: 2,
-              borderRadius: 3,
-              border: "1px solid",
-              borderColor: "divider",
-            }}
-          >
-            <CardContent sx={{ p: 2 }}>
-              <Typography
-                variant="subtitle2"
-                fontWeight="bold"
-                color="text.secondary"
-                sx={{
-                  mb: 1.5,
-                  textTransform: "uppercase",
-                  fontSize: "0.7rem",
-                  letterSpacing: 1,
-                }}
-              >
-                Informasi Distributor
-              </Typography>
-              <List dense disablePadding>
-                {user.phone && (
-                  <>
-                    <ListItem disableGutters sx={{ py: 1 }}>
-                      <Phone sx={{ fontSize: 18, color: "#0891b2", mr: 1.5 }} />
-                      <ListItemText
-                        primary={
-                          <Typography variant="body2" fontWeight={600}>
-                            {user.phone}
-                          </Typography>
-                        }
-                        secondary="Nomor Telepon"
-                      />
-                    </ListItem>
-                    <Divider />
-                  </>
-                )}
-                {user.address && (
-                  <>
-                    <ListItem disableGutters sx={{ py: 1 }}>
-                      <LocationOn
-                        sx={{ fontSize: 18, color: "#0891b2", mr: 1.5 }}
-                      />
-                      <ListItemText
-                        primary={
-                          <Typography variant="body2" fontWeight={600}>
-                            {user.address}
-                          </Typography>
-                        }
-                        secondary="Alamat"
-                      />
-                    </ListItem>
-                    <Divider />
-                  </>
-                )}
-                <ListItem disableGutters sx={{ py: 1 }}>
-                  <Person sx={{ fontSize: 18, color: "#0891b2", mr: 1.5 }} />
-                  <ListItemText
-                    primary={
-                      <Typography variant="body2" fontWeight={600}>
-                        AMDK Arroyyan99
-                      </Typography>
-                    }
-                    secondary="Perusahaan"
-                  />
-                </ListItem>
-                <Divider />
-                <ListItem disableGutters sx={{ py: 1 }}>
-                  <LocationOn
-                    sx={{ fontSize: 18, color: "#0891b2", mr: 1.5 }}
-                  />
-                  <ListItemText
-                    primary={
-                      <Typography variant="body2" fontWeight={600}>
-                        Bogatama, Tulang Bawang, Lampung
-                      </Typography>
-                    }
-                    secondary="Lokasi Pabrik"
-                  />
-                </ListItem>
-              </List>
-            </CardContent>
-          </Card>
-
-          <Button
-            variant="outlined"
-            fullWidth
-            size="large"
-            color="error"
-            startIcon={<Logout />}
-            onClick={() => setLogoutDialog(true)}
-            sx={{ borderRadius: 2.5, fontWeight: "bold", py: 1.4 }}
-          >
-            Keluar
-          </Button>
-        </Box>
-      )}
-
-      {activeTab === 1 && (
-        <Box>
-          <Card
-            elevation={0}
-            sx={{
-              mb: 2,
-              borderRadius: 3,
-              border: "1px solid",
-              borderColor: "divider",
-            }}
-          >
-            <CardContent sx={{ p: 2.5 }}>
-              <Box
-                sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2.5 }}
-              >
-                <Edit sx={{ color: "#0891b2" }} />
-                <Typography variant="subtitle1" fontWeight="bold">
-                  Edit Profil
-                </Typography>
-              </Box>
-
-              {saveError && (
-                <Alert
-                  severity="error"
-                  sx={{ mb: 2, borderRadius: 2 }}
-                  onClose={() => setSaveError("")}
-                >
-                  {saveError}
-                </Alert>
-              )}
-              {saveSuccess && (
-                <Alert
-                  severity="success"
-                  icon={<CheckCircle />}
-                  sx={{ mb: 2, borderRadius: 2 }}
-                >
-                  Profil berhasil diperbarui! Perubahan sudah masuk ke sistem
-                  admin.
-                </Alert>
-              )}
-
-              <TextField
-                fullWidth
-                label="Nama Distributor"
-                value={editForm.distributor_name}
-                onChange={(e) =>
-                  setEditForm((p) => ({
-                    ...p,
-                    distributor_name: e.target.value,
-                  }))
-                }
-                sx={fieldSx}
-                size="small"
-                required
+        {done ? (
+          <div className="py-12 text-center px-5">
+            <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto mb-3" />
+            <p className="font-semibold text-gray-900">Profil diperbarui</p>
+          </div>
+        ) : (
+          <div className="px-5 py-4 space-y-4">
+            {error && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-xl flex gap-2 text-sm text-red-700">
+                <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                {error}
+              </div>
+            )}
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1.5">
+                Nama
+              </label>
+              <input
+                type="text"
+                value={namaSales}
+                onChange={(e) => setNamaSales(e.target.value)}
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
               />
-
-              <TextField
-                fullWidth
-                label="Nama Lengkap (Pemilik)"
-                value={editForm.name}
-                onChange={(e) =>
-                  setEditForm((p) => ({ ...p, name: e.target.value }))
-                }
-                sx={fieldSx}
-                size="small"
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1.5">
+                No. HP
+              </label>
+              <input
+                type="text"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
               />
-
-              <TextField
-                fullWidth
-                label="Email"
-                type="email"
-                value={editForm.email}
-                onChange={(e) =>
-                  setEditForm((p) => ({ ...p, email: e.target.value }))
-                }
-                sx={fieldSx}
-                size="small"
-                helperText="Perubahan email hanya memperbarui data profil, bukan akun login"
-              />
-
-              <TextField
-                fullWidth
-                label="Nomor Telepon"
-                value={editForm.phone}
-                onChange={(e) =>
-                  setEditForm((p) => ({ ...p, phone: e.target.value }))
-                }
-                sx={fieldSx}
-                size="small"
-                placeholder="08xxxxxxxxxx"
-              />
-
-              <TextField
-                fullWidth
-                label="Alamat"
-                value={editForm.address}
-                onChange={(e) =>
-                  setEditForm((p) => ({ ...p, address: e.target.value }))
-                }
-                sx={{ ...fieldSx, mb: 0 }}
-                size="small"
-                multiline
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1.5">
+                Alamat
+              </label>
+              <textarea
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
                 rows={2}
+                className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
               />
-            </CardContent>
-          </Card>
-
-          <Alert severity="info" sx={{ mb: 2, borderRadius: 2 }}>
-            <Typography variant="caption">
-              <strong>Catatan:</strong> Nama perusahaan dan lokasi pabrik tidak
-              dapat diubah. Hubungi admin jika diperlukan.
-            </Typography>
-          </Alert>
-
-          <Button
-            fullWidth
-            variant="contained"
-            size="large"
-            startIcon={
-              saving ? <CircularProgress size={16} color="inherit" /> : <Save />
-            }
-            onClick={handleSave}
-            disabled={saving}
-            sx={{
-              borderRadius: 2.5,
-              fontWeight: "bold",
-              py: 1.4,
-              background: "linear-gradient(135deg, #1e3a8a, #0891b2)",
-            }}
-          >
-            {saving ? "Menyimpan..." : "Simpan Perubahan"}
-          </Button>
-        </Box>
-      )}
-
-      {activeTab === 2 && (
-        <Box>
-          {loadingReport ? (
-            <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
-              <CircularProgress />
-            </Box>
-          ) : reportError ? (
-            <Alert
-              severity="error"
-              sx={{ borderRadius: 2 }}
-              onClose={() => setReportError("")}
+            </div>
+            <button
+              onClick={handleSubmit}
+              disabled={saving}
+              className="w-full bg-cyan-600 text-white py-3.5 rounded-xl font-semibold disabled:opacity-60 flex items-center justify-center gap-2 cursor-pointer"
             >
-              {reportError}
-            </Alert>
-          ) : (
-            <>
-              <Card
-                elevation={0}
-                sx={{
-                  mb: 2,
-                  borderRadius: 3,
-                  border: "1px solid",
-                  borderColor: "divider",
-                }}
-              >
-                <CardContent sx={{ p: 2 }}>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 1,
-                      mb: 2,
-                    }}
-                  >
-                    <Receipt sx={{ color: "#0891b2" }} />
-                    <Typography variant="subtitle2" fontWeight="bold">
-                      Laporan Hari Ini
-                    </Typography>
-                    <Typography
-                      variant="caption"
-                      color="text.disabled"
-                      sx={{ ml: "auto" }}
-                    >
-                      {new Date().toLocaleDateString("id-ID", {
-                        day: "numeric",
-                        month: "long",
-                        year: "numeric",
-                      })}
-                    </Typography>
-                  </Box>
-                  {dailyTrx === 0 ? (
-                    <Alert severity="info" sx={{ borderRadius: 2 }}>
-                      Belum ada transaksi hari ini
-                    </Alert>
-                  ) : (
-                    <Box sx={{ display: "flex", gap: 2 }}>
-                      <Box
-                        sx={{
-                          flex: 1,
-                          bgcolor: "#eff6ff",
-                          borderRadius: 2,
-                          p: 1.5,
-                          textAlign: "center",
-                        }}
-                      >
-                        <Typography
-                          variant="h6"
-                          fontWeight="bold"
-                          color="#0891b2"
-                        >
-                          {formatRp(dailySales)}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          Total Penjualan
-                        </Typography>
-                      </Box>
-                      <Box
-                        sx={{
-                          flex: 1,
-                          bgcolor: "#f5f3ff",
-                          borderRadius: 2,
-                          p: 1.5,
-                          textAlign: "center",
-                        }}
-                      >
-                        <Typography
-                          variant="h6"
-                          fontWeight="bold"
-                          color="#7c3aed"
-                        >
-                          {dailyTrx}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          Transaksi
-                        </Typography>
-                      </Box>
-                    </Box>
-                  )}
-                </CardContent>
-              </Card>
-
-              <Card
-                elevation={0}
-                sx={{
-                  mb: 2,
-                  borderRadius: 3,
-                  border: "1px solid",
-                  borderColor: "divider",
-                }}
-              >
-                <CardContent sx={{ p: 2 }}>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 1,
-                      mb: 2,
-                    }}
-                  >
-                    <TrendingUp sx={{ color: "#059669" }} />
-                    <Typography variant="subtitle2" fontWeight="bold">
-                      Laporan Bulan Ini
-                    </Typography>
-                    <Typography
-                      variant="caption"
-                      color="text.disabled"
-                      sx={{ ml: "auto" }}
-                    >
-                      {new Date().toLocaleDateString("id-ID", {
-                        month: "long",
-                        year: "numeric",
-                      })}
-                    </Typography>
-                  </Box>
-                  {monthlyTrx === 0 ? (
-                    <Alert severity="info" sx={{ borderRadius: 2 }}>
-                      Belum ada transaksi bulan ini
-                    </Alert>
-                  ) : (
-                    <Box sx={{ display: "flex", gap: 2 }}>
-                      <Box
-                        sx={{
-                          flex: 1,
-                          bgcolor: "#f0fdf4",
-                          borderRadius: 2,
-                          p: 1.5,
-                          textAlign: "center",
-                        }}
-                      >
-                        <Typography
-                          variant="h6"
-                          fontWeight="bold"
-                          color="#059669"
-                        >
-                          {formatRp(monthlySales)}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          Total Penjualan
-                        </Typography>
-                      </Box>
-                      <Box
-                        sx={{
-                          flex: 1,
-                          bgcolor: "#fef9c3",
-                          borderRadius: 2,
-                          p: 1.5,
-                          textAlign: "center",
-                        }}
-                      >
-                        <Typography
-                          variant="h6"
-                          fontWeight="bold"
-                          color="#d97706"
-                        >
-                          {monthlyTrx}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          Transaksi
-                        </Typography>
-                      </Box>
-                    </Box>
-                  )}
-                </CardContent>
-              </Card>
-
-              <Card
-                elevation={0}
-                sx={{
-                  borderRadius: 3,
-                  border: "1px solid",
-                  borderColor: "divider",
-                }}
-              >
-                <CardContent sx={{ p: 2 }}>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 1,
-                      mb: 2,
-                    }}
-                  >
-                    <Star sx={{ color: "#d97706" }} />
-                    <Typography variant="subtitle2" fontWeight="bold">
-                      Produk Terlaris
-                    </Typography>
-                  </Box>
-                  {topProducts.length === 0 ? (
-                    <Alert severity="info" sx={{ borderRadius: 2 }}>
-                      Belum ada data penjualan
-                    </Alert>
-                  ) : (
-                    <List dense disablePadding>
-                      {topProducts.map((p, i) => (
-                        <Box key={i}>
-                          {i > 0 && <Divider sx={{ my: 0.5 }} />}
-                          <ListItem disableGutters sx={{ py: 0.75 }}>
-                            <Box
-                              sx={{
-                                width: 24,
-                                height: 24,
-                                borderRadius: "50%",
-                                bgcolor: i < 3 ? "#0891b2" : "#e2e8f0",
-                                color: i < 3 ? "white" : "#64748b",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                fontSize: 11,
-                                fontWeight: "bold",
-                                mr: 1.5,
-                                flexShrink: 0,
-                              }}
-                            >
-                              {i + 1}
-                            </Box>
-                            <ListItemText
-                              primary={
-                                <Typography variant="body2" fontWeight={600}>
-                                  {p.name}
-                                </Typography>
-                              }
-                              secondary={`${p.totalSold} terjual · ${formatRp(p.revenue)}`}
-                            />
-                          </ListItem>
-                        </Box>
-                      ))}
-                    </List>
-                  )}
-                </CardContent>
-              </Card>
-            </>
-          )}
-        </Box>
-      )}
-
-      <Dialog
-        open={logoutDialog}
-        onClose={() => setLogoutDialog(false)}
-        PaperProps={{ sx: { borderRadius: 3, mx: 2 } }}
-      >
-        <DialogTitle sx={{ pb: 1 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <Logout color="error" />
-            <Typography variant="subtitle1" fontWeight="bold">
-              Keluar?
-            </Typography>
-          </Box>
-        </DialogTitle>
-        <DialogContent>
-          <Typography variant="body2" color="text.secondary">
-            Apakah Anda yakin ingin keluar dari aplikasi?
-          </Typography>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-          <Button
-            onClick={() => setLogoutDialog(false)}
-            variant="outlined"
-            sx={{ borderRadius: 2, flex: 1 }}
-          >
-            Batal
-          </Button>
-          <Button
-            onClick={() => {
-              setLogoutDialog(false);
-              onLogout();
-            }}
-            variant="contained"
-            color="error"
-            sx={{ borderRadius: 2, flex: 1, fontWeight: "bold" }}
-          >
-            Ya, Keluar
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
+              {saving && <RefreshCw className="w-4 h-4 animate-spin" />}
+              {saving ? "Menyimpan..." : "Simpan Perubahan"}
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
