@@ -13,12 +13,18 @@ import {
   Power,
   ShieldCheck,
   ShieldAlert,
+  KeyRound,
+  UserPlus,
+  Copy,
+  Check,
 } from "lucide-react";
 import {
   getAllSales,
   createSales,
   updateSales,
   deleteSales,
+  createSalesAccount,
+  resetSalesPassword,
   Sales,
 } from "../../../services/salesService";
 import { supabaseAdmin } from "../../../lib/supabaseAdmin";
@@ -54,6 +60,12 @@ export function SalesManagement() {
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<Sales | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [accountModalSales, setAccountModalSales] = useState<Sales | null>(
+    null,
+  );
+  const [accountModalMode, setAccountModalMode] = useState<"create" | "reset">(
+    "create",
+  );
 
   const fetchSales = useCallback(async () => {
     setLoading(true);
@@ -318,17 +330,27 @@ export function SalesManagement() {
                               {s.is_active ? "Aktif" : "Nonaktif"}
                             </span>
                             {s.user_id ? (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-600 border border-blue-100">
+                              <button
+                                onClick={() => {
+                                  setAccountModalMode("reset");
+                                  setAccountModalSales(s);
+                                }}
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-600 border border-blue-100 hover:bg-blue-100 cursor-pointer"
+                              >
                                 <ShieldCheck className="w-3 h-3" />
-                                {s.users?.is_approved
-                                  ? "Akun aktif"
-                                  : "Menunggu approval"}
-                              </span>
+                                Akun aktif — Reset Password
+                              </button>
                             ) : (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-600 border border-amber-100">
-                                <ShieldAlert className="w-3 h-3" />
-                                Belum ada akun login
-                              </span>
+                              <button
+                                onClick={() => {
+                                  setAccountModalMode("create");
+                                  setAccountModalSales(s);
+                                }}
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-600 border border-amber-100 hover:bg-amber-100 cursor-pointer"
+                              >
+                                <UserPlus className="w-3 h-3" />
+                                Buat Akun Login
+                              </button>
                             )}
                           </div>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-sm text-gray-600">
@@ -391,6 +413,7 @@ export function SalesManagement() {
         )}
       </div>
 
+      {/* Modal tambah / edit sales */}
       {showForm && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
@@ -530,6 +553,227 @@ export function SalesManagement() {
           </div>
         </div>
       )}
+      {accountModalSales && (
+        <AccountModal
+          sales={accountModalSales}
+          mode={accountModalMode}
+          onClose={() => setAccountModalSales(null)}
+          onSuccess={() => {
+            setAccountModalSales(null);
+            fetchSales();
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function generatePassword() {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
+  let out = "";
+  for (let i = 0; i < 10; i++)
+    out += chars[Math.floor(Math.random() * chars.length)];
+  return out;
+}
+
+function AccountModal({
+  sales,
+  mode,
+  onClose,
+  onSuccess,
+}: {
+  sales: Sales;
+  mode: "create" | "reset";
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
+  const [email, setEmail] = useState(sales.users?.email ?? "");
+  const [password, setPassword] = useState(generatePassword());
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [done, setDone] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(`Email: ${email}\nPassword: ${password}`);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+
+  const handleSubmit = async () => {
+    setError(null);
+    if (mode === "create" && !email.trim()) {
+      setError("Email wajib diisi.");
+      return;
+    }
+    if (!password || password.length < 6) {
+      setError("Password minimal 6 karakter.");
+      return;
+    }
+
+    setSaving(true);
+
+    if (mode === "create") {
+      const { error: createError } = await createSalesAccount(
+        sales.id,
+        sales.nama_sales,
+        email.trim(),
+        password,
+      );
+      if (createError) {
+        setError((createError as any).message ?? "Gagal membuat akun.");
+        setSaving(false);
+        return;
+      }
+    } else {
+      if (!sales.users?.auth_user_id) {
+        setError("Data akun tidak lengkap, tidak bisa reset password.");
+        setSaving(false);
+        return;
+      }
+      const { error: resetError } = await resetSalesPassword(
+        sales.users.auth_user_id,
+        password,
+      );
+      if (resetError) {
+        setError((resetError as any).message ?? "Gagal reset password.");
+        setSaving(false);
+        return;
+      }
+    }
+
+    setSaving(false);
+    setDone(true);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
+        <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+          <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+            <KeyRound className="w-5 h-5 text-blue-600" />
+            {mode === "create" ? "Buat Akun Login" : "Reset Password"} —{" "}
+            {sales.nama_sales}
+          </h3>
+          <button
+            onClick={onClose}
+            className="p-1.5 hover:bg-gray-100 rounded-lg cursor-pointer"
+          >
+            <X className="w-5 h-5 text-gray-500" />
+          </button>
+        </div>
+
+        {done ? (
+          <div className="p-6">
+            <div className="p-4 bg-green-50 border border-green-200 rounded-xl mb-4">
+              <p className="text-sm text-green-800 font-medium mb-2">
+                {mode === "create"
+                  ? "Akun berhasil dibuat"
+                  : "Password berhasil direset"}
+                . Kirimkan detail ini ke sales agar bisa login di app mobile
+                Sales:
+              </p>
+              <div className="bg-white border border-green-200 rounded-lg p-3 font-mono text-sm space-y-1">
+                <p>Email: {email}</p>
+                <p>Password: {password}</p>
+              </div>
+              <button
+                onClick={handleCopy}
+                className="mt-3 flex items-center gap-1.5 text-xs text-green-700 hover:text-green-800 cursor-pointer"
+              >
+                {copied ? (
+                  <Check className="w-3.5 h-3.5" />
+                ) : (
+                  <Copy className="w-3.5 h-3.5" />
+                )}
+                {copied ? "Tersalin!" : "Salin ke clipboard"}
+              </button>
+            </div>
+            <button
+              onClick={onSuccess}
+              className="w-full px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-medium cursor-pointer"
+            >
+              Selesai
+            </button>
+          </div>
+        ) : (
+          <>
+            <div className="p-6 space-y-4">
+              {error && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
+                  <p className="text-sm text-red-700">{error}</p>
+                </div>
+              )}
+
+              {mode === "create" ? (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                    Email Login <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="sales@email.com"
+                  />
+                </div>
+              ) : (
+                <p className="text-sm text-gray-600 bg-gray-50 border border-gray-200 rounded-lg p-3">
+                  Email login:{" "}
+                  <span className="font-medium">{sales.users?.email}</span>
+                </p>
+              )}
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Password {mode === "create" ? "Awal" : "Baru"}
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setPassword(generatePassword())}
+                    className="px-3 py-2 border border-gray-300 rounded-lg text-xs text-gray-600 hover:bg-gray-50 cursor-pointer whitespace-nowrap"
+                  >
+                    Acak Ulang
+                  </button>
+                </div>
+                <p className="text-xs text-gray-400 mt-1">
+                  Sales bisa memakai password ini untuk login pertama kali.
+                  Sarankan untuk menggantinya sendiri setelahnya.
+                </p>
+              </div>
+            </div>
+
+            <div className="border-t border-gray-200 px-6 py-4 flex gap-3">
+              <button
+                onClick={onClose}
+                className="flex-1 px-4 py-2.5 border border-gray-300 rounded-xl text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                onClick={handleSubmit}
+                disabled={saving}
+                className="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-medium cursor-pointer disabled:opacity-50"
+              >
+                {saving
+                  ? "Menyimpan..."
+                  : mode === "create"
+                    ? "Buat Akun"
+                    : "Reset Password"}
+              </button>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }
