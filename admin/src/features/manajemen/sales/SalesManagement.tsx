@@ -198,14 +198,14 @@ export function SalesManagement() {
           <button
             onClick={fetchSales}
             disabled={loading}
-            className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 cursor-pointer"
+            className="flex items-center gap-2 px-4 py-2 clay-inset border-0 rounded-lg text-sm text-gray-700 hover:bg-[rgba(215,233,255,0.5)] transition-colors disabled:opacity-50 cursor-pointer"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
             Refresh
           </button>
           <button
             onClick={openCreateForm}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors cursor-pointer"
+            className="flex items-center gap-2 px-4 py-2 clay-blue clay-pressable text-white rounded-lg text-sm font-medium transition-colors cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             Tambah Sales
@@ -240,10 +240,10 @@ export function SalesManagement() {
           <button
             key={key}
             onClick={() => setFilter(key as FilterType)}
-            className={`bg-white rounded-lg border p-6 text-left transition-all cursor-pointer ${
+            className={`clay-raised clay-pressable rounded-lg p-6 text-left transition-all cursor-pointer ${
               filter === key
                 ? `border-${color}-500 ring-2 ring-${color}-100`
-                : "border-gray-200 hover:border-gray-300"
+                : "clay-raised-sm border-0"
             }`}
           >
             <div
@@ -257,8 +257,8 @@ export function SalesManagement() {
         ))}
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200">
-        <div className="border-b border-gray-200 px-6 py-4 flex items-center gap-4">
+      <div className="clay-raised rounded-lg">
+        <div className="border-b border-[rgba(140,172,214,0.35)] px-6 py-4 flex items-center gap-4">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
@@ -266,7 +266,7 @@ export function SalesManagement() {
               placeholder="Cari nama atau nomor HP..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-9 pr-4 py-2 clay-inset border-0 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
             />
           </div>
           <span className="text-sm text-gray-500">
@@ -275,7 +275,7 @@ export function SalesManagement() {
         </div>
 
         {error && (
-          <div className="mx-6 mt-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3">
+          <div className="mx-6 mt-4 p-4 clay-inset-red border-0 rounded-lg flex items-center gap-3">
             <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
             <p className="text-sm text-red-700">{error}</p>
           </div>
@@ -300,8 +300,8 @@ export function SalesManagement() {
                     key={s.id}
                     className={`border rounded-xl p-5 transition-all ${
                       !s.is_active
-                        ? "border-gray-200 bg-gray-50"
-                        : "border-gray-200 bg-white hover:shadow-sm"
+                        ? "border-[rgba(140,172,214,0.35)] bg-[rgba(215,233,255,0.4)]"
+                        : "border-[rgba(140,172,214,0.35)] bg-white hover:shadow-sm"
                     }`}
                   >
                     <div className="flex items-start justify-between gap-4">
@@ -309,7 +309,7 @@ export function SalesManagement() {
                         <div
                           className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-lg flex-shrink-0 ${
                             s.is_active
-                              ? "bg-blue-600 text-white"
+                              ? "clay-blue text-white"
                               : "bg-gray-300 text-white"
                           }`}
                         >
@@ -391,7 +391,7 @@ export function SalesManagement() {
                             </button>
                             <button
                               onClick={() => openEditForm(s)}
-                              className="flex items-center gap-1.5 px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm rounded-lg transition-colors cursor-pointer"
+                              className="flex items-center gap-1.5 px-3 py-2 bg-[rgba(215,233,255,0.55)] hover:bg-gray-200 text-gray-700 text-sm rounded-lg transition-colors cursor-pointer"
                             >
                               <Pencil className="w-4 h-4" /> Edit
                             </button>
@@ -417,13 +417,13 @@ export function SalesManagement() {
       {showForm && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+            <div className="border-b border-[rgba(140,172,214,0.35)] px-6 py-4 flex items-center justify-between">
               <h3 className="text-lg font-semibold text-gray-900">
                 {form.id ? "Edit Sales" : "Tambah Sales"}
               </h3>
               <button
                 onClick={() => setShowForm(false)}
-                className="p-1.5 hover:bg-gray-100 rounded-lg cursor-pointer"
+                className="p-1.5 hover:bg-[rgba(215,233,255,0.55)] rounded-lg cursor-pointer"
               >
                 <X className="w-5 h-5 text-gray-500" />
               </button>
@@ -431,7 +431,7 @@ export function SalesManagement() {
 
             <div className="p-6 space-y-4">
               {formError && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
+                <div className="p-3 clay-inset-red border-0 rounded-lg flex items-center gap-2">
                   <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
                   <p className="text-sm text-red-700">{formError}</p>
                 </div>
@@ -447,7 +447,7 @@ export function SalesManagement() {
                   onChange={(e) =>
                     setForm({ ...form, nama_sales: e.target.value })
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 clay-inset border-0 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
                   placeholder="Nama lengkap sales"
                 />
               </div>
@@ -463,7 +463,7 @@ export function SalesManagement() {
                     onChange={(e) =>
                       setForm({ ...form, phone: e.target.value })
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 clay-inset border-0 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
                   />
                 </div>
                 <div>
@@ -476,12 +476,12 @@ export function SalesManagement() {
                     onChange={(e) =>
                       setForm({ ...form, address: e.target.value })
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 clay-inset border-0 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
                   />
                 </div>
               </div>
 
-              <p className="text-xs text-gray-500 bg-gray-50 border border-gray-200 rounded-lg p-3">
+              <p className="text-xs text-gray-500 bg-[rgba(215,233,255,0.4)] border border-[rgba(140,172,214,0.35)] rounded-lg p-3">
                 Akun login untuk aplikasi mobile Sales dibuat terpisah lewat
                 menu approval akun, lalu dihubungkan otomatis ke data sales ini
                 berdasarkan email yang didaftarkan.
@@ -494,23 +494,23 @@ export function SalesManagement() {
                   onChange={(e) =>
                     setForm({ ...form, is_active: e.target.checked })
                   }
-                  className="rounded border-gray-300"
+                  className="rounded border-[rgba(140,172,214,0.5)]"
                 />
                 Aktif
               </label>
             </div>
 
-            <div className="border-t border-gray-200 px-6 py-4 flex gap-3">
+            <div className="border-t border-[rgba(140,172,214,0.35)] px-6 py-4 flex gap-3">
               <button
                 onClick={() => setShowForm(false)}
-                className="flex-1 px-4 py-2.5 border border-gray-300 rounded-xl text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+                className="flex-1 px-4 py-2.5 clay-inset-sm border-0 rounded-xl text-sm text-gray-700 cursor-pointer"
               >
                 Batal
               </button>
               <button
                 onClick={handleSubmit}
                 disabled={saving}
-                className="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-medium cursor-pointer disabled:opacity-50"
+                className="flex-1 px-4 py-2.5 clay-blue clay-pressable text-white rounded-xl text-sm font-medium cursor-pointer disabled:opacity-50"
               >
                 {saving
                   ? "Menyimpan..."
@@ -539,13 +539,13 @@ export function SalesManagement() {
             <div className="flex gap-3">
               <button
                 onClick={() => setConfirmDelete(null)}
-                className="flex-1 px-4 py-2.5 border border-gray-300 rounded-xl text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+                className="flex-1 px-4 py-2.5 clay-inset-sm border-0 rounded-xl text-sm text-gray-700 cursor-pointer"
               >
                 Batal
               </button>
               <button
                 onClick={() => handleDelete(confirmDelete)}
-                className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-medium cursor-pointer"
+                className="flex-1 px-4 py-2.5 clay-red clay-pressable text-white rounded-xl text-sm font-medium cursor-pointer"
               >
                 Ya, Hapus
               </button>
@@ -649,7 +649,7 @@ function AccountModal({
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
-        <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+        <div className="border-b border-[rgba(140,172,214,0.35)] px-6 py-4 flex items-center justify-between">
           <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
             <KeyRound className="w-5 h-5 text-blue-600" />
             {mode === "create" ? "Buat Akun Login" : "Reset Password"} —{" "}
@@ -657,7 +657,7 @@ function AccountModal({
           </h3>
           <button
             onClick={onClose}
-            className="p-1.5 hover:bg-gray-100 rounded-lg cursor-pointer"
+            className="p-1.5 hover:bg-[rgba(215,233,255,0.55)] rounded-lg cursor-pointer"
           >
             <X className="w-5 h-5 text-gray-500" />
           </button>
@@ -665,7 +665,7 @@ function AccountModal({
 
         {done ? (
           <div className="p-6">
-            <div className="p-4 bg-green-50 border border-green-200 rounded-xl mb-4">
+            <div className="p-4 clay-inset-green border-0 rounded-xl mb-4">
               <p className="text-sm text-green-800 font-medium mb-2">
                 {mode === "create"
                   ? "Akun berhasil dibuat"
@@ -673,7 +673,7 @@ function AccountModal({
                 . Kirimkan detail ini ke sales agar bisa login di app mobile
                 Sales:
               </p>
-              <div className="bg-white border border-green-200 rounded-lg p-3 font-mono text-sm space-y-1">
+              <div className="clay-inset-green border-0 rounded-lg p-3 font-mono text-sm space-y-1">
                 <p>Email: {email}</p>
                 <p>Password: {password}</p>
               </div>
@@ -691,7 +691,7 @@ function AccountModal({
             </div>
             <button
               onClick={onSuccess}
-              className="w-full px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-medium cursor-pointer"
+              className="w-full px-4 py-2.5 clay-blue clay-pressable text-white rounded-xl text-sm font-medium cursor-pointer"
             >
               Selesai
             </button>
@@ -700,7 +700,7 @@ function AccountModal({
           <>
             <div className="p-6 space-y-4">
               {error && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
+                <div className="p-3 clay-inset-red border-0 rounded-lg flex items-center gap-2">
                   <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
                   <p className="text-sm text-red-700">{error}</p>
                 </div>
@@ -715,12 +715,12 @@ function AccountModal({
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 clay-inset border-0 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
                     placeholder="sales@email.com"
                   />
                 </div>
               ) : (
-                <p className="text-sm text-gray-600 bg-gray-50 border border-gray-200 rounded-lg p-3">
+                <p className="text-sm text-gray-600 bg-[rgba(215,233,255,0.4)] border border-[rgba(140,172,214,0.35)] rounded-lg p-3">
                   Email login:{" "}
                   <span className="font-medium">{sales.users?.email}</span>
                 </p>
@@ -735,12 +735,12 @@ function AccountModal({
                     type="text"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="flex-1 px-3 py-2 clay-inset border-0 rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
                   />
                   <button
                     type="button"
                     onClick={() => setPassword(generatePassword())}
-                    className="px-3 py-2 border border-gray-300 rounded-lg text-xs text-gray-600 hover:bg-gray-50 cursor-pointer whitespace-nowrap"
+                    className="px-3 py-2 clay-inset border-0 rounded-lg text-xs text-gray-600 hover:bg-[rgba(215,233,255,0.5)] cursor-pointer whitespace-nowrap"
                   >
                     Acak Ulang
                   </button>
@@ -752,17 +752,17 @@ function AccountModal({
               </div>
             </div>
 
-            <div className="border-t border-gray-200 px-6 py-4 flex gap-3">
+            <div className="border-t border-[rgba(140,172,214,0.35)] px-6 py-4 flex gap-3">
               <button
                 onClick={onClose}
-                className="flex-1 px-4 py-2.5 border border-gray-300 rounded-xl text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+                className="flex-1 px-4 py-2.5 clay-inset-sm border-0 rounded-xl text-sm text-gray-700 cursor-pointer"
               >
                 Batal
               </button>
               <button
                 onClick={handleSubmit}
                 disabled={saving}
-                className="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-medium cursor-pointer disabled:opacity-50"
+                className="flex-1 px-4 py-2.5 clay-blue clay-pressable text-white rounded-xl text-sm font-medium cursor-pointer disabled:opacity-50"
               >
                 {saving
                   ? "Menyimpan..."

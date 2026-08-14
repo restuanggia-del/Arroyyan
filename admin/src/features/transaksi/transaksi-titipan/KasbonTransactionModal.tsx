@@ -184,13 +184,13 @@ export function KasbonTransactionModal({
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl w-full max-w-3xl shadow-2xl max-h-[90vh] flex flex-col">
-        <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between flex-shrink-0">
+        <div className="border-b border-[rgba(140,172,214,0.35)] px-6 py-4 flex items-center justify-between flex-shrink-0">
           <h2 className="text-xl font-semibold text-gray-900">
             Buat Titipan Baru
           </h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
+            className="p-2 hover:bg-[rgba(215,233,255,0.55)] rounded-lg transition-colors cursor-pointer"
           >
             <X className="w-5 h-5 text-gray-500" />
           </button>
@@ -198,7 +198,7 @@ export function KasbonTransactionModal({
 
         <div className="p-6 overflow-y-auto flex-1">
           {formError && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-sm text-red-700">
+            <div className="mb-4 p-3 clay-inset-red border-0 rounded-lg flex items-center gap-2 text-sm text-red-700">
               <AlertCircle className="w-4 h-4 flex-shrink-0" />
               {formError}
             </div>
@@ -219,7 +219,7 @@ export function KasbonTransactionModal({
                   <select
                     value={customerId}
                     onChange={(e) => setCustomerId(e.target.value)}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                    className="w-full px-4 py-2.5 clay-inset border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40 cursor-pointer"
                   >
                     <option value="">-- Pilih Toko / Pelanggan --</option>
                     {customers.map((c) => (
@@ -238,7 +238,7 @@ export function KasbonTransactionModal({
                   <select
                     value={salesId}
                     onChange={(e) => setSalesId(e.target.value)}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                    className="w-full px-4 py-2.5 clay-inset border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40 cursor-pointer"
                   >
                     <option value="">-- Pilih Sales --</option>
                     {salesList.map((s) => (
@@ -254,7 +254,7 @@ export function KasbonTransactionModal({
               </div>
 
               {!salesId ? (
-                <p className="text-sm text-gray-400 text-center py-10 border border-dashed border-gray-200 rounded-xl">
+                <p className="text-sm text-gray-400 text-center py-10 border border-dashed border-[rgba(140,172,214,0.35)] rounded-xl">
                   Pilih sales terlebih dahulu untuk melihat produk & stok yang
                   tersedia.
                 </p>
@@ -281,8 +281,8 @@ export function KasbonTransactionModal({
                             disabled={disabled}
                             className={`text-left border rounded-xl p-3 transition-colors ${
                               disabled
-                                ? "border-gray-100 bg-gray-50 opacity-50 cursor-not-allowed"
-                                : "border-gray-200 hover:border-blue-400 hover:bg-blue-50 cursor-pointer"
+                                ? "border-[rgba(140,172,214,0.2)] bg-[rgba(215,233,255,0.4)] opacity-50 cursor-not-allowed"
+                                : "border-[rgba(140,172,214,0.35)] hover:border-blue-400 hover:bg-blue-50 cursor-pointer"
                             }`}
                           >
                             <p className="text-sm font-medium text-gray-900 leading-tight mb-1">
@@ -309,7 +309,7 @@ export function KasbonTransactionModal({
                       Keranjang Titipan
                     </h3>
                     {cart.length === 0 ? (
-                      <p className="text-sm text-gray-400 text-center py-10 border border-dashed border-gray-200 rounded-xl">
+                      <p className="text-sm text-gray-400 text-center py-10 border border-dashed border-[rgba(140,172,214,0.35)] rounded-xl">
                         Belum ada produk dipilih
                       </p>
                     ) : (
@@ -317,7 +317,7 @@ export function KasbonTransactionModal({
                         {cart.map((item) => (
                           <div
                             key={item.product.id}
-                            className="border border-gray-200 rounded-xl p-3"
+                            className="border border-[rgba(140,172,214,0.35)] rounded-xl p-3"
                           >
                             <div className="flex items-start justify-between mb-2">
                               <p className="text-sm font-medium text-gray-900 flex-1 leading-tight">
@@ -351,7 +351,7 @@ export function KasbonTransactionModal({
                                         : Number(e.target.value),
                                     )
                                   }
-                                  className="w-full pl-7 pr-2 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  className="w-full pl-7 pr-2 py-1.5 clay-inset border-0 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
                                 />
                               </div>
                               {(priceOptionsMap[item.product.id]?.length ?? 0) >
@@ -365,7 +365,7 @@ export function KasbonTransactionModal({
                                         Number(e.target.value),
                                       );
                                   }}
-                                  className="px-2 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer bg-blue-50/50"
+                                  className="px-2 py-1.5 border border-[rgba(140,172,214,0.35)] rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40 cursor-pointer bg-blue-50/50"
                                 >
                                   <option value="">Pilih...</option>
                                   <option value={item.product.price}>
@@ -385,7 +385,7 @@ export function KasbonTransactionModal({
                               <div className="flex items-center gap-1.5">
                                 <button
                                   onClick={() => updateQty(item.product.id, -1)}
-                                  className="w-7 h-7 border border-gray-300 rounded-lg flex items-center justify-center hover:bg-gray-50 cursor-pointer"
+                                  className="w-7 h-7 clay-raised-sm clay-pressable border-0 rounded-lg flex items-center justify-center cursor-pointer"
                                 >
                                   <Minus className="w-3.5 h-3.5" />
                                 </button>
@@ -394,7 +394,7 @@ export function KasbonTransactionModal({
                                 </span>
                                 <button
                                   onClick={() => updateQty(item.product.id, 1)}
-                                  className="w-7 h-7 border border-gray-300 rounded-lg flex items-center justify-center hover:bg-gray-50 cursor-pointer"
+                                  className="w-7 h-7 clay-raised-sm clay-pressable border-0 rounded-lg flex items-center justify-center cursor-pointer"
                                 >
                                   <Plus className="w-3.5 h-3.5" />
                                 </button>
@@ -417,7 +417,7 @@ export function KasbonTransactionModal({
           )}
         </div>
 
-        <div className="border-t border-gray-200 px-6 py-4 flex-shrink-0">
+        <div className="border-t border-[rgba(140,172,214,0.35)] px-6 py-4 flex-shrink-0">
           <div className="flex items-center justify-between mb-4">
             <div>
               <p className="text-xs text-gray-500">
@@ -441,7 +441,7 @@ export function KasbonTransactionModal({
               type="button"
               onClick={onClose}
               disabled={saving}
-              className="px-5 py-2.5 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors cursor-pointer disabled:opacity-50"
+              className="px-5 py-2.5 text-gray-700 bg-[rgba(215,233,255,0.55)] hover:bg-gray-200 rounded-xl transition-colors cursor-pointer disabled:opacity-50"
             >
               Batal
             </button>
@@ -449,7 +449,7 @@ export function KasbonTransactionModal({
               type="button"
               onClick={handleSubmit}
               disabled={saving || cart.length === 0}
-              className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-colors cursor-pointer disabled:opacity-70 flex items-center gap-2"
+              className="px-5 py-2.5 clay-blue clay-pressable text-white rounded-xl transition-colors cursor-pointer disabled:opacity-70 flex items-center gap-2"
             >
               {saving && <RefreshCw className="w-4 h-4 animate-spin" />}
               Simpan Titipan

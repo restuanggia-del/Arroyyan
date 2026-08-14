@@ -114,7 +114,7 @@ export function SalesPrediction() {
       </div>
 
       {historicalData.every((d) => d.penjualan === 0) && (
-        <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-700">
+        <div className="mb-6 p-4 clay-inset-amber border-0 rounded-xl text-sm text-amber-700">
           ⚠️ Belum ada data transaksi. Prediksi akan muncul setelah ada riwayat
           penjualan.
         </div>
@@ -122,7 +122,7 @@ export function SalesPrediction() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <div className="clay-raised rounded-xl p-6">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-lg font-semibold text-gray-900">
                 Grafik Penjualan & Prediksi
@@ -132,7 +132,7 @@ export function SalesPrediction() {
                 <select
                   value={period}
                   onChange={(e) => setPeriod(parseInt(e.target.value))}
-                  className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                  className="px-3 py-1.5 clay-inset border-0 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40 cursor-pointer"
                 >
                   <option value={2}>2 Bulan</option>
                   <option value={3}>3 Bulan</option>
@@ -224,7 +224,7 @@ export function SalesPrediction() {
             )}
           </div>
 
-          <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <div className="clay-raised rounded-xl p-6">
             <div className="flex items-center gap-2 mb-4">
               <Activity className="w-5 h-5 text-blue-600" />
               <h3 className="font-semibold text-gray-900">Metrik Akurasi</h3>
@@ -238,12 +238,12 @@ export function SalesPrediction() {
             {accuracy !== "—" && (
               <div className="w-full bg-gray-200 rounded-full h-2">
                 <div
-                  className="bg-blue-600 h-2 rounded-full"
+                  className="clay-fill h-2 rounded-full"
                   style={{ width: `${accuracy}%` }}
                 />
               </div>
             )}
-            <div className="pt-4 border-t border-gray-200 mt-4">
+            <div className="pt-4 border-t border-[rgba(140,172,214,0.35)] mt-4">
               <p className="text-xs text-gray-500">Periode Moving Average</p>
               <p className="text-lg font-semibold text-gray-900 mt-0.5">
                 {period} Bulan
@@ -251,7 +251,7 @@ export function SalesPrediction() {
             </div>
           </div>
 
-          <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <div className="clay-raised rounded-xl p-6">
             <div className="flex items-center gap-2 mb-4">
               <Calendar className="w-5 h-5 text-blue-600" />
               <h3 className="font-semibold text-gray-900">
@@ -262,7 +262,7 @@ export function SalesPrediction() {
               {historicalData.slice(-period).map((item) => (
                 <div
                   key={item.bulan}
-                  className="flex justify-between py-2 border-b border-gray-100 last:border-0"
+                  className="flex justify-between py-2 border-b border-[rgba(140,172,214,0.2)] last:border-0"
                 >
                   <span className="text-sm text-gray-600">{item.bulan}</span>
                   <span className="text-sm font-semibold text-gray-900">
@@ -275,7 +275,7 @@ export function SalesPrediction() {
             </div>
           </div>
 
-          <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <div className="clay-raised rounded-xl p-6">
             <div className="flex items-center gap-2 mb-4">
               <DollarSign className="w-5 h-5 text-green-600" />
               <h3 className="font-semibold text-gray-900">Statistik</h3>

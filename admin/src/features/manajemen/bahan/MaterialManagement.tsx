@@ -119,7 +119,7 @@ function MovementList({
         return (
           <div
             key={mov.id}
-            className="border border-gray-200 rounded-xl p-4 hover:bg-gray-50 transition-colors"
+            className="clay-raised-sm clay-pressable border-0 rounded-xl p-4 transition-colors"
           >
             <div className="flex items-start justify-between">
               <div className="flex items-start gap-3">
@@ -200,7 +200,7 @@ function StokGudangTab({
   return (
     <div>
       {!loading && lowStockItems.length > 0 && (
-        <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 mb-6 flex items-start gap-3">
+        <div className="clay-inset-amber border-0 rounded-xl p-4 mb-6 flex items-start gap-3">
           <AlertTriangle className="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" />
           <div>
             <h3 className="font-semibold text-orange-900 mb-1">
@@ -222,7 +222,7 @@ function StokGudangTab({
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="clay-raised rounded-lg p-6">
           <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
             <Boxes className="w-6 h-6 text-blue-600" />
           </div>
@@ -231,7 +231,7 @@ function StokGudangTab({
             {loading ? "—" : `${materials.length} Bahan`}
           </p>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="clay-raised rounded-lg p-6">
           <div className="w-12 h-12 bg-cyan-100 rounded-lg flex items-center justify-center mb-4">
             <Warehouse className="w-6 h-6 text-cyan-600" />
           </div>
@@ -240,7 +240,7 @@ function StokGudangTab({
             {loading ? "—" : totalStokGudang.toLocaleString("id-ID")}
           </p>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="clay-raised rounded-lg p-6">
           <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-4">
             <AlertTriangle className="w-6 h-6 text-orange-600" />
           </div>
@@ -251,15 +251,15 @@ function StokGudangTab({
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200">
-        <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between flex-wrap gap-3">
+      <div className="clay-raised rounded-lg">
+        <div className="border-b border-[rgba(140,172,214,0.35)] px-6 py-4 flex items-center justify-between flex-wrap gap-3">
           <div className="flex gap-2">
             <button
               onClick={() => setSubTab("daftar")}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
                 subTab === "daftar"
                   ? "bg-blue-50 text-blue-600"
-                  : "text-gray-600 hover:bg-gray-50"
+                  : "text-gray-600 hover:bg-[rgba(215,233,255,0.5)]"
               }`}
             >
               Daftar Bahan
@@ -269,7 +269,7 @@ function StokGudangTab({
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
                 subTab === "riwayat"
                   ? "bg-blue-50 text-blue-600"
-                  : "text-gray-600 hover:bg-gray-50"
+                  : "text-gray-600 hover:bg-[rgba(215,233,255,0.5)]"
               }`}
             >
               Riwayat Pergerakan
@@ -278,7 +278,7 @@ function StokGudangTab({
           <div className="flex gap-2 flex-wrap">
             <button
               onClick={onAddMaterial}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer"
+              className="clay-blue clay-pressable text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               Tambah Bahan
@@ -292,21 +292,21 @@ function StokGudangTab({
             </button>
             <button
               onClick={() => onAddTransaction("masuk")}
-              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer"
+              className="clay-green clay-pressable text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer"
             >
               <TrendingUp className="w-4 h-4" />
               Stok Masuk
             </button>
             <button
               onClick={() => onAddTransaction("ke_sementara")}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer"
+              className="clay-blue clay-pressable text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer"
             >
               <ArrowRightCircle className="w-4 h-4" />
               Pindah ke Sementara
             </button>
             <button
               onClick={() => onAddTransaction("keluar")}
-              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer"
+              className="clay-red clay-pressable text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer"
             >
               <TrendingDown className="w-4 h-4" />
               Stok Keluar
@@ -316,7 +316,7 @@ function StokGudangTab({
 
         <div className="p-6">
           {error && (
-            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3">
+            <div className="mb-4 p-4 clay-inset-red border-0 rounded-lg flex items-center gap-3">
               <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
               <p className="text-sm text-red-700">{error}</p>
             </div>
@@ -331,7 +331,7 @@ function StokGudangTab({
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-gray-200">
+                  <tr className="border-b border-[rgba(140,172,214,0.35)]">
                     {[
                       "Nama Bahan",
                       "Satuan",
@@ -365,7 +365,7 @@ function StokGudangTab({
                       return (
                         <tr
                           key={m.id}
-                          className="border-b border-gray-100 hover:bg-gray-50"
+                          className="border-b border-[rgba(140,172,214,0.2)] hover:bg-[rgba(215,233,255,0.5)]"
                         >
                           <td className="py-3 px-4 text-sm font-medium text-gray-900">
                             {m.nama_bahan}
@@ -385,7 +385,7 @@ function StokGudangTab({
                                 className={`inline-flex px-3 py-1 rounded-full text-xs font-medium transition-colors cursor-pointer ${
                                   m.is_active
                                     ? "bg-green-100 text-green-700 hover:bg-green-200"
-                                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                    : "bg-[rgba(215,233,255,0.55)] text-gray-700 hover:bg-gray-200"
                                 }`}
                               >
                                 {m.is_active ? "Aktif" : "Nonaktif"}
@@ -463,7 +463,7 @@ function StokSementaraTab({
   return (
     <div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="clay-raised rounded-lg p-6">
           <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
             <Factory className="w-6 h-6 text-purple-600" />
           </div>
@@ -472,7 +472,7 @@ function StokSementaraTab({
             {loading ? "—" : totalStokSementara.toLocaleString("id-ID")}
           </p>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="clay-raised rounded-lg p-6">
           <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
             <PackageOpen className="w-6 h-6 text-blue-600" />
           </div>
@@ -485,15 +485,15 @@ function StokSementaraTab({
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200">
-        <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between flex-wrap gap-3">
+      <div className="clay-raised rounded-lg">
+        <div className="border-b border-[rgba(140,172,214,0.35)] px-6 py-4 flex items-center justify-between flex-wrap gap-3">
           <div className="flex gap-2">
             <button
               onClick={() => setSubTab("daftar")}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
                 subTab === "daftar"
                   ? "bg-blue-50 text-blue-600"
-                  : "text-gray-600 hover:bg-gray-50"
+                  : "text-gray-600 hover:bg-[rgba(215,233,255,0.5)]"
               }`}
             >
               Daftar Bahan
@@ -503,7 +503,7 @@ function StokSementaraTab({
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
                 subTab === "riwayat"
                   ? "bg-blue-50 text-blue-600"
-                  : "text-gray-600 hover:bg-gray-50"
+                  : "text-gray-600 hover:bg-[rgba(215,233,255,0.5)]"
               }`}
             >
               Riwayat Pergerakan
@@ -512,14 +512,14 @@ function StokSementaraTab({
           <div className="flex gap-2 flex-wrap">
             <button
               onClick={() => onAddTransaction("kembali_gudang")}
-              className="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer"
+              className="clay-amber clay-pressable text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer"
             >
               <ArrowLeftCircle className="w-4 h-4" />
               Kembali ke Gudang
             </button>
             <button
               onClick={() => onAddTransaction("produksi")}
-              className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer"
+              className="clay-purple clay-pressable text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer"
             >
               <Factory className="w-4 h-4" />
               Pemakaian Produksi
@@ -537,7 +537,7 @@ function StokSementaraTab({
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-gray-200">
+                  <tr className="border-b border-[rgba(140,172,214,0.35)]">
                     {["Nama Bahan", "Satuan", "Stok Sementara"].map((h) => (
                       <th
                         key={h}
@@ -562,7 +562,7 @@ function StokSementaraTab({
                     materials.map((m) => (
                       <tr
                         key={m.id}
-                        className="border-b border-gray-100 hover:bg-gray-50"
+                        className="border-b border-[rgba(140,172,214,0.2)] hover:bg-[rgba(215,233,255,0.5)]"
                       >
                         <td className="py-3 px-4 text-sm font-medium text-gray-900">
                           {m.nama_bahan}
@@ -741,14 +741,14 @@ export function MaterialManagement() {
         <button
           onClick={fetchAll}
           disabled={loading}
-          className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50 cursor-pointer transition-colors"
+          className="flex items-center gap-2 px-4 py-2 clay-inset border-0 rounded-lg text-sm text-gray-700 hover:bg-[rgba(215,233,255,0.5)] disabled:opacity-50 cursor-pointer transition-colors"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
           Refresh
         </button>
       </div>
 
-      <div className="flex gap-1 mb-6 border-b border-gray-200">
+      <div className="flex gap-1 mb-6 border-b border-[rgba(140,172,214,0.35)]">
         {[
           { id: "gudang", label: "Stok Gudang" },
           { id: "sementara", label: "Stok Sementara" },
@@ -809,13 +809,13 @@ export function MaterialManagement() {
             <div className="flex gap-3">
               <button
                 onClick={() => setConfirmDelete(null)}
-                className="flex-1 px-4 py-2.5 border border-gray-300 rounded-xl text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+                className="flex-1 px-4 py-2.5 clay-inset-sm border-0 rounded-xl text-sm text-gray-700 cursor-pointer"
               >
                 Batal
               </button>
               <button
                 onClick={handleDeleteConfirm}
-                className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-medium cursor-pointer"
+                className="flex-1 px-4 py-2.5 clay-red clay-pressable text-white rounded-xl text-sm font-medium cursor-pointer"
               >
                 Ya, Hapus
               </button>

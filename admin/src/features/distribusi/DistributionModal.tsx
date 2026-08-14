@@ -148,7 +148,7 @@ export function DistributionModal({
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
-        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between rounded-t-2xl">
+        <div className="sticky top-0 border-b border-[rgba(140,172,214,0.35)] px-6 py-4 flex items-center justify-between rounded-t-2xl">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
               <Truck className="w-5 h-5 text-blue-600" />
@@ -159,7 +159,7 @@ export function DistributionModal({
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg cursor-pointer"
+            className="p-2 hover:bg-[rgba(215,233,255,0.55)] rounded-lg cursor-pointer"
           >
             <X className="w-5 h-5 text-gray-500" />
           </button>
@@ -181,7 +181,7 @@ export function DistributionModal({
             </div>
 
             {formError && (
-              <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex gap-3">
+              <div className="clay-inset-red border-0 rounded-xl p-4 flex gap-3">
                 <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
                 <p className="text-sm text-red-700">{formError}</p>
               </div>
@@ -198,7 +198,7 @@ export function DistributionModal({
                   setSalesId(e.target.value);
                   setFormError(null);
                 }}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                className="w-full px-4 py-2.5 clay-inset border-0 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40 cursor-pointer"
               >
                 <option value="">-- Pilih Sales --</option>
                 {salesList.map((k) => (
@@ -244,7 +244,7 @@ export function DistributionModal({
                   return (
                     <div
                       key={idx}
-                      className="border border-gray-200 rounded-xl p-4 bg-gray-50"
+                      className="border border-[rgba(140,172,214,0.35)] rounded-xl p-4 bg-[rgba(215,233,255,0.4)]"
                     >
                       <div className="flex gap-3 items-start">
                         <div className="flex-1">
@@ -254,7 +254,7 @@ export function DistributionModal({
                             onChange={(e) =>
                               updateItem(idx, "product_id", e.target.value)
                             }
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer bg-white"
+                            className="w-full px-3 py-2 clay-inset border-0 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40 cursor-pointer"
                           >
                             <option value="">-- Pilih Produk --</option>
                             {availableProducts(idx).map((p) => (
@@ -289,10 +289,10 @@ export function DistributionModal({
                                   : parseInt(e.target.value, 10),
                               )
                             }
-                            className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                            className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40 ${
                               isOverStock
                                 ? "border-red-400 bg-red-50"
-                                : "border-gray-300"
+                                : "border-[rgba(140,172,214,0.4)]"
                             }`}
                             placeholder="0"
                           />
@@ -315,7 +315,7 @@ export function DistributionModal({
             </div>
 
             {totalItems.length > 0 && (
-              <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
+              <div className="bg-[rgba(215,233,255,0.4)] border border-[rgba(140,172,214,0.35)] rounded-xl p-4">
                 <p className="text-sm font-medium text-gray-700 mb-2">
                   Ringkasan Pengiriman
                 </p>
@@ -334,7 +334,7 @@ export function DistributionModal({
                       </div>
                     );
                   })}
-                  <div className="border-t border-gray-200 pt-2 mt-2 flex justify-between text-sm font-semibold text-gray-900">
+                  <div className="border-t border-[rgba(140,172,214,0.35)] pt-2 mt-2 flex justify-between text-sm font-semibold text-gray-900">
                     <span>Total</span>
                     <span>{totalQty} unit</span>
                   </div>
@@ -347,14 +347,14 @@ export function DistributionModal({
                 type="button"
                 onClick={onClose}
                 disabled={saving}
-                className="flex-1 px-4 py-2.5 border border-gray-300 rounded-xl text-sm text-gray-700 hover:bg-gray-50 cursor-pointer disabled:opacity-50"
+                className="flex-1 px-4 py-2.5 clay-inset-sm border-0 rounded-xl text-sm text-gray-700 cursor-pointer disabled:opacity-50"
               >
                 Batal
               </button>
               <button
                 type="submit"
                 disabled={saving || loadingData}
-                className="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold cursor-pointer disabled:opacity-70 flex items-center justify-center gap-2"
+                className="flex-1 px-4 py-2.5 clay-blue clay-pressable text-white rounded-xl text-sm font-semibold cursor-pointer disabled:opacity-70 flex items-center justify-center gap-2"
               >
                 {saving ? (
                   <RefreshCw className="w-4 h-4 animate-spin" />

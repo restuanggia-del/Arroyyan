@@ -112,7 +112,7 @@ export function AuditLog() {
     logs.filter((l) => categorize(l.activity_type) === t).length;
 
   const filterBtns: { id: FilterType; label: string; activeCls: string }[] = [
-    { id: "all", label: "Semua", activeCls: "bg-gray-100 text-gray-900" },
+    { id: "all", label: "Semua", activeCls: "bg-[rgba(215,233,255,0.55)] text-gray-900" },
     { id: "login", label: "Login", activeCls: "bg-green-100 text-green-700" },
     {
       id: "transaction",
@@ -134,7 +134,7 @@ export function AuditLog() {
   const statCards = [
     {
       icon: <History className="w-6 h-6 text-gray-600" />,
-      bg: "bg-gray-100",
+      bg: "bg-[rgba(215,233,255,0.55)]",
       label: "Total Log",
       value: logs.length,
     },
@@ -189,7 +189,7 @@ export function AuditLog() {
         <button
           onClick={fetchLogs}
           disabled={loading}
-          className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50 cursor-pointer"
+          className="flex items-center gap-2 px-4 py-2 clay-inset border-0 rounded-lg text-sm text-gray-700 hover:bg-[rgba(215,233,255,0.5)] disabled:opacity-50 cursor-pointer"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
           Refresh
@@ -200,7 +200,7 @@ export function AuditLog() {
         {statCards.map((card) => (
           <div
             key={card.label}
-            className="bg-white rounded-xl border border-gray-200 p-5"
+            className="clay-raised rounded-xl p-5"
           >
             <div
               className={`w-10 h-10 ${card.bg} rounded-lg flex items-center justify-center mb-3`}
@@ -215,8 +215,8 @@ export function AuditLog() {
         ))}
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-200">
-        <div className="border-b border-gray-200 px-6 py-4 space-y-3">
+      <div className="clay-raised rounded-xl">
+        <div className="border-b border-[rgba(140,172,214,0.35)] px-6 py-4 space-y-3">
           <div className="flex items-center gap-3 flex-wrap">
             <div className="relative flex-1 min-w-[200px] max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -225,7 +225,7 @@ export function AuditLog() {
                 placeholder="Cari aktivitas..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-9 pr-4 py-2 clay-inset border-0 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
               />
             </div>
             <div className="flex items-center gap-2">
@@ -234,7 +234,7 @@ export function AuditLog() {
                 type="date"
                 value={dateFilter}
                 onChange={(e) => setDateFilter(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                className="px-3 py-2 clay-inset border-0 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40 cursor-pointer"
               />
               {dateFilter && (
                 <button
@@ -254,7 +254,7 @@ export function AuditLog() {
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors ${
                   filterType === f.id
                     ? f.activeCls
-                    : "text-gray-500 hover:bg-gray-50"
+                    : "text-gray-500 hover:bg-[rgba(215,233,255,0.5)]"
                 }`}
               >
                 {f.label}
@@ -292,7 +292,7 @@ export function AuditLog() {
                   return (
                     <div
                       key={log.id}
-                      className="border border-gray-200 rounded-xl p-4 hover:bg-gray-50 transition-colors"
+                      className="clay-raised-sm clay-pressable border-0 rounded-xl p-4 transition-colors"
                     >
                       <div className="flex items-start gap-4">
                         <div
@@ -308,7 +308,7 @@ export function AuditLog() {
                               >
                                 {badge.label}
                               </span>
-                              <code className="text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">
+                              <code className="text-xs text-gray-400 bg-[rgba(215,233,255,0.55)] px-1.5 py-0.5 rounded">
                                 {log.activity_type}
                               </code>
                             </div>
@@ -330,7 +330,7 @@ export function AuditLog() {
                 })}
               </div>
 
-              <div className="flex items-center justify-between border-t border-gray-100 pt-4">
+              <div className="flex items-center justify-between border-t border-[rgba(140,172,214,0.2)] pt-4">
                 <p className="text-xs text-gray-400">
                   Menampilkan{" "}
                   <span className="font-medium text-gray-600">
@@ -349,7 +349,7 @@ export function AuditLog() {
                     <button
                       onClick={() => setPage((p) => Math.max(1, p - 1))}
                       disabled={safePage === 1}
-                      className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                      className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg border border-[rgba(140,172,214,0.35)] text-gray-600 hover:bg-[rgba(215,233,255,0.5)] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
                     >
                       <ChevronLeft className="w-3.5 h-3.5" />
                       Sebelumnya
@@ -370,8 +370,8 @@ export function AuditLog() {
                             onClick={() => setPage(p as number)}
                             className={`w-8 h-8 rounded-lg text-xs font-medium cursor-pointer transition-colors ${
                               safePage === p
-                                ? "bg-blue-600 text-white"
-                                : "text-gray-600 hover:bg-gray-100"
+                                ? "clay-blue text-white"
+                                : "text-gray-600 hover:bg-[rgba(215,233,255,0.55)]"
                             }`}
                           >
                             {p}
@@ -385,7 +385,7 @@ export function AuditLog() {
                         setPage((p) => Math.min(totalPages, p + 1))
                       }
                       disabled={safePage === totalPages}
-                      className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                      className="flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg border border-[rgba(140,172,214,0.35)] text-gray-600 hover:bg-[rgba(215,233,255,0.5)] disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
                     >
                       Selanjutnya
                       <ChevronRight className="w-3.5 h-3.5" />

@@ -81,20 +81,20 @@ function CustomerModal({
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl">
-        <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+        <div className="border-b border-[rgba(140,172,214,0.35)] px-6 py-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-gray-900">
             {customer ? "Edit Pelanggan" : "Tambah Pelanggan"}
           </h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg cursor-pointer"
+            className="p-2 hover:bg-[rgba(215,233,255,0.55)] rounded-lg cursor-pointer"
           >
             <X className="w-5 h-5 text-gray-500" />
           </button>
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+            <div className="p-3 clay-inset-red border-0 rounded-lg text-sm text-red-700">
               {error}
             </div>
           )}
@@ -108,7 +108,7 @@ function CustomerModal({
               onChange={(e) =>
                 setForm((p) => ({ ...p, customer_name: e.target.value }))
               }
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2.5 clay-inset border-0 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
               placeholder="Nama pelanggan"
             />
           </div>
@@ -121,7 +121,7 @@ function CustomerModal({
               onChange={(e) =>
                 setForm((p) => ({ ...p, phone: e.target.value }))
               }
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2.5 clay-inset border-0 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
               placeholder="08xxxxxxxxxx"
             />
           </div>
@@ -135,7 +135,7 @@ function CustomerModal({
                 setForm((p) => ({ ...p, address: e.target.value }))
               }
               rows={2}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              className="w-full px-4 py-2.5 clay-inset border-0 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40 resize-none"
               placeholder="Alamat lengkap"
             />
           </div>
@@ -157,14 +157,14 @@ function CustomerModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2.5 border border-gray-300 rounded-xl text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+              className="flex-1 px-4 py-2.5 clay-inset-sm border-0 rounded-xl text-sm text-gray-700 cursor-pointer"
             >
               Batal
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-medium cursor-pointer disabled:opacity-70 flex items-center justify-center gap-2"
+              className="flex-1 px-4 py-2.5 clay-blue clay-pressable text-white rounded-xl text-sm font-medium cursor-pointer disabled:opacity-70 flex items-center justify-center gap-2"
             >
               {saving && <RefreshCw className="w-4 h-4 animate-spin" />}
               {customer ? "Simpan" : "Tambah"}
@@ -243,10 +243,10 @@ function ThresholdPanel({ threshold, onSaved }: ThresholdPanelProps) {
   })();
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 mb-6 overflow-hidden">
+    <div className="clay-raised rounded-xl mb-6 overflow-hidden">
       <button
         onClick={() => setOpen((o) => !o)}
-        className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors cursor-pointer"
+        className="w-full px-6 py-4 flex items-center justify-between hover:bg-[rgba(215,233,255,0.5)] transition-colors cursor-pointer"
       >
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 bg-violet-100 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -267,7 +267,7 @@ function ThresholdPanel({ threshold, onSaved }: ThresholdPanelProps) {
       </button>
 
       {open && (
-        <div className="border-t border-gray-100 px-6 py-5 space-y-5">
+        <div className="border-t border-[rgba(140,172,214,0.2)] px-6 py-5 space-y-5">
           <div className="p-4 bg-violet-50 border border-violet-100 rounded-xl flex gap-2.5">
             <Zap className="w-4 h-4 text-violet-600 flex-shrink-0 mt-0.5" />
             <p className="text-xs text-violet-800 leading-relaxed">
@@ -282,7 +282,7 @@ function ThresholdPanel({ threshold, onSaved }: ThresholdPanelProps) {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="border border-gray-200 rounded-xl p-4 space-y-3">
+            <div className="border border-[rgba(140,172,214,0.35)] rounded-xl p-4 space-y-3">
               <div className="flex items-center gap-2">
                 <div className="w-7 h-7 bg-green-100 rounded-lg flex items-center justify-center">
                   <TrendingUp className="w-3.5 h-3.5 text-green-600" />
@@ -302,7 +302,7 @@ function ThresholdPanel({ threshold, onSaved }: ThresholdPanelProps) {
                   onChange={(e) =>
                     setForm((p) => ({ ...p, min_total_price: e.target.value }))
                   }
-                  className="w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+                  className="w-full pl-10 pr-3 py-2.5 clay-inset border-0 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
                   placeholder="cth: 500000"
                 />
               </div>
@@ -311,7 +311,7 @@ function ThresholdPanel({ threshold, onSaved }: ThresholdPanelProps) {
               </p>
             </div>
 
-            <div className="border border-gray-200 rounded-xl p-4 space-y-3">
+            <div className="border border-[rgba(140,172,214,0.35)] rounded-xl p-4 space-y-3">
               <div className="flex items-center gap-2">
                 <div className="w-7 h-7 bg-blue-100 rounded-lg flex items-center justify-center">
                   <ShoppingBag className="w-3.5 h-3.5 text-blue-600" />
@@ -328,7 +328,7 @@ function ThresholdPanel({ threshold, onSaved }: ThresholdPanelProps) {
                   onChange={(e) =>
                     setForm((p) => ({ ...p, min_total_qty: e.target.value }))
                   }
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 pr-12"
+                  className="w-full px-3 py-2.5 clay-inset border-0 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 pr-12"
                   placeholder="cth: 10"
                 />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-400 pointer-events-none">
@@ -342,7 +342,7 @@ function ThresholdPanel({ threshold, onSaved }: ThresholdPanelProps) {
           </div>
 
           {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+            <div className="p-3 clay-inset-red border-0 rounded-lg text-sm text-red-700">
               {error}
             </div>
           )}
@@ -350,7 +350,7 @@ function ThresholdPanel({ threshold, onSaved }: ThresholdPanelProps) {
           <button
             onClick={handleSave}
             disabled={saving}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-violet-600 hover:bg-violet-700 disabled:opacity-60 text-white rounded-lg text-sm font-medium cursor-pointer transition-colors"
+            className="inline-flex items-center gap-2 px-5 py-2.5 clay-purple clay-pressable disabled:opacity-60 text-white rounded-lg text-sm font-medium cursor-pointer transition-colors"
           >
             {saving ? (
               <RefreshCw className="w-4 h-4 animate-spin" />
@@ -445,7 +445,7 @@ export function CustomerManagement() {
         <button
           onClick={fetchCustomers}
           disabled={loading}
-          className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50 cursor-pointer"
+          className="flex items-center gap-2 px-4 py-2 clay-inset border-0 rounded-lg text-sm text-gray-700 hover:bg-[rgba(215,233,255,0.5)] disabled:opacity-50 cursor-pointer"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
           Refresh
@@ -453,7 +453,7 @@ export function CustomerManagement() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
+        <div className="clay-raised rounded-xl p-6">
           <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
             <Users className="w-6 h-6 text-blue-600" />
           </div>
@@ -462,7 +462,7 @@ export function CustomerManagement() {
             {loading ? "—" : customers.length}
           </p>
         </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
+        <div className="clay-raised rounded-xl p-6">
           <div className="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center mb-4">
             <Star className="w-6 h-6 text-amber-600" />
           </div>
@@ -475,8 +475,8 @@ export function CustomerManagement() {
 
       <ThresholdPanel threshold={threshold} onSaved={setThreshold} />
 
-      <div className="bg-white rounded-xl border border-gray-200">
-        <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between flex-wrap gap-3">
+      <div className="clay-raised rounded-xl">
+        <div className="border-b border-[rgba(140,172,214,0.35)] px-6 py-4 flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-3 flex-1 flex-wrap">
             <div className="relative max-w-sm flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -485,7 +485,7 @@ export function CustomerManagement() {
                 placeholder="Cari nama atau telepon..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-9 pr-4 py-2 clay-inset border-0 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
               />
             </div>
             <div className="flex gap-1">
@@ -498,7 +498,7 @@ export function CustomerManagement() {
                       ? f === "subscribed"
                         ? "bg-amber-50 text-amber-700"
                         : "bg-blue-50 text-blue-600"
-                      : "text-gray-600 hover:bg-gray-50"
+                      : "text-gray-600 hover:bg-[rgba(215,233,255,0.5)]"
                   }`}
                 >
                   {f === "all"
@@ -515,7 +515,7 @@ export function CustomerManagement() {
               setEditingCustomer(null);
               setShowModal(true);
             }}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm cursor-pointer"
+            className="clay-blue clay-pressable text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             Tambah Pelanggan
@@ -524,7 +524,7 @@ export function CustomerManagement() {
 
         <div className="p-6">
           {error && (
-            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl flex gap-3">
+            <div className="mb-4 p-4 clay-inset-red border-0 rounded-xl flex gap-3">
               <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
               <p className="text-sm text-red-700">{error}</p>
             </div>
@@ -539,7 +539,7 @@ export function CustomerManagement() {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-gray-200">
+                  <tr className="border-b border-[rgba(140,172,214,0.35)]">
                     {[
                       "Nama",
                       "No. Telepon",
@@ -571,7 +571,7 @@ export function CustomerManagement() {
                     filtered.map((c) => (
                       <tr
                         key={c.id}
-                        className="border-b border-gray-100 hover:bg-gray-50"
+                        className="border-b border-[rgba(140,172,214,0.2)] hover:bg-[rgba(215,233,255,0.5)]"
                       >
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-3">
@@ -601,7 +601,7 @@ export function CustomerManagement() {
                               Langganan
                             </span>
                           ) : (
-                            <span className="inline-flex px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                            <span className="inline-flex px-2.5 py-1 rounded-full text-xs font-medium bg-[rgba(215,233,255,0.55)] text-gray-600">
                               Reguler
                             </span>
                           )}
@@ -623,7 +623,7 @@ export function CustomerManagement() {
                                 setEditingCustomer(c);
                                 setShowModal(true);
                               }}
-                              className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg cursor-pointer"
+                              className="p-2 text-gray-600 hover:bg-[rgba(215,233,255,0.55)] rounded-lg cursor-pointer"
                               title="Edit"
                             >
                               <Edit2 className="w-4 h-4" />
@@ -673,7 +673,7 @@ export function CustomerManagement() {
             <div className="flex gap-3">
               <button
                 onClick={() => setConfirmDelete(null)}
-                className="flex-1 px-4 py-2.5 border border-gray-300 rounded-xl text-sm cursor-pointer"
+                className="flex-1 px-4 py-2.5 clay-inset border-0 rounded-xl text-sm cursor-pointer"
               >
                 Batal
               </button>
@@ -691,13 +691,13 @@ export function CustomerManagement() {
       {selectedCustomer && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl">
-            <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+            <div className="border-b border-[rgba(140,172,214,0.35)] px-6 py-4 flex items-center justify-between">
               <h2 className="text-lg font-semibold text-gray-900">
                 Detail Pelanggan
               </h2>
               <button
                 onClick={() => setSelectedCustomer(null)}
-                className="p-2 hover:bg-gray-100 rounded-lg cursor-pointer"
+                className="p-2 hover:bg-[rgba(215,233,255,0.55)] rounded-lg cursor-pointer"
               >
                 <X className="w-5 h-5 text-gray-500" />
               </button>
@@ -722,13 +722,13 @@ export function CustomerManagement() {
                 </div>
               </div>
               <div className="space-y-2 text-sm">
-                <div className="flex justify-between py-2 border-b border-gray-100">
+                <div className="flex justify-between py-2 border-b border-[rgba(140,172,214,0.2)]">
                   <span className="text-gray-500">No. Telepon</span>
                   <span className="font-medium">
                     {selectedCustomer.phone ?? "—"}
                   </span>
                 </div>
-                <div className="flex justify-between py-2 border-b border-gray-100">
+                <div className="flex justify-between py-2 border-b border-[rgba(140,172,214,0.2)]">
                   <span className="text-gray-500">Alamat</span>
                   <span className="font-medium text-right max-w-[220px]">
                     {selectedCustomer.address ?? "—"}

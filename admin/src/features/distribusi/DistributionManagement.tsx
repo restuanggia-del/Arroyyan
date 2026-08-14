@@ -142,7 +142,7 @@ export function DistributionManagement({
   const renderDistCard = (dist: Distribution) => (
     <div
       key={dist.id}
-      className="border border-gray-200 rounded-xl p-5 hover:shadow-sm transition-shadow"
+      className="border border-[rgba(140,172,214,0.35)] rounded-xl p-5 hover:shadow-sm transition-shadow"
     >
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-start gap-4 flex-1 min-w-0">
@@ -173,7 +173,7 @@ export function DistributionManagement({
               {(dist.distribution_details ?? []).map((detail) => (
                 <div
                   key={detail.id}
-                  className="bg-gray-50 rounded-lg px-3 py-2 text-sm"
+                  className="bg-[rgba(215,233,255,0.4)] rounded-lg px-3 py-2 text-sm"
                 >
                   <span className="text-gray-600">
                     {detail.products?.product_name ?? "—"}
@@ -202,7 +202,7 @@ export function DistributionManagement({
               {dist.status === "pending" && (
                 <button
                   onClick={() => handleUpdateStatus(dist.id, "sent")}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded-lg cursor-pointer transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 clay-blue clay-pressable text-white text-xs rounded-lg cursor-pointer transition-colors"
                 >
                   <Send className="w-3.5 h-3.5" /> Tandai Dikirim
                 </button>
@@ -210,7 +210,7 @@ export function DistributionManagement({
               {dist.status === "sent" && (
                 <button
                   onClick={() => handleUpdateStatus(dist.id, "received")}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs rounded-lg cursor-pointer transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 clay-green clay-pressable text-white text-xs rounded-lg cursor-pointer transition-colors"
                 >
                   <CheckCircle className="w-3.5 h-3.5" /> Konfirmasi Diterima
                 </button>
@@ -225,7 +225,7 @@ export function DistributionManagement({
   const renderReturnCard = (ret: ReturnRow) => (
     <div
       key={ret.id}
-      className="border border-gray-200 rounded-xl p-5 hover:shadow-sm transition-shadow"
+      className="border border-[rgba(140,172,214,0.35)] rounded-xl p-5 hover:shadow-sm transition-shadow"
     >
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-start gap-4 flex-1 min-w-0">
@@ -260,7 +260,7 @@ export function DistributionManagement({
               {(ret.return_details ?? []).map((detail) => (
                 <div
                   key={detail.id}
-                  className="bg-gray-50 rounded-lg px-3 py-2 text-sm"
+                  className="bg-[rgba(215,233,255,0.4)] rounded-lg px-3 py-2 text-sm"
                 >
                   <span className="text-gray-600">
                     {detail.products?.product_name ?? "—"}
@@ -288,13 +288,13 @@ export function DistributionManagement({
             <div className="flex gap-2 justify-end flex-wrap">
               <button
                 onClick={() => setRejectDialog(ret.id)}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs rounded-lg cursor-pointer transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-[rgba(215,233,255,0.55)] hover:bg-gray-200 text-gray-700 text-xs rounded-lg cursor-pointer transition-colors"
               >
                 <X className="w-3.5 h-3.5" /> Tolak
               </button>
               <button
                 onClick={() => handleReviewReturn(ret.id, "approved")}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs rounded-lg cursor-pointer transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 clay-green clay-pressable text-white text-xs rounded-lg cursor-pointer transition-colors"
               >
                 <CheckCircle className="w-3.5 h-3.5" /> Setujui
               </button>
@@ -319,7 +319,7 @@ export function DistributionManagement({
         <button
           onClick={fetchAll}
           disabled={loading}
-          className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50 cursor-pointer transition-colors"
+          className="flex items-center gap-2 px-4 py-2 clay-inset border-0 rounded-lg text-sm text-gray-700 hover:bg-[rgba(215,233,255,0.5)] disabled:opacity-50 cursor-pointer transition-colors"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
           Refresh
@@ -367,10 +367,10 @@ export function DistributionManagement({
           <button
             key={card.label}
             onClick={() => setFilterStatus(card.key)}
-            className={`bg-white rounded-xl border p-6 text-left transition-all cursor-pointer ${
+            className={`clay-raised clay-pressable rounded-xl p-6 text-left transition-all cursor-pointer ${
               filterStatus === card.key
                 ? "border-blue-500 ring-2 ring-blue-100"
-                : "border-gray-200 hover:border-gray-300"
+                : "clay-raised-sm border-0"
             }`}
           >
             <div
@@ -391,14 +391,14 @@ export function DistributionManagement({
         ))}
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-200 mb-6">
+      <div className="clay-raised rounded-xl mb-6">
         <div className="px-6 py-4 flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-3">
             <h2 className="text-lg font-semibold text-gray-900">Riwayat</h2>
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value as FilterStatus)}
-              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+              className="px-3 py-1.5 clay-inset border-0 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40 cursor-pointer"
             >
               <option value="all">Semua Status</option>
               <option value="pending">Pending</option>
@@ -409,7 +409,7 @@ export function DistributionManagement({
           </div>
           <button
             onClick={() => setIsModalOpen(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer"
+            className="clay-blue clay-pressable text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             Buat Distribusi Baru
@@ -418,22 +418,22 @@ export function DistributionManagement({
       </div>
 
       {error && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex gap-3">
+        <div className="mb-6 p-4 clay-inset-red border-0 rounded-xl flex gap-3">
           <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
           <p className="text-sm text-red-700">{error}</p>
         </div>
       )}
 
       {loading ? (
-        <div className="bg-white rounded-xl border border-gray-200 py-16 text-center">
+        <div className="clay-raised rounded-xl py-16 text-center">
           <RefreshCw className="w-8 h-8 animate-spin text-gray-400 mx-auto mb-3" />
           <p className="text-sm text-gray-500">Memuat data...</p>
         </div>
       ) : (
         <div className="space-y-8">
           {showPending && (
-            <div className="bg-white rounded-xl border border-gray-200">
-              <div className="border-b border-gray-200 px-6 py-4">
+            <div className="clay-raised rounded-xl">
+              <div className="border-b border-[rgba(140,172,214,0.35)] px-6 py-4">
                 <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
                   <Clock className="w-4 h-4 text-orange-600" />
                   Pending
@@ -460,8 +460,8 @@ export function DistributionManagement({
           )}
 
           {showSent && (
-            <div className="bg-white rounded-xl border border-gray-200">
-              <div className="border-b border-gray-200 px-6 py-4">
+            <div className="clay-raised rounded-xl">
+              <div className="border-b border-[rgba(140,172,214,0.35)] px-6 py-4">
                 <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
                   <Truck className="w-4 h-4 text-blue-600" />
                   Dikirim
@@ -488,8 +488,8 @@ export function DistributionManagement({
           )}
 
           {showReceived && (
-            <div className="bg-white rounded-xl border border-gray-200">
-              <div className="border-b border-gray-200 px-6 py-4">
+            <div className="clay-raised rounded-xl">
+              <div className="border-b border-[rgba(140,172,214,0.35)] px-6 py-4">
                 <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
                   <CheckCircle className="w-4 h-4 text-green-600" />
                   Diterima
@@ -516,8 +516,8 @@ export function DistributionManagement({
           )}
 
           {showReturn && (
-            <div className="bg-white rounded-xl border border-gray-200">
-              <div className="border-b border-gray-200 px-6 py-4">
+            <div className="clay-raised rounded-xl">
+              <div className="border-b border-[rgba(140,172,214,0.35)] px-6 py-4">
                 <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
                   <RotateCcw className="w-4 h-4 text-red-600" />
                   Return
@@ -562,7 +562,7 @@ export function DistributionManagement({
       {rejectDialog && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm">
-            <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="w-12 h-12 bg-[rgba(215,233,255,0.55)] rounded-full flex items-center justify-center mx-auto mb-4">
               <X className="w-6 h-6 text-gray-600" />
             </div>
             <h3 className="text-lg font-semibold text-gray-900 text-center mb-2">
@@ -574,7 +574,7 @@ export function DistributionManagement({
             <div className="flex gap-3">
               <button
                 onClick={() => setRejectDialog(null)}
-                className="flex-1 px-4 py-2.5 border border-gray-300 rounded-xl text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+                className="flex-1 px-4 py-2.5 clay-inset-sm border-0 rounded-xl text-sm text-gray-700 cursor-pointer"
               >
                 Batal
               </button>

@@ -92,14 +92,14 @@ export function TransaksiTitipan() {
           <button
             onClick={fetchAll}
             disabled={loading}
-            className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50 cursor-pointer transition-colors"
+            className="flex items-center gap-2 px-4 py-2 clay-inset border-0 rounded-lg text-sm text-gray-700 hover:bg-[rgba(215,233,255,0.5)] disabled:opacity-50 cursor-pointer transition-colors"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
             Refresh
           </button>
           <button
             onClick={() => setIsCreateOpen(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer"
+            className="clay-blue clay-pressable text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             Buat Titipan Baru
@@ -108,7 +108,7 @@ export function TransaksiTitipan() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="clay-raised rounded-lg p-6">
           <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-4">
             <Clock className="w-6 h-6 text-orange-600" />
           </div>
@@ -117,7 +117,7 @@ export function TransaksiTitipan() {
             {loading ? "—" : `${totalBelumLunas} Toko`}
           </p>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="clay-raised rounded-lg p-6">
           <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mb-4">
             <Wallet className="w-6 h-6 text-red-600" />
           </div>
@@ -126,7 +126,7 @@ export function TransaksiTitipan() {
             {loading ? "—" : formatRp(totalSisaRp)}
           </p>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="clay-raised rounded-lg p-6">
           <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
             <PackageCheck className="w-6 h-6 text-blue-600" />
           </div>
@@ -137,8 +137,8 @@ export function TransaksiTitipan() {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200">
-        <div className="border-b border-gray-200 px-6 py-4 flex items-center gap-2">
+      <div className="clay-raised rounded-lg">
+        <div className="border-b border-[rgba(140,172,214,0.35)] px-6 py-4 flex items-center gap-2">
           {[
             { id: "belum_lunas", label: "Belum Lunas" },
             { id: "lunas", label: "Lunas" },
@@ -150,7 +150,7 @@ export function TransaksiTitipan() {
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
                 filter === f.id
                   ? "bg-blue-50 text-blue-600"
-                  : "text-gray-600 hover:bg-gray-50"
+                  : "text-gray-600 hover:bg-[rgba(215,233,255,0.5)]"
               }`}
             >
               {f.label}
@@ -160,7 +160,7 @@ export function TransaksiTitipan() {
 
         <div className="p-6">
           {error && (
-            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3">
+            <div className="mb-4 p-4 clay-inset-red border-0 rounded-lg flex items-center gap-3">
               <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
               <p className="text-sm text-red-700">{error}</p>
             </div>
@@ -185,7 +185,7 @@ export function TransaksiTitipan() {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-gray-200">
+                  <tr className="border-b border-[rgba(140,172,214,0.35)]">
                     {[
                       "Tanggal",
                       "Toko",
@@ -209,7 +209,7 @@ export function TransaksiTitipan() {
                   {filtered.map((t) => (
                     <tr
                       key={t.id}
-                      className="border-b border-gray-100 hover:bg-gray-50"
+                      className="border-b border-[rgba(140,172,214,0.2)] hover:bg-[rgba(215,233,255,0.5)]"
                     >
                       <td className="py-3 px-4 text-sm text-gray-600 whitespace-nowrap">
                         {formatDate(t.created_at)}

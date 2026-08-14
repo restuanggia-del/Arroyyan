@@ -87,14 +87,14 @@ export function HandlingFeeManagement() {
           <button
             onClick={fetchAll}
             disabled={loading}
-            className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50 cursor-pointer transition-colors"
+            className="flex items-center gap-2 px-4 py-2 clay-inset border-0 rounded-lg text-sm text-gray-700 hover:bg-[rgba(215,233,255,0.5)] disabled:opacity-50 cursor-pointer transition-colors"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
             Refresh
           </button>
           <button
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-orange-600 hover:bg-orange-700 text-white rounded-lg text-sm font-medium transition-colors cursor-pointer"
+            className="flex items-center gap-2 px-4 py-2.5 clay-amber clay-pressable text-white rounded-lg text-sm font-medium transition-colors cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             Tambah Handling Fee
@@ -103,7 +103,7 @@ export function HandlingFeeManagement() {
       </div>
 
       {error && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3">
+        <div className="mb-6 p-4 clay-inset-red border-0 rounded-lg flex items-center gap-3">
           <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
           <p className="text-sm text-red-700">{error}</p>
         </div>
@@ -111,7 +111,7 @@ export function HandlingFeeManagement() {
 
       {/* Ringkasan */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="clay-raised rounded-lg p-6">
           <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-4">
             <HardHat className="w-6 h-6 text-orange-600" />
           </div>
@@ -120,7 +120,7 @@ export function HandlingFeeManagement() {
             {loading ? "—" : formatRp(totalFee)}
           </p>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="clay-raised rounded-lg p-6">
           <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
             <Boxes className="w-6 h-6 text-blue-600" />
           </div>
@@ -129,7 +129,7 @@ export function HandlingFeeManagement() {
             {loading ? "—" : totalDus.toLocaleString("id-ID")}
           </p>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="clay-raised rounded-lg p-6">
           <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
             <Users className="w-6 h-6 text-green-600" />
           </div>
@@ -140,8 +140,8 @@ export function HandlingFeeManagement() {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-        <div className="border-b border-gray-200 px-6 py-4">
+      <div className="clay-raised rounded-lg overflow-hidden">
+        <div className="border-b border-[rgba(140,172,214,0.35)] px-6 py-4">
           <h2 className="text-lg font-semibold text-gray-900">
             Riwayat Handling Fee
           </h2>
@@ -154,7 +154,7 @@ export function HandlingFeeManagement() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-gray-200 bg-gray-50">
+                <tr className="border-b border-[rgba(140,172,214,0.35)] bg-[rgba(215,233,255,0.4)]">
                   {[
                     "Tanggal",
                     "Jumlah Dus",
@@ -187,7 +187,7 @@ export function HandlingFeeManagement() {
                   records.map((r) => (
                     <tr
                       key={r.id}
-                      className="border-b border-gray-100 hover:bg-gray-50"
+                      className="border-b border-[rgba(140,172,214,0.2)] hover:bg-[rgba(215,233,255,0.5)]"
                     >
                       <td className="py-3 px-4 text-sm text-gray-600">
                         {formatDate(r.tanggal)}
@@ -267,13 +267,13 @@ export function HandlingFeeManagement() {
             <div className="flex gap-3">
               <button
                 onClick={() => setConfirmDelete(null)}
-                className="flex-1 px-4 py-2.5 border border-gray-300 rounded-xl text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+                className="flex-1 px-4 py-2.5 clay-inset-sm border-0 rounded-xl text-sm text-gray-700 cursor-pointer"
               >
                 Batal
               </button>
               <button
                 onClick={handleDeleteConfirm}
-                className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-medium cursor-pointer"
+                className="flex-1 px-4 py-2.5 clay-red clay-pressable text-white rounded-xl text-sm font-medium cursor-pointer"
               >
                 Ya, Hapus
               </button>

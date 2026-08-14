@@ -33,26 +33,26 @@ const dayNames = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
 const getEventColor = (type: CalendarEvent["type"]) => {
   switch (type) {
     case "delivery":
-      return "bg-blue-500";
+      return "bg-[#0249e1]";
     case "payment":
-      return "bg-red-500";
+      return "bg-[#ee3d5a]";
     case "meeting":
-      return "bg-green-500";
+      return "bg-[#1fb262]";
     default:
-      return "bg-gray-500";
+      return "bg-[rgba(215,233,255,0.4)]0";
   }
 };
 
 const getLegendColor = (type: CalendarEvent["type"]) => {
   switch (type) {
     case "delivery":
-      return "text-blue-600 bg-blue-50 border-blue-200";
+      return "text-[#023dbb] clay-inset-sm border-0";
     case "payment":
-      return "text-red-600 bg-red-50 border-red-200";
+      return "text-[#ee3d5a] clay-inset-red border-0";
     case "meeting":
-      return "text-green-600 bg-green-50 border-green-200";
+      return "text-[#159650] clay-inset-green border-0";
     default:
-      return "text-gray-600 bg-gray-50 border-gray-200";
+      return "text-[#5b6a8f] clay-inset-sm border-0";
   }
 };
 
@@ -122,35 +122,35 @@ export function Calendar() {
     viewMonth === now.getMonth() && viewYear === now.getFullYear();
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-6">
+    <div className="clay-raised rounded-3xl p-6">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
-          <CalendarIcon className="w-5 h-5 text-blue-600" />
-          <h3 className="text-lg font-semibold text-gray-900">Kalender</h3>
+          <CalendarIcon className="w-5 h-5 text-[#0249E1]" />
+          <h3 className="text-lg font-bold text-[#10193a]">Kalender</h3>
         </div>
         <div className="flex items-center gap-1">
           {!isCurrentMonth && (
             <button
               onClick={goToToday}
-              className="mr-2 px-2.5 py-1 text-xs text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 cursor-pointer transition-colors"
+              className="mr-2 px-2.5 py-1 text-xs text-[#0249E1] font-semibold clay-raised-sm clay-pressable rounded-lg cursor-pointer"
             >
               Hari Ini
             </button>
           )}
           <button
             onClick={prevMonth}
-            className="p-1.5 hover:bg-gray-100 rounded-lg cursor-pointer transition-colors"
+            className="p-1.5 clay-raised-sm clay-pressable rounded-xl cursor-pointer"
           >
-            <ChevronLeft className="w-4 h-4 text-gray-600" />
+            <ChevronLeft className="w-4 h-4 text-[#5b6a8f]" />
           </button>
-          <span className="text-sm font-semibold text-gray-900 min-w-[140px] text-center">
+          <span className="text-sm font-bold text-[#10193a] min-w-[140px] text-center">
             {monthNames[viewMonth]} {viewYear}
           </span>
           <button
             onClick={nextMonth}
-            className="p-1.5 hover:bg-gray-100 rounded-lg cursor-pointer transition-colors"
+            className="p-1.5 clay-raised-sm clay-pressable rounded-xl cursor-pointer"
           >
-            <ChevronRight className="w-4 h-4 text-gray-600" />
+            <ChevronRight className="w-4 h-4 text-[#5b6a8f]" />
           </button>
         </div>
       </div>
@@ -159,7 +159,7 @@ export function Calendar() {
         {dayNames.map((day) => (
           <div
             key={day}
-            className="text-center text-xs font-medium text-gray-400 py-2"
+            className="text-center text-xs font-bold text-[#8fa4d4] py-2"
           >
             {day}
           </div>
@@ -184,10 +184,10 @@ export function Calendar() {
               key={date}
               className={`aspect-square flex flex-col items-center justify-center rounded-lg text-sm relative transition-colors ${
                 today
-                  ? "bg-blue-600 text-white font-bold shadow-md"
+                  ? "clay-blue text-white font-bold"
                   : isPast
-                    ? "text-gray-300"
-                    : "hover:bg-gray-50 text-gray-900 cursor-pointer"
+                    ? "text-[#c3d3f5]"
+                    : "hover:bg-[rgba(215,233,255,0.5)] text-[#10193a] cursor-pointer"
               }`}
             >
               <span className="leading-none">{date}</span>
@@ -208,8 +208,8 @@ export function Calendar() {
         })}
       </div>
 
-      <div className="mt-5 pt-4 border-t border-gray-100">
-        <p className="text-xs font-semibold text-gray-500 mb-3 uppercase tracking-wide">
+      <div className="mt-5 pt-4 border-t border-[rgba(140,172,214,0.2)]">
+        <p className="text-xs font-bold text-[#5b6a8f] mb-3 uppercase tracking-wide">
           {upcomingEvents.length > 0
             ? "Event Mendatang"
             : "Tidak ada event mendatang"}
@@ -219,33 +219,33 @@ export function Calendar() {
             {upcomingEvents.map((event, i) => (
               <div key={i} className="flex items-center gap-3">
                 <span
-                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border ${getLegendColor(event.type)}`}
+                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${getLegendColor(event.type)}`}
                 >
                   <span
                     className={`w-1.5 h-1.5 rounded-full ${getEventColor(event.type)}`}
                   />
                   {typeLabel[event.type]}
                 </span>
-                <span className="text-xs text-gray-500">
+                <span className="text-xs text-[#5b6a8f]">
                   {event.date} {monthNames[event.month].slice(0, 3)}
                 </span>
-                <span className="text-sm text-gray-700">{event.title}</span>
+                <span className="text-sm text-[#10193a] font-medium">{event.title}</span>
               </div>
             ))}
           </div>
         ) : (
-          <p className="text-xs text-gray-400 italic">
+          <p className="text-xs text-[#8fa4d4] italic">
             Semua berjalan lancar bulan ini
           </p>
         )}
       </div>
 
-      <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between text-xs text-gray-400">
+      <div className="mt-4 pt-3 border-t border-[rgba(140,172,214,0.2)] flex items-center justify-between text-xs text-[#8fa4d4]">
         <span>
           {daysInMonth} hari · {monthNames[viewMonth]} {viewYear}
         </span>
         {isCurrentMonth && (
-          <span className="text-blue-500 font-medium">
+          <span className="text-[#0249E1] font-semibold">
             Hari ini: {now.getDate()} {monthNames[now.getMonth()]}{" "}
             {now.getFullYear()}
           </span>

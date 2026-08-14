@@ -31,26 +31,26 @@ function LogoutConfirmModal({
 }) {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
-        <div className="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+      <div className="clay-raised-lg rounded-[28px] w-full max-w-sm p-6">
+        <div className="w-14 h-14 clay-inset-red rounded-full flex items-center justify-center mx-auto mb-4">
           <AlertTriangle className="w-7 h-7 text-red-600" />
         </div>
-        <h3 className="text-lg font-bold text-gray-900 text-center mb-2">
+        <h3 className="text-lg font-bold text-[#10193a] text-center mb-2">
           Yakin ingin keluar?
         </h3>
-        <p className="text-sm text-gray-500 text-center mb-6">
+        <p className="text-sm text-[#5b6a8f] text-center mb-6">
           Kamu akan keluar dari sistem. Semua sesi aktif akan dihapus.
         </p>
         <div className="flex gap-3">
           <button
             onClick={onCancel}
-            className="flex-1 px-4 py-2.5 border border-gray-300 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
+            className="flex-1 px-4 py-2.5 clay-inset border-0 rounded-xl text-sm font-semibold text-[#10193a] transition-colors cursor-pointer"
           >
             Batal
           </button>
           <button
             onClick={onConfirm}
-            className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-medium transition-colors cursor-pointer flex items-center justify-center gap-2"
+            className="flex-1 px-4 py-2.5 clay-red clay-pressable text-white rounded-xl text-sm font-medium transition-colors cursor-pointer flex items-center justify-center gap-2"
           >
             <LogOut className="w-4 h-4" />
             Ya, Keluar
@@ -203,38 +203,38 @@ function AccountSettingsModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 sticky top-0 bg-white rounded-t-2xl">
+      <div className="clay-raised-lg rounded-[28px] w-full max-w-md max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[rgba(140,172,214,0.35)] sticky top-0 clay-raised rounded-t-[28px]">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl flex items-center justify-center">
               <User className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-gray-900">
+              <h2 className="text-lg font-bold text-[#10193a]">
                 Pengaturan Akun
               </h2>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-[#5b6a8f]">
                 Kelola informasi akun admin
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg cursor-pointer"
+            className="p-2 hover:bg-[rgba(215,233,255,0.55)] rounded-lg cursor-pointer"
           >
-            <X className="w-5 h-5 text-gray-500" />
+            <X className="w-5 h-5 text-[#5b6a8f]" />
           </button>
         </div>
 
         <div className="p-6 space-y-6">
-          <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+          <div className="bg-[rgba(215,233,255,0.4)] rounded-xl p-4 border border-[rgba(140,172,214,0.35)]">
             <h3 className="text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2">
               <User className="w-4 h-4 text-blue-600" />
               Informasi Profil
             </h3>
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                <label className="block text-xs font-bold text-[#5b6a8f] mb-1.5">
                   Nama Lengkap
                 </label>
                 <input
@@ -244,7 +244,7 @@ function AccountSettingsModal({
                     setName(e.target.value);
                     setNameError("");
                   }}
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                  className="w-full px-3 py-2.5 clay-inset border-0 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
                   placeholder="Masukkan nama lengkap"
                 />
                 {nameError && (
@@ -259,7 +259,7 @@ function AccountSettingsModal({
               <button
                 onClick={handleSaveName}
                 disabled={savingName}
-                className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-medium transition-colors cursor-pointer disabled:opacity-60 flex items-center justify-center gap-2"
+                className="w-full py-2.5 clay-blue clay-pressable text-white rounded-xl text-sm font-medium transition-colors cursor-pointer disabled:opacity-60 flex items-center justify-center gap-2"
               >
                 {savingName ? (
                   <>
@@ -274,7 +274,7 @@ function AccountSettingsModal({
             </div>
           </div>
 
-          <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+          <div className="bg-[rgba(215,233,255,0.4)] rounded-xl p-4 border border-[rgba(140,172,214,0.35)]">
             <h3 className="text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2">
               <Settings className="w-4 h-4 text-purple-600" />
               Ubah Password
@@ -307,7 +307,7 @@ function AccountSettingsModal({
                 },
               ].map((field) => (
                 <div key={field.label}>
-                  <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                  <label className="block text-xs font-bold text-[#5b6a8f] mb-1.5">
                     {field.label}
                   </label>
                   <div className="relative">
@@ -318,13 +318,13 @@ function AccountSettingsModal({
                         field.setter(e.target.value);
                         setPwError("");
                       }}
-                      className="w-full pl-3 pr-10 py-2.5 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white"
+                      className="w-full pl-3 pr-10 py-2.5 clay-inset border-0 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
                       placeholder={field.placeholder}
                     />
                     <button
                       type="button"
                       onClick={field.toggleShow}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8fa4d4] hover:text-[#10193a] cursor-pointer"
                     >
                       {field.show ? (
                         <EyeOff className="w-4 h-4" />
@@ -346,7 +346,7 @@ function AccountSettingsModal({
               <button
                 onClick={handleSavePassword}
                 disabled={savingPw}
-                className="w-full py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-sm font-medium transition-colors cursor-pointer disabled:opacity-60 flex items-center justify-center gap-2"
+                className="w-full py-2.5 clay-purple clay-pressable text-white rounded-xl text-sm font-medium transition-colors cursor-pointer disabled:opacity-60 flex items-center justify-center gap-2"
               >
                 {savingPw ? (
                   <>
@@ -394,7 +394,7 @@ export function UserProfile({
       <div className="relative ml-auto">
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+          className="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-[rgba(215,233,255,0.55)] transition-colors cursor-pointer"
         >
           <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
             <span className="text-white font-bold text-sm">
@@ -402,13 +402,13 @@ export function UserProfile({
             </span>
           </div>
           <div className="hidden md:flex flex-col items-start">
-            <span className="text-sm font-medium text-gray-900">
+            <span className="text-sm font-semibold text-[#10193a]">
               {currentName}
             </span>
-            <span className="text-xs text-gray-500">{role}</span>
+            <span className="text-xs text-[#5b6a8f]">{role}</span>
           </div>
           <ChevronDown
-            className={`w-4 h-4 text-gray-400 hidden md:block transition-transform ${isOpen ? "rotate-180" : ""}`}
+            className={`w-4 h-4 text-[#8fa4d4] hidden md:block transition-transform ${isOpen ? "rotate-180" : ""}`}
           />
         </button>
 
@@ -418,29 +418,29 @@ export function UserProfile({
               className="fixed inset-0 z-40"
               onClick={() => setIsOpen(false)}
             />
-            <div className="absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-50">
+            <div className="absolute right-0 mt-2 w-52 clay-raised-lg rounded-xl py-2 z-50">
               <div className="px-4 py-2 mb-1">
-                <p className="text-sm font-semibold text-gray-900 truncate">
+                <p className="text-sm font-semibold text-[#10193a] truncate">
                   {currentName}
                 </p>
-                <p className="text-xs text-gray-400">{role} — Arroyyan99</p>
+                <p className="text-xs text-[#8fa4d4]">{role} — Arroyyan99</p>
               </div>
-              <hr className="border-gray-100 mb-1" />
+              <hr className="border-[rgba(140,172,214,0.2)] mb-1" />
 
               <button
                 onClick={() => {
                   setIsOpen(false);
                   setShowAccountSettings(true);
                 }}
-                className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors cursor-pointer"
+                className="w-full px-4 py-2.5 text-left text-sm text-[#10193a] hover:bg-[rgba(215,233,255,0.5)] flex items-center gap-3 transition-colors cursor-pointer"
               >
-                <div className="w-7 h-7 bg-blue-100 rounded-lg flex items-center justify-center">
+                <div className="w-7 h-7 clay-blue-soft rounded-lg flex items-center justify-center">
                   <Settings className="w-3.5 h-3.5 text-blue-600" />
                 </div>
                 Pengaturan Akun
               </button>
 
-              <hr className="border-gray-100 my-1" />
+              <hr className="border-[rgba(140,172,214,0.2)] my-1" />
 
               <button
                 onClick={() => {
@@ -449,7 +449,7 @@ export function UserProfile({
                 }}
                 className="w-full px-4 py-2.5 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-3 transition-colors cursor-pointer"
               >
-                <div className="w-7 h-7 bg-red-100 rounded-lg flex items-center justify-center">
+                <div className="w-7 h-7 clay-inset-red rounded-lg flex items-center justify-center">
                   <LogOut className="w-3.5 h-3.5 text-red-600" />
                 </div>
                 Keluar

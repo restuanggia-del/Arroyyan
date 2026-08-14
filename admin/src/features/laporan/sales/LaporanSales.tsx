@@ -388,8 +388,8 @@ function ProdukTableCard({
   salesColumns: SalesColumn[];
 }) {
   return (
-    <div className="bg-white rounded-lg border border-gray-200 mb-6 overflow-hidden">
-      <div className="border-b border-gray-200 px-5 py-3">
+    <div className="clay-raised rounded-lg mb-6 overflow-hidden">
+      <div className="border-b border-[rgba(140,172,214,0.35)] px-5 py-3">
         <h3 className="font-semibold text-gray-900 text-sm">
           Catatan Penjualan — {productLabel(table)}
         </h3>
@@ -402,7 +402,7 @@ function ProdukTableCard({
         <div className="overflow-x-auto">
           <table className="w-full text-xs whitespace-nowrap">
             <thead>
-              <tr className="bg-gray-50 border-b border-gray-200 text-gray-600">
+              <tr className="bg-[rgba(215,233,255,0.4)] border-b border-[rgba(140,172,214,0.35)] text-gray-600">
                 <th className="text-left py-2 px-3 font-semibold">Tanggal</th>
                 <th className="text-right py-2 px-3 font-semibold">
                   Stok Awal
@@ -444,7 +444,7 @@ function ProdukTableCard({
               {table.rows.map((r) => (
                 <tr
                   key={r.tanggal}
-                  className="border-b border-gray-100 hover:bg-gray-50"
+                  className="border-b border-[rgba(140,172,214,0.2)] hover:bg-[rgba(215,233,255,0.5)]"
                 >
                   <td className="py-2 px-3 text-gray-600">
                     {formatDate(r.tanggal)}
@@ -494,7 +494,7 @@ function ProdukTableCard({
               ))}
             </tbody>
             <tfoot>
-              <tr className="border-t-2 border-gray-300 bg-gray-50 font-semibold">
+              <tr className="border-t-2 border-[rgba(140,172,214,0.4)] bg-[rgba(215,233,255,0.4)] font-semibold">
                 <td className="py-2.5 px-3">TOTAL</td>
                 <td className="py-2.5 px-3 text-right">
                   {formatDus(table.total.stok_awal_dus)}
@@ -560,8 +560,8 @@ function ItemBox({
   emptyText: string;
 }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden mb-4">
-      <div className="border-b border-gray-200 px-4 py-3">
+    <div className="clay-raised rounded-xl overflow-hidden mb-4">
+      <div className="border-b border-[rgba(140,172,214,0.35)] px-4 py-3">
         <h3 className="font-semibold text-gray-900 text-sm">{title}</h3>
       </div>
       <div className="divide-y divide-gray-100 max-h-80 overflow-y-auto">
@@ -618,7 +618,7 @@ function DetailHarianTab({
   }
   return (
     <div>
-      <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6 flex gap-3">
+      <div className="clay-inset-amber border-0 rounded-lg p-4 mb-6 flex gap-3">
         <Info className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
         <p className="text-xs text-amber-800">
           Kolom nama sales menampilkan dus yang didistribusikan ke sales
@@ -726,8 +726,8 @@ function RincianSetoranTab({
         }))}
       />
 
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden mb-4">
-        <div className="border-b border-gray-200 px-4 py-3">
+      <div className="clay-raised rounded-xl overflow-hidden mb-4">
+        <div className="border-b border-[rgba(140,172,214,0.35)] px-4 py-3">
           <h3 className="font-semibold text-gray-900 text-sm">
             Titip ke Toko-toko / Bon Bulan Ini
           </h3>
@@ -744,9 +744,9 @@ function RincianSetoranTab({
           data.titipan.per_sales.map((b) => (
             <div
               key={b.actor_id}
-              className="border-b border-gray-100 last:border-b-0"
+              className="border-b border-[rgba(140,172,214,0.2)] last:border-b-0"
             >
-              <div className="px-4 py-2 bg-gray-50 flex items-center justify-between">
+              <div className="px-4 py-2 bg-[rgba(215,233,255,0.4)] flex items-center justify-between">
                 <span className="text-sm font-medium text-gray-800">
                   Titipan {b.nama}
                 </span>
@@ -783,7 +783,7 @@ function RincianSetoranTab({
         </div>
       </div>
 
-      <div className="rounded-xl overflow-hidden border border-gray-200 mt-6">
+      <div className="rounded-xl overflow-hidden border border-[rgba(140,172,214,0.35)] mt-6">
         <div className="divide-y divide-gray-100">
           <div className="flex items-center justify-between px-5 py-3">
             <span className="text-sm text-gray-600">Total Penjualan</span>
@@ -850,8 +850,8 @@ function KomisiSetoranSalesTab({
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-        <div className="border-b border-gray-200 px-5 py-3">
+      <div className="clay-raised rounded-xl overflow-hidden">
+        <div className="border-b border-[rgba(140,172,214,0.35)] px-5 py-3">
           <h3 className="font-semibold text-gray-900 text-sm">
             Komisi Sales Bulan Ini
           </h3>
@@ -868,7 +868,7 @@ function KomisiSetoranSalesTab({
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-gray-50 border-b border-gray-200 text-gray-600 text-xs">
+                <tr className="bg-[rgba(215,233,255,0.4)] border-b border-[rgba(140,172,214,0.35)] text-gray-600 text-xs">
                   <th className="text-left py-2.5 px-4 font-semibold">Sales</th>
                   <th className="text-right py-2.5 px-4 font-semibold">
                     Dus Terjual
@@ -888,7 +888,7 @@ function KomisiSetoranSalesTab({
                 {data.komisi_sales.rows.map((r) => (
                   <tr
                     key={r.sales_id}
-                    className="border-b border-gray-100 hover:bg-gray-50"
+                    className="border-b border-[rgba(140,172,214,0.2)] hover:bg-[rgba(215,233,255,0.5)]"
                   >
                     <td className="py-2.5 px-4 font-medium text-gray-900">
                       {r.nama_sales}
@@ -913,7 +913,7 @@ function KomisiSetoranSalesTab({
                 ))}
               </tbody>
               <tfoot>
-                <tr className="border-t-2 border-gray-300 bg-gray-50 font-semibold">
+                <tr className="border-t-2 border-[rgba(140,172,214,0.4)] bg-[rgba(215,233,255,0.4)] font-semibold">
                   <td className="py-2.5 px-4" colSpan={4}>
                     TOTAL KOMISI SALES
                   </td>
@@ -925,7 +925,7 @@ function KomisiSetoranSalesTab({
             </table>
           </div>
         )}
-        <p className="text-xs text-gray-400 px-5 py-3 border-t border-gray-100">
+        <p className="text-xs text-gray-400 px-5 py-3 border-t border-[rgba(140,172,214,0.2)]">
           Catatan: laporan omzet resmi perusahaan (di tab "Detail Harian per
           Produk" &amp; "Rincian Setoran") menggunakan kolom Omzet (Harga
           Pabrik) di atas — bukan harga jual sales.
@@ -995,7 +995,7 @@ export function LaporanSales() {
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
               Bulan
             </label>
-            <div className="flex items-center gap-2 border border-gray-300 rounded-lg px-3 py-2">
+            <div className="flex items-center gap-2 clay-inset border-0 rounded-lg px-3 py-2">
               <Calendar className="w-4 h-4 text-gray-400" />
               <input
                 type="month"
@@ -1020,7 +1020,7 @@ export function LaporanSales() {
               !data ||
               (exportingType !== null && exportingType !== "pdf")
             }
-            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer disabled:opacity-60"
+            className="clay-red clay-pressable text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer disabled:opacity-60"
           >
             {exportingType === "pdf" ? (
               <RefreshCw className="w-4 h-4 animate-spin" />
@@ -1044,7 +1044,7 @@ export function LaporanSales() {
               !data ||
               (exportingType !== null && exportingType !== "excel")
             }
-            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer disabled:opacity-60"
+            className="clay-green clay-pressable text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer disabled:opacity-60"
           >
             {exportingType === "excel" ? (
               <RefreshCw className="w-4 h-4 animate-spin" />
@@ -1057,14 +1057,14 @@ export function LaporanSales() {
       </div>
 
       {error && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3">
+        <div className="mb-6 p-4 clay-inset-red border-0 rounded-lg flex items-center gap-3">
           <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
           <p className="text-sm text-red-700">{error}</p>
         </div>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="clay-raised rounded-lg p-6">
           <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
             <Package className="w-6 h-6 text-blue-600" />
           </div>
@@ -1073,7 +1073,7 @@ export function LaporanSales() {
             {loading ? "—" : formatRp(totalPenjualanCard)}
           </p>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="clay-raised rounded-lg p-6">
           <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-4">
             <Wallet className="w-6 h-6 text-orange-600" />
           </div>
@@ -1082,7 +1082,7 @@ export function LaporanSales() {
             {loading ? "—" : formatRp(totalPotonganCard)}
           </p>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="clay-raised rounded-lg p-6">
           <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
             <Wallet className="w-6 h-6 text-green-600" />
           </div>
@@ -1093,7 +1093,7 @@ export function LaporanSales() {
         </div>
       </div>
 
-      <div className="flex gap-1 mb-6 border-b border-gray-200">
+      <div className="flex gap-1 mb-6 border-b border-[rgba(140,172,214,0.35)]">
         {[
           { id: "harian", label: "Detail Harian per Produk" },
           { id: "setoran", label: "Rincian Setoran & Potongan" },

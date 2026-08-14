@@ -221,10 +221,12 @@ export default function App() {
 
   if (!authReady) {
     return (
-      <div className="flex h-screen items-center justify-center bg-gray-50">
+      <div className="flex h-screen items-center justify-center bg-gradient-to-br from-[#0249E1] via-[#1A5CE8] to-[#8FBBFA]">
         <div className="text-center">
-          <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-blue-200 border-t-blue-600" />
-          <p className="text-sm text-gray-600">Memuat...</p>
+          <div className="w-16 h-16 rounded-[26px] flex items-center justify-center mx-auto mb-4 bg-gradient-to-br from-[#202b52] to-[#0c1330] shadow-[8px_8px_18px_rgba(4,8,26,0.45),-6px_-6px_14px_rgba(120,150,230,0.25)]">
+            <div className="h-7 w-7 animate-spin rounded-full border-4 border-[#8FBBFA]/30 border-t-[#DAFB71]" />
+          </div>
+          <p className="text-sm text-white/80 font-medium">Memuat...</p>
         </div>
       </div>
     );
@@ -238,8 +240,10 @@ export default function App() {
     <div className="p-8">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-1">Dashboard</h1>
-          <p className="text-gray-600">
+          <h1 className="text-2xl font-extrabold text-[#10193a] mb-1">
+            Dashboard
+          </h1>
+          <p className="text-[#5b6a8f]">
             Selamat datang kembali, {currentUser?.name}! Berikut ringkasan
             bisnis Anda hari ini.
           </p>
@@ -247,7 +251,7 @@ export default function App() {
         <button
           onClick={fetchDashboardData}
           disabled={dashLoading}
-          className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50 cursor-pointer transition-colors"
+          className="flex items-center gap-2 px-4 py-2.5 clay-raised-sm clay-pressable border-0 rounded-xl text-sm font-semibold text-[#5b6a8f] disabled:opacity-50 cursor-pointer"
         >
           <RefreshCw
             className={`w-4 h-4 ${dashLoading ? "animate-spin" : ""}`}
@@ -261,14 +265,14 @@ export default function App() {
           title="Penjualan Hari Ini"
           value={dashStats ? formatRp(dashStats.salesToday) : "—"}
           icon={DollarSign}
-          color="bg-gradient-to-br from-blue-500 to-blue-600"
+          color="bg-gradient-to-br from-[#4a86f4] to-[#0249e1]"
           loading={dashLoading}
         />
         <StatCard
           title="Penjualan Bulan Ini"
           value={dashStats ? formatRp(dashStats.salesThisMonth) : "—"}
           icon={TrendingUp}
-          color="bg-gradient-to-br from-green-500 to-green-600"
+          color="bg-gradient-to-br from-[#4ad080] to-[#159650]"
           loading={dashLoading}
         />
         <StatCard
@@ -277,7 +281,7 @@ export default function App() {
             dashStats ? `${dashStats.totalTransactionsToday} Transaksi` : "—"
           }
           icon={ShoppingCart}
-          color="bg-gradient-to-br from-purple-500 to-purple-600"
+          color="bg-gradient-to-br from-[#a685f0] to-[#6636c9]"
           loading={dashLoading}
         />
         <StatCard
@@ -286,7 +290,7 @@ export default function App() {
             dashStats ? `${dashStats.totalTransactionsMonth} Transaksi` : "—"
           }
           icon={Package}
-          color="bg-gradient-to-br from-orange-500 to-orange-600"
+          color="bg-gradient-to-br from-[#ffc857] to-[#e08e0a]"
           loading={dashLoading}
         />
       </div>
@@ -302,37 +306,37 @@ export default function App() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         <div className="lg:col-span-2">
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          <div className="clay-raised rounded-3xl p-6">
+            <h3 className="text-lg font-bold text-[#10193a] mb-4">
               Prediksi Penjualan (Moving Average 3 Bulan)
             </h3>
             {dashLoading ? (
               <div className="space-y-3">
-                <div className="h-24 bg-gray-100 animate-pulse rounded-lg" />
+                <div className="h-24 clay-inset-sm animate-pulse rounded-2xl" />
                 <div className="grid grid-cols-3 gap-4">
                   {[1, 2, 3].map((i) => (
                     <div
                       key={i}
-                      className="h-16 bg-gray-100 animate-pulse rounded-lg"
+                      className="h-16 clay-inset-sm animate-pulse rounded-2xl"
                     />
                   ))}
                 </div>
               </div>
             ) : prediction && prediction.value > 0 ? (
               <>
-                <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg p-6 border border-blue-200">
+                <div className="clay-blue rounded-3xl p-6">
                   <div className="flex items-center justify-between mb-3">
                     <div>
-                      <p className="text-sm text-gray-600 mb-1">
+                      <p className="text-sm text-white/75 mb-1">
                         Prediksi {prediction.nextMonth}
                       </p>
-                      <p className="text-3xl font-bold text-blue-600">
+                      <p className="text-3xl font-extrabold text-white">
                         {formatRp(prediction.value)}
                       </p>
                     </div>
-                    <TrendingUp className="w-12 h-12 text-blue-400" />
+                    <TrendingUp className="w-12 h-12 text-[#DAFB71]" />
                   </div>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-white/70">
                     Berdasarkan rata-rata 3 bulan terakhir dari data transaksi
                     nyata
                   </p>
@@ -341,10 +345,10 @@ export default function App() {
                   {prediction.months.map((m) => (
                     <div
                       key={m.label}
-                      className="text-center p-3 bg-gray-50 rounded-lg"
+                      className="text-center p-3 clay-inset-sm rounded-2xl"
                     >
-                      <p className="text-xs text-gray-500 mb-1">{m.label}</p>
-                      <p className="font-semibold text-gray-900 text-sm">
+                      <p className="text-xs text-[#5b6a8f] mb-1">{m.label}</p>
+                      <p className="font-bold text-[#10193a] text-sm">
                         {m.value > 0 ? formatRp(m.value) : "Rp 0"}
                       </p>
                     </div>
@@ -352,12 +356,12 @@ export default function App() {
                 </div>
               </>
             ) : (
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-5 text-center">
-                <TrendingUp className="w-10 h-10 text-amber-400 mx-auto mb-2" />
-                <p className="text-sm font-medium text-amber-700">
+              <div className="clay-inset-amber border-0 rounded-2xl p-5 text-center">
+                <TrendingUp className="w-10 h-10 text-[#e08e0a] mx-auto mb-2" />
+                <p className="text-sm font-semibold text-[#8a5c07]">
                   Belum ada data transaksi
                 </p>
-                <p className="text-xs text-amber-600 mt-1">
+                <p className="text-xs text-[#8a5c07]/80 mt-1">
                   Prediksi akan muncul setelah ada riwayat penjualan
                 </p>
               </div>
@@ -436,13 +440,13 @@ export default function App() {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50">
-      <div className="flex flex-col">
+    <div className="flex h-screen clay-page-bg">
+      <div className="flex w-64 flex-col flex-shrink-0 items-center">
         <Logo />
         <Sidebar activeMenu={activeMenu} onMenuChange={handleMenuChange} />
       </div>
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="bg-white border-b border-gray-200 px-8 py-4">
+      <div className="flex-1 flex flex-col overflow-hidden p-4 gap-4">
+        <header className="clay-raised rounded-[28px] px-6 py-3.5 flex-shrink-0">
           <div className="flex items-center gap-4">
             <SearchBar onNavigate={handleMenuChange} />
             <UserProfile
@@ -453,7 +457,9 @@ export default function App() {
             />
           </div>
         </header>
-        <main className="flex-1 overflow-y-auto">{renderContent()}</main>
+        <main className="flex-1 overflow-y-auto clay-raised rounded-[28px]">
+          {renderContent()}
+        </main>
       </div>
     </div>
   );

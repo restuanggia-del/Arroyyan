@@ -95,13 +95,13 @@ export function MaterialModal({
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl">
-        <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between rounded-t-2xl">
+        <div className="border-b border-[rgba(140,172,214,0.35)] px-6 py-4 flex items-center justify-between rounded-t-2xl">
           <h2 className="text-xl font-semibold text-gray-900">
             {material ? "Edit Bahan" : "Tambah Bahan Baru"}
           </h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
+            className="p-2 hover:bg-[rgba(215,233,255,0.55)] rounded-lg transition-colors cursor-pointer"
           >
             <X className="w-5 h-5 text-gray-500" />
           </button>
@@ -109,7 +109,7 @@ export function MaterialModal({
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {formError && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+            <div className="p-3 clay-inset-red border-0 rounded-lg text-sm text-red-700">
               {formError}
             </div>
           )}
@@ -124,7 +124,7 @@ export function MaterialModal({
               value={formData.nama_bahan}
               onChange={(e) => handleChange("nama_bahan", e.target.value)}
               placeholder="Contoh: Preform Botol 600ml, Tutup Cup, Sedotan"
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2.5 clay-inset border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
             />
           </div>
 
@@ -139,7 +139,7 @@ export function MaterialModal({
                 value={formData.satuan}
                 onChange={(e) => handleChange("satuan", e.target.value)}
                 placeholder="kg / pcs / roll"
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2.5 clay-inset border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
               />
             </div>
             <div>
@@ -151,7 +151,7 @@ export function MaterialModal({
                 onChange={(e) =>
                   handleChange("is_active", e.target.value === "aktif")
                 }
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                className="w-full px-4 py-2.5 clay-inset border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40 cursor-pointer"
               >
                 <option value="aktif">Aktif</option>
                 <option value="nonaktif">Nonaktif</option>
@@ -172,14 +172,14 @@ export function MaterialModal({
               type="button"
               onClick={onClose}
               disabled={saving}
-              className="px-5 py-2.5 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors cursor-pointer disabled:opacity-50"
+              className="px-5 py-2.5 text-gray-700 bg-[rgba(215,233,255,0.55)] hover:bg-gray-200 rounded-xl transition-colors cursor-pointer disabled:opacity-50"
             >
               Batal
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-colors cursor-pointer disabled:opacity-70 flex items-center gap-2"
+              className="px-5 py-2.5 clay-blue clay-pressable text-white rounded-xl transition-colors cursor-pointer disabled:opacity-70 flex items-center gap-2"
             >
               {saving && <RefreshCw className="w-4 h-4 animate-spin" />}
               {material ? "Simpan Perubahan" : "Tambah Bahan"}

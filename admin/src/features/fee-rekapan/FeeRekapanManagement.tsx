@@ -79,14 +79,14 @@ export function FeeRekapanManagement() {
             setEditingEntry(null);
             setIsModalOpen(true);
           }}
-          className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors cursor-pointer"
+          className="flex items-center gap-2 px-4 py-2.5 clay-purple clay-pressable text-white rounded-lg text-sm font-medium transition-colors cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           Tambah Fee Rekapan
         </button>
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+      <div className="clay-raised rounded-lg p-6 mb-6">
         <div className="flex flex-wrap items-end gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
@@ -96,7 +96,7 @@ export function FeeRekapanManagement() {
               type="month"
               value={periode}
               onChange={(e) => setPeriode(e.target.value)}
-              className="px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="px-4 py-2.5 clay-inset border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
             />
           </div>
           <div className="flex items-center gap-2 px-4 py-2.5 bg-indigo-50 border border-indigo-200 rounded-lg">
@@ -110,14 +110,14 @@ export function FeeRekapanManagement() {
       </div>
 
       {error && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3">
+        <div className="mb-6 p-4 clay-inset-red border-0 rounded-lg flex items-center gap-3">
           <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
           <p className="text-sm text-red-700">{error}</p>
         </div>
       )}
 
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-        <div className="border-b border-gray-200 px-6 py-4">
+      <div className="clay-raised rounded-lg overflow-hidden">
+        <div className="border-b border-[rgba(140,172,214,0.35)] px-6 py-4">
           <h2 className="text-lg font-semibold text-gray-900">
             Daftar Fee Rekapan — Periode {periode}
           </h2>
@@ -130,7 +130,7 @@ export function FeeRekapanManagement() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-gray-200 bg-gray-50">
+                <tr className="border-b border-[rgba(140,172,214,0.35)] bg-[rgba(215,233,255,0.4)]">
                   {["Karyawan", "Jumlah", "Keterangan", "Aksi"].map((h) => (
                     <th
                       key={h}
@@ -155,7 +155,7 @@ export function FeeRekapanManagement() {
                   entries.map((entry) => (
                     <tr
                       key={entry.id}
-                      className="border-b border-gray-100 hover:bg-gray-50"
+                      className="border-b border-[rgba(140,172,214,0.2)] hover:bg-[rgba(215,233,255,0.5)]"
                     >
                       <td className="py-3 px-4 text-sm font-medium text-gray-900">
                         {entry.karyawan?.nama ?? "—"}
@@ -233,13 +233,13 @@ export function FeeRekapanManagement() {
             <div className="flex gap-3">
               <button
                 onClick={() => setConfirmDelete(null)}
-                className="flex-1 px-4 py-2.5 border border-gray-300 rounded-xl text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+                className="flex-1 px-4 py-2.5 clay-inset-sm border-0 rounded-xl text-sm text-gray-700 cursor-pointer"
               >
                 Batal
               </button>
               <button
                 onClick={handleDeleteConfirm}
-                className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-medium cursor-pointer"
+                className="flex-1 px-4 py-2.5 clay-red clay-pressable text-white rounded-xl text-sm font-medium cursor-pointer"
               >
                 Ya, Hapus
               </button>

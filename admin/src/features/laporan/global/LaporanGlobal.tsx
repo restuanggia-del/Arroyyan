@@ -230,7 +230,7 @@ function RekapProdukTab() {
 
   return (
     <div>
-      <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6 flex gap-3">
+      <div className="clay-inset-amber border-0 rounded-lg p-4 mb-6 flex gap-3">
         <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
         <p className="text-xs text-amber-800">
           Nilai Rp pada kolom Sodaqoh, Pribadi, Bonus, dan Retur adalah{" "}
@@ -242,7 +242,7 @@ function RekapProdukTab() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="clay-raised rounded-lg p-6">
           <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
             <Package className="w-6 h-6 text-blue-600" />
           </div>
@@ -251,7 +251,7 @@ function RekapProdukTab() {
             {loading ? "—" : formatDus(totals.total_produksi_dus)} dus
           </p>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="clay-raised rounded-lg p-6">
           <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
             <Wallet className="w-6 h-6 text-green-600" />
           </div>
@@ -260,7 +260,7 @@ function RekapProdukTab() {
             {loading ? "—" : formatRp(totals.penjualan_total_rp)}
           </p>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="clay-raised rounded-lg p-6">
           <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
             <Package className="w-6 h-6 text-purple-600" />
           </div>
@@ -269,7 +269,7 @@ function RekapProdukTab() {
             {loading ? "—" : formatDus(totals.sisa_stok_dus)} dus
           </p>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="clay-raised rounded-lg p-6">
           <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-4">
             <Package className="w-6 h-6 text-orange-600" />
           </div>
@@ -280,8 +280,8 @@ function RekapProdukTab() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-200">
-        <div className="border-b border-gray-200 px-6 py-4 flex items-end justify-between flex-wrap gap-4">
+      <div className="clay-raised rounded-xl">
+        <div className="border-b border-[rgba(140,172,214,0.35)] px-6 py-4 flex items-end justify-between flex-wrap gap-4">
           <div className="flex items-end gap-3">
             <Calendar className="w-5 h-5 text-gray-500 mb-2.5" />
             <div>
@@ -292,7 +292,7 @@ function RekapProdukTab() {
                 type="month"
                 value={periode}
                 onChange={(e) => setPeriode(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-3 py-2 clay-inset border-0 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
               />
             </div>
           </div>
@@ -309,7 +309,7 @@ function RekapProdukTab() {
               disabled={
                 loading || (exportingType !== null && exportingType !== "pdf")
               }
-              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer disabled:opacity-60"
+              className="clay-red clay-pressable text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer disabled:opacity-60"
             >
               {exportingType === "pdf" ? (
                 <RefreshCw className="w-4 h-4 animate-spin" />
@@ -330,7 +330,7 @@ function RekapProdukTab() {
               disabled={
                 loading || (exportingType !== null && exportingType !== "excel")
               }
-              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer disabled:opacity-60"
+              className="clay-green clay-pressable text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer disabled:opacity-60"
             >
               {exportingType === "excel" ? (
                 <RefreshCw className="w-4 h-4 animate-spin" />
@@ -344,7 +344,7 @@ function RekapProdukTab() {
 
         <div className="p-6">
           {error && (
-            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl flex gap-3">
+            <div className="mb-4 p-4 clay-inset-red border-0 rounded-xl flex gap-3">
               <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
               <p className="text-sm text-red-700">{error}</p>
             </div>
@@ -362,7 +362,7 @@ function RekapProdukTab() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b-2 border-gray-200">
+                  <tr className="border-b-2 border-[rgba(140,172,214,0.35)]">
                     <th
                       rowSpan={2}
                       className="text-left py-2 px-2 font-semibold text-gray-700 align-bottom whitespace-nowrap"
@@ -395,13 +395,13 @@ function RekapProdukTab() {
                     </th>
                     <th
                       colSpan={2}
-                      className="text-center py-1 px-2 font-semibold text-gray-700 border-b border-gray-200 whitespace-nowrap"
+                      className="text-center py-1 px-2 font-semibold text-gray-700 border-b border-[rgba(140,172,214,0.35)] whitespace-nowrap"
                     >
                       Cash
                     </th>
                     <th
                       colSpan={2}
-                      className="text-center py-1 px-2 font-semibold text-gray-700 border-b border-gray-200 whitespace-nowrap"
+                      className="text-center py-1 px-2 font-semibold text-gray-700 border-b border-[rgba(140,172,214,0.35)] whitespace-nowrap"
                     >
                       Bon
                     </th>
@@ -430,7 +430,7 @@ function RekapProdukTab() {
                       Retur
                     </th>
                   </tr>
-                  <tr className="border-b-2 border-gray-200">
+                  <tr className="border-b-2 border-[rgba(140,172,214,0.35)]">
                     <th className="text-right py-1 px-2 font-medium text-gray-500 text-xs whitespace-nowrap">
                       Dus
                     </th>
@@ -449,7 +449,7 @@ function RekapProdukTab() {
                   {data.map((r) => (
                     <tr
                       key={r.product_id}
-                      className="border-b border-gray-100 hover:bg-gray-50"
+                      className="border-b border-[rgba(140,172,214,0.2)] hover:bg-[rgba(215,233,255,0.5)]"
                     >
                       <td className="py-2 px-2 font-medium text-gray-900 whitespace-nowrap">
                         {r.product_name}
@@ -495,7 +495,7 @@ function RekapProdukTab() {
                   ))}
                 </tbody>
                 <tfoot>
-                  <tr className="border-t-2 border-gray-300 bg-gray-50 font-bold">
+                  <tr className="border-t-2 border-[rgba(140,172,214,0.4)] bg-[rgba(215,233,255,0.4)] font-bold">
                     <td className="py-3 px-2">TOTAL</td>
                     <td className="py-3 px-2 text-right">
                       {formatDus(totals.stok_awal_dus)}
@@ -750,8 +750,8 @@ function RekapanSetoranTab() {
 
   return (
     <div>
-      <div className="bg-white rounded-xl border border-gray-200 mb-6">
-        <div className="border-b border-gray-200 px-6 py-4 flex items-end justify-between flex-wrap gap-4">
+      <div className="clay-raised rounded-xl mb-6">
+        <div className="border-b border-[rgba(140,172,214,0.35)] px-6 py-4 flex items-end justify-between flex-wrap gap-4">
           <div className="flex items-end gap-3">
             <Calendar className="w-5 h-5 text-gray-500 mb-2.5" />
             <div>
@@ -762,7 +762,7 @@ function RekapanSetoranTab() {
                 type="month"
                 value={periode}
                 onChange={(e) => setPeriode(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-3 py-2 clay-inset border-0 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
               />
             </div>
           </div>
@@ -774,7 +774,7 @@ function RekapanSetoranTab() {
                 !data ||
                 (exportingType !== null && exportingType !== "pdf")
               }
-              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer disabled:opacity-60"
+              className="clay-red clay-pressable text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer disabled:opacity-60"
             >
               {exportingType === "pdf" ? (
                 <RefreshCw className="w-4 h-4 animate-spin" />
@@ -790,7 +790,7 @@ function RekapanSetoranTab() {
                 !data ||
                 (exportingType !== null && exportingType !== "excel")
               }
-              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer disabled:opacity-60"
+              className="clay-green clay-pressable text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer disabled:opacity-60"
             >
               {exportingType === "excel" ? (
                 <RefreshCw className="w-4 h-4 animate-spin" />
@@ -804,7 +804,7 @@ function RekapanSetoranTab() {
       </div>
 
       {error && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex gap-3">
+        <div className="mb-6 p-4 clay-inset-red border-0 rounded-xl flex gap-3">
           <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
           <p className="text-sm text-red-700">{error}</p>
         </div>
@@ -955,8 +955,8 @@ function SetoranBox({
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-      <div className="border-b border-gray-200 px-4 py-3">
+    <div className="clay-raised rounded-xl overflow-hidden">
+      <div className="border-b border-[rgba(140,172,214,0.35)] px-4 py-3">
         <h3 className="font-semibold text-gray-900 text-sm">{title}</h3>
       </div>
       <div className="divide-y divide-gray-100">{children}</div>
@@ -996,7 +996,7 @@ export function LaporanGlobal() {
         </p>
       </div>
 
-      <div className="flex gap-1 mb-6 border-b border-gray-200">
+      <div className="flex gap-1 mb-6 border-b border-[rgba(140,172,214,0.35)]">
         {[
           { id: "produk", label: "Rekap Produk" },
           { id: "setoran", label: "Rekapan Setoran" },

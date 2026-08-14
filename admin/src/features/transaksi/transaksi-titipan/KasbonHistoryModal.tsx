@@ -39,7 +39,7 @@ export function KasbonHistoryModal({
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl w-full max-w-xl shadow-2xl max-h-[85vh] flex flex-col">
-        <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between flex-shrink-0">
+        <div className="border-b border-[rgba(140,172,214,0.35)] px-6 py-4 flex items-center justify-between flex-shrink-0">
           <div>
             <h2 className="text-xl font-semibold text-gray-900">
               Riwayat Pembayaran
@@ -51,7 +51,7 @@ export function KasbonHistoryModal({
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
+            className="p-2 hover:bg-[rgba(215,233,255,0.55)] rounded-lg transition-colors cursor-pointer"
           >
             <X className="w-5 h-5 text-gray-500" />
           </button>
@@ -72,7 +72,7 @@ export function KasbonHistoryModal({
               {payments.map((p) => (
                 <div
                   key={p.id}
-                  className="border border-gray-200 rounded-xl p-4"
+                  className="border border-[rgba(140,172,214,0.35)] rounded-xl p-4"
                 >
                   <div className="flex items-center justify-between mb-2">
                     <p className="text-sm font-medium text-gray-900">
@@ -88,7 +88,7 @@ export function KasbonHistoryModal({
                     <p>Cash: {formatRp(p.jumlah_cash)}</p>
                     <p>Ke Owner: {formatRp(p.jumlah_ke_owner)}</p>
                   </div>
-                  <div className="border-t border-gray-100 pt-2 flex items-center justify-between text-xs">
+                  <div className="border-t border-[rgba(140,172,214,0.2)] pt-2 flex items-center justify-between text-xs">
                     <span className="text-gray-500">Sisa setelah ini:</span>
                     <span className="font-medium text-gray-700">
                       {p.sisa_dus} unit · {formatRp(p.sisa_rp)}

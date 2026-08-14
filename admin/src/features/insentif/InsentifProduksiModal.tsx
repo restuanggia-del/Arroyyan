@@ -107,7 +107,7 @@ export function InsentifProduksiModal({
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto">
-        <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between sticky top-0 bg-white rounded-t-2xl">
+        <div className="border-b border-[rgba(140,172,214,0.35)] px-6 py-4 flex items-center justify-between sticky top-0 bg-white rounded-t-2xl">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-teal-100 flex items-center justify-center">
               <Factory className="w-5 h-5 text-teal-600" />
@@ -118,7 +118,7 @@ export function InsentifProduksiModal({
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
+            className="p-2 hover:bg-[rgba(215,233,255,0.55)] rounded-lg transition-colors cursor-pointer"
           >
             <X className="w-5 h-5 text-gray-500" />
           </button>
@@ -126,7 +126,7 @@ export function InsentifProduksiModal({
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {formError && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-sm text-red-700">
+            <div className="p-3 clay-inset-red border-0 rounded-lg flex items-center gap-2 text-sm text-red-700">
               <AlertCircle className="w-4 h-4 flex-shrink-0" />
               {formError}
             </div>
@@ -142,7 +142,7 @@ export function InsentifProduksiModal({
                 required
                 value={tanggal}
                 onChange={(e) => setTanggal(e.target.value)}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2.5 clay-inset border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
               />
             </div>
             <div>
@@ -155,7 +155,7 @@ export function InsentifProduksiModal({
                 onChange={(e) =>
                   setKategori(e.target.value as ProduksiKategori)
                 }
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                className="w-full px-4 py-2.5 clay-inset border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40 cursor-pointer"
               >
                 <option value="cup">Cup</option>
                 <option value="botol">Botol</option>
@@ -177,7 +177,7 @@ export function InsentifProduksiModal({
                   handleNumberChange(setJumlahDus)(e.target.value)
                 }
                 placeholder="0"
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2.5 clay-inset border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
               />
             </div>
             <div>
@@ -192,7 +192,7 @@ export function InsentifProduksiModal({
                 onChange={(e) =>
                   handleNumberChange(setRatePerDus, true)(e.target.value)
                 }
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2.5 clay-inset border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
               />
               <p className="text-xs text-gray-400 mt-1">
                 Default: cup Rp 1.000, botol Rp 2.000 / dus.
@@ -214,17 +214,17 @@ export function InsentifProduksiModal({
                 Belum ada karyawan aktif dengan peran produksi.
               </p>
             ) : (
-              <div className="border border-gray-200 rounded-lg divide-y divide-gray-100 max-h-40 overflow-y-auto">
+              <div className="border border-[rgba(140,172,214,0.35)] rounded-lg divide-y divide-gray-100 max-h-40 overflow-y-auto">
                 {karyawanList.map((k) => (
                   <label
                     key={k.id}
-                    className="flex items-center gap-2 px-3 py-2 hover:bg-gray-50 cursor-pointer"
+                    className="flex items-center gap-2 px-3 py-2 hover:bg-[rgba(215,233,255,0.5)] cursor-pointer"
                   >
                     <input
                       type="checkbox"
                       checked={selectedKaryawanIds.includes(k.id)}
                       onChange={() => toggleKaryawan(k.id)}
-                      className="w-4 h-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500 cursor-pointer"
+                      className="w-4 h-4 rounded border-[rgba(140,172,214,0.5)] text-teal-600 focus:ring-teal-500 cursor-pointer"
                     />
                     <span className="text-sm text-gray-700">{k.nama}</span>
                   </label>
@@ -247,7 +247,7 @@ export function InsentifProduksiModal({
               onChange={(e) => setKeterangan(e.target.value)}
               placeholder="Contoh: Produksi cup batch sore"
               rows={2}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              className="w-full px-4 py-2.5 clay-inset border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40 resize-none"
             />
           </div>
 
@@ -273,7 +273,7 @@ export function InsentifProduksiModal({
               type="button"
               onClick={onClose}
               disabled={saving}
-              className="px-5 py-2.5 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors cursor-pointer disabled:opacity-50"
+              className="px-5 py-2.5 text-gray-700 bg-[rgba(215,233,255,0.55)] hover:bg-gray-200 rounded-xl transition-colors cursor-pointer disabled:opacity-50"
             >
               Batal
             </button>

@@ -65,7 +65,7 @@ const movementColor: Record<string, string> = {
   stok_awal: "bg-cyan-100 text-cyan-700",
   distribution_out: "bg-orange-100 text-orange-700",
   distribution_in: "bg-blue-100 text-blue-700",
-  sale_out: "bg-gray-100 text-gray-700",
+  sale_out: "bg-[rgba(215,233,255,0.55)] text-gray-700",
 };
 
 export function StockManagement() {
@@ -145,7 +145,7 @@ export function StockManagement() {
         <button
           onClick={fetchAll}
           disabled={loading}
-          className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50 cursor-pointer transition-colors"
+          className="flex items-center gap-2 px-4 py-2 clay-inset border-0 rounded-lg text-sm text-gray-700 hover:bg-[rgba(215,233,255,0.5)] disabled:opacity-50 cursor-pointer transition-colors"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
           Refresh
@@ -153,7 +153,7 @@ export function StockManagement() {
       </div>
 
       {!loading && lowStockItems.length > 0 && (
-        <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 mb-6 flex items-start gap-3">
+        <div className="clay-inset-amber border-0 rounded-xl p-4 mb-6 flex items-start gap-3">
           <AlertTriangle className="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" />
           <div>
             <h3 className="font-semibold text-orange-900 mb-1">
@@ -175,7 +175,7 @@ export function StockManagement() {
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="clay-raised rounded-lg p-6">
           <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
             <Warehouse className="w-6 h-6 text-blue-600" />
           </div>
@@ -184,7 +184,7 @@ export function StockManagement() {
             {loading ? "—" : `${totalPusat} Unit`}
           </p>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="clay-raised rounded-lg p-6">
           <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
             <TrendingUp className="w-6 h-6 text-green-600" />
           </div>
@@ -193,7 +193,7 @@ export function StockManagement() {
             {loading ? "—" : `${totalDist} Unit`}
           </p>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="clay-raised rounded-lg p-6">
           <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-4">
             <AlertTriangle className="w-6 h-6 text-orange-600" />
           </div>
@@ -204,15 +204,15 @@ export function StockManagement() {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200">
-        <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+      <div className="clay-raised rounded-lg">
+        <div className="border-b border-[rgba(140,172,214,0.35)] px-6 py-4 flex items-center justify-between">
           <div className="flex gap-2">
             <button
               onClick={() => setActiveTab("overview")}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${
                 activeTab === "overview"
                   ? "bg-blue-50 text-blue-600"
-                  : "text-gray-600 hover:bg-gray-50"
+                  : "text-gray-600 hover:bg-[rgba(215,233,255,0.5)]"
               }`}
             >
               Ringkasan Stok
@@ -222,7 +222,7 @@ export function StockManagement() {
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${
                 activeTab === "movement"
                   ? "bg-blue-50 text-blue-600"
-                  : "text-gray-600 hover:bg-gray-50"
+                  : "text-gray-600 hover:bg-[rgba(215,233,255,0.5)]"
               }`}
             >
               Riwayat Pergerakan
@@ -238,14 +238,14 @@ export function StockManagement() {
             </button>
             <button
               onClick={() => handleAddTransaction("masuk")}
-              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer"
+              className="clay-green clay-pressable text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer"
             >
               <TrendingUp className="w-4 h-4" />
               Stok Masuk
             </button>
             <button
               onClick={() => handleAddTransaction("keluar")}
-              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer"
+              className="clay-red clay-pressable text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer"
             >
               <TrendingDown className="w-4 h-4" />
               Stok Keluar
@@ -255,7 +255,7 @@ export function StockManagement() {
 
         <div className="p-6">
           {error && (
-            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3">
+            <div className="mb-4 p-4 clay-inset-red border-0 rounded-lg flex items-center gap-3">
               <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
               <p className="text-sm text-red-700">{error}</p>
             </div>
@@ -270,7 +270,7 @@ export function StockManagement() {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-gray-200">
+                  <tr className="border-b border-[rgba(140,172,214,0.35)]">
                     {[
                       "Produk",
                       "Kategori",
@@ -306,7 +306,7 @@ export function StockManagement() {
                       return (
                         <tr
                           key={item.product_id}
-                          className="border-b border-gray-100 hover:bg-gray-50"
+                          className="border-b border-[rgba(140,172,214,0.2)] hover:bg-[rgba(215,233,255,0.5)]"
                         >
                           <td className="py-3 px-4 text-sm font-medium text-gray-900">
                             {item.product_name}
@@ -368,7 +368,7 @@ export function StockManagement() {
                   return (
                     <div
                       key={mov.id}
-                      className="border border-gray-200 rounded-xl p-4 hover:bg-gray-50 transition-colors"
+                      className="clay-raised-sm clay-pressable border-0 rounded-xl p-4 transition-colors"
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex items-start gap-3">
@@ -395,7 +395,7 @@ export function StockManagement() {
                             <span
                               className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
                                 movementColor[mov.movement_type] ??
-                                "bg-gray-100 text-gray-600"
+                                "bg-[rgba(215,233,255,0.55)] text-gray-600"
                               }`}
                             >
                               {movementLabel[mov.movement_type] ??

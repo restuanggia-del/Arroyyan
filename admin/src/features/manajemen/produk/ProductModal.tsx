@@ -154,13 +154,13 @@ export function ProductModal({
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
         {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between rounded-t-2xl">
+        <div className="sticky top-0 border-b border-[rgba(140,172,214,0.35)] px-6 py-4 flex items-center justify-between rounded-t-2xl">
           <h2 className="text-xl font-semibold text-gray-900">
             {product ? "Edit Produk" : "Tambah Produk Baru"}
           </h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
+            className="p-2 hover:bg-[rgba(215,233,255,0.55)] rounded-lg transition-colors cursor-pointer"
           >
             <X className="w-5 h-5 text-gray-500" />
           </button>
@@ -168,7 +168,7 @@ export function ProductModal({
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {formError && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+            <div className="p-3 clay-inset-red border-0 rounded-lg text-sm text-red-700">
               {formError}
             </div>
           )}
@@ -183,7 +183,7 @@ export function ProductModal({
               value={formData.product_name}
               onChange={(e) => handleChange("product_name", e.target.value)}
               placeholder="Contoh: Arroyyan99 Cup Kecil"
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2.5 clay-inset border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
             />
           </div>
 
@@ -198,7 +198,7 @@ export function ProductModal({
                 onChange={(e) =>
                   handleChange("category", e.target.value as "cup" | "botol")
                 }
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                className="w-full px-4 py-2.5 clay-inset border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40 cursor-pointer"
               >
                 <option value="cup">Cup</option>
                 <option value="botol">Botol</option>
@@ -213,7 +213,7 @@ export function ProductModal({
                 onChange={(e) =>
                   handleChange("is_active", e.target.value === "aktif")
                 }
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                className="w-full px-4 py-2.5 clay-inset border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40 cursor-pointer"
               >
                 <option value="aktif">Aktif</option>
                 <option value="nonaktif">Nonaktif</option>
@@ -234,7 +234,7 @@ export function ProductModal({
                 value={formData.size}
                 onChange={(e) => handleChange("size", e.target.value)}
                 placeholder="Contoh: 240ml, 600ml"
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2.5 clay-inset border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
               />
             </div>
             <div>
@@ -247,7 +247,7 @@ export function ProductModal({
                 value={formData.unit}
                 onChange={(e) => handleChange("unit", e.target.value)}
                 placeholder="pcs / box / karton"
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2.5 clay-inset border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
               />
             </div>
           </div>
@@ -273,7 +273,7 @@ export function ProductModal({
                   handleChange("price", value === "" ? 0 : parseInt(value, 10));
                 }}
                 placeholder="0"
-                className="w-full pl-12 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-12 pr-4 py-2.5 clay-inset border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
               />
             </div>
             <p className="text-xs text-gray-400 mt-1.5">
@@ -281,7 +281,7 @@ export function ProductModal({
             </p>
           </div>
 
-          <div className="border border-gray-200 rounded-xl p-4">
+          <div className="border border-[rgba(140,172,214,0.35)] rounded-xl p-4">
             <div className="flex items-center gap-2 mb-1">
               <Tag className="w-4 h-4 text-blue-600" />
               <label className="text-sm font-medium text-gray-700">
@@ -297,14 +297,14 @@ export function ProductModal({
             </p>
 
             {!product ? (
-              <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg p-3">
+              <p className="text-xs text-amber-600 clay-inset-amber border-0 rounded-lg p-3">
                 Simpan produk ini terlebih dahulu, lalu edit kembali untuk
                 menambahkan opsi harga variatif.
               </p>
             ) : (
               <>
                 {priceError && (
-                  <div className="mb-3 p-2.5 bg-red-50 border border-red-200 rounded-lg text-xs text-red-700">
+                  <div className="mb-3 p-2.5 clay-inset-red border-0 rounded-lg text-xs text-red-700">
                     {priceError}
                   </div>
                 )}
@@ -319,7 +319,7 @@ export function ProductModal({
                     {prices.map((p) => (
                       <div
                         key={p.id}
-                        className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg px-3 py-2"
+                        className="flex items-center justify-between bg-[rgba(215,233,255,0.4)] border border-[rgba(140,172,214,0.35)] rounded-lg px-3 py-2"
                       >
                         <div>
                           <p className="text-sm font-medium text-gray-900">
@@ -356,7 +356,7 @@ export function ProductModal({
                       value={newPriceLabel}
                       onChange={(e) => setNewPriceLabel(e.target.value)}
                       placeholder="Contoh: Harga Grosir"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 clay-inset border-0 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
                     />
                   </div>
                   <div className="w-32">
@@ -372,14 +372,14 @@ export function ProductModal({
                         setNewPriceValue(v === "" ? 0 : parseInt(v, 10));
                       }}
                       placeholder="0"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 clay-inset border-0 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
                     />
                   </div>
                   <button
                     type="button"
                     onClick={handleAddPrice}
                     disabled={savingPrice}
-                    className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm flex items-center gap-1 cursor-pointer disabled:opacity-60"
+                    className="px-3 py-2 clay-blue clay-pressable text-white rounded-lg text-sm flex items-center gap-1 cursor-pointer disabled:opacity-60"
                   >
                     {savingPrice ? (
                       <RefreshCw className="w-4 h-4 animate-spin" />
@@ -398,7 +398,7 @@ export function ProductModal({
               Foto Produk
               <span className="text-gray-400 font-normal ml-1">(opsional)</span>
             </label>
-            <div className="border-2 border-dashed border-gray-300 rounded-xl p-5 text-center hover:border-blue-400 transition-colors">
+            <div className="border-2 border-dashed border-[rgba(140,172,214,0.4)] rounded-xl p-5 text-center hover:border-blue-400 transition-colors">
               <Upload className="w-7 h-7 text-gray-400 mx-auto mb-2" />
               <p className="text-xs text-gray-500 mb-3">
                 Tempel URL foto produk di bawah
@@ -408,7 +408,7 @@ export function ProductModal({
                 value={formData.photo_url}
                 onChange={(e) => handleChange("photo_url", e.target.value)}
                 placeholder="https://..."
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2 clay-inset border-0 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
               />
               {formData.photo_url && (
                 <img
@@ -426,14 +426,14 @@ export function ProductModal({
               type="button"
               onClick={onClose}
               disabled={saving}
-              className="px-5 py-2.5 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors cursor-pointer disabled:opacity-50"
+              className="px-5 py-2.5 text-gray-700 bg-[rgba(215,233,255,0.55)] hover:bg-gray-200 rounded-xl transition-colors cursor-pointer disabled:opacity-50"
             >
               Batal
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-colors cursor-pointer disabled:opacity-70 flex items-center gap-2"
+              className="px-5 py-2.5 clay-blue clay-pressable text-white rounded-xl transition-colors cursor-pointer disabled:opacity-70 flex items-center gap-2"
             >
               {saving && <RefreshCw className="w-4 h-4 animate-spin" />}
               {product ? "Simpan Perubahan" : "Tambah Produk"}

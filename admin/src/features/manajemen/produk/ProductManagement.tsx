@@ -118,14 +118,14 @@ export function ProductManagement() {
         <button
           onClick={fetchProducts}
           disabled={loading}
-          className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50 cursor-pointer transition-colors"
+          className="flex items-center gap-2 px-4 py-2 clay-inset border-0 rounded-lg text-sm text-gray-700 hover:bg-[rgba(215,233,255,0.5)] disabled:opacity-50 cursor-pointer transition-colors"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
           Refresh
         </button>
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
+      <div className="clay-raised rounded-lg p-6">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4 flex-1">
             <div className="relative flex-1 max-w-md">
@@ -135,7 +135,7 @@ export function ProductManagement() {
                 placeholder="Cari produk..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-10 pr-4 py-2 clay-inset border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
               />
             </div>
             <div className="flex items-center gap-2">
@@ -145,7 +145,7 @@ export function ProductManagement() {
                 onChange={(e) =>
                   setFilterKategori(e.target.value as "all" | "cup" | "botol")
                 }
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                className="px-4 py-2 clay-inset border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40 cursor-pointer"
               >
                 <option value="all">Semua Kategori</option>
                 <option value="cup">Cup</option>
@@ -155,7 +155,7 @@ export function ProductManagement() {
           </div>
           <button
             onClick={handleAddProduct}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors cursor-pointer"
+            className="clay-blue clay-pressable text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors cursor-pointer"
           >
             <Plus className="w-5 h-5" />
             Tambah Produk
@@ -163,7 +163,7 @@ export function ProductManagement() {
         </div>
 
         {error && (
-          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3">
+          <div className="mb-4 p-4 clay-inset-red border-0 rounded-lg flex items-center gap-3">
             <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
             <p className="text-sm text-red-700">{error}</p>
           </div>
@@ -179,7 +179,7 @@ export function ProductManagement() {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-gray-200">
+                  <tr className="border-b border-[rgba(140,172,214,0.35)]">
                     <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
                       Foto
                     </th>
@@ -210,7 +210,7 @@ export function ProductManagement() {
                   {filteredProducts.map((product) => (
                     <tr
                       key={product.id}
-                      className="border-b border-gray-100 hover:bg-gray-50"
+                      className="border-b border-[rgba(140,172,214,0.2)] hover:bg-[rgba(215,233,255,0.5)]"
                     >
                       <td className="py-3 px-4">
                         <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-cyan-100 rounded-lg flex items-center justify-center overflow-hidden">
@@ -267,7 +267,7 @@ export function ProductManagement() {
                             className={`inline-flex px-3 py-1 rounded-full text-xs font-medium transition-colors cursor-pointer ${
                               product.is_active
                                 ? "bg-green-100 text-green-700 hover:bg-green-200"
-                                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                : "bg-[rgba(215,233,255,0.55)] text-gray-700 hover:bg-gray-200"
                             }`}
                           >
                             {product.is_active ? "Aktif" : "Nonaktif"}
@@ -345,13 +345,13 @@ export function ProductManagement() {
             <div className="flex gap-3">
               <button
                 onClick={() => setConfirmDelete(null)}
-                className="flex-1 px-4 py-2.5 border border-gray-300 rounded-xl text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+                className="flex-1 px-4 py-2.5 clay-inset-sm border-0 rounded-xl text-sm text-gray-700 cursor-pointer"
               >
                 Batal
               </button>
               <button
                 onClick={handleDeleteConfirm}
-                className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-medium cursor-pointer"
+                className="flex-1 px-4 py-2.5 clay-red clay-pressable text-white rounded-xl text-sm font-medium cursor-pointer"
               >
                 Ya, Hapus
               </button>

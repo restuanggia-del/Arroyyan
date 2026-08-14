@@ -54,7 +54,7 @@ export function AddCustomerModal({ onClose, onSave }: AddCustomerModalProps) {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+        <div className="sticky top-0 border-b border-[rgba(140,172,214,0.35)] px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
               <UserPlus className="w-5 h-5 text-blue-600" />
@@ -65,7 +65,7 @@ export function AddCustomerModal({ onClose, onSave }: AddCustomerModalProps) {
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
+            className="p-2 hover:bg-[rgba(215,233,255,0.55)] rounded-lg transition-colors cursor-pointer"
           >
             <X className="w-5 h-5 text-gray-500" />
           </button>
@@ -83,7 +83,7 @@ export function AddCustomerModal({ onClose, onSave }: AddCustomerModalProps) {
                 value={formData.name}
                 onChange={(e) => handleChange("name", e.target.value)}
                 placeholder="Contoh: Budi Santoso"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2 clay-inset border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
               />
             </div>
 
@@ -97,7 +97,7 @@ export function AddCustomerModal({ onClose, onSave }: AddCustomerModalProps) {
                 value={formData.phone}
                 onChange={(e) => handleChange("phone", e.target.value)}
                 placeholder="08xxxxxxxxxx"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2 clay-inset border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
               />
             </div>
 
@@ -110,7 +110,7 @@ export function AddCustomerModal({ onClose, onSave }: AddCustomerModalProps) {
                 value={formData.email}
                 onChange={(e) => handleChange("email", e.target.value)}
                 placeholder="contoh@email.com"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2 clay-inset border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
               />
             </div>
 
@@ -123,11 +123,11 @@ export function AddCustomerModal({ onClose, onSave }: AddCustomerModalProps) {
                 onChange={(e) => handleChange("address", e.target.value)}
                 placeholder="Jl. Contoh No. 123, Kota"
                 rows={3}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                className="w-full px-4 py-2 clay-inset border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40 resize-none"
               />
             </div>
 
-            <div className="flex items-center gap-3 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+            <div className="flex items-center gap-3 p-4 clay-inset-amber border-0 rounded-lg">
               <input
                 type="checkbox"
                 id="loyalCustomer"
@@ -135,7 +135,7 @@ export function AddCustomerModal({ onClose, onSave }: AddCustomerModalProps) {
                 onChange={(e) =>
                   handleChange("isLoyalCustomer", e.target.checked)
                 }
-                className="w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                className="w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-[#0249E1]/40"
               />
               <label htmlFor="loyalCustomer" className="flex-1">
                 <span className="font-medium text-gray-900">
@@ -160,13 +160,13 @@ export function AddCustomerModal({ onClose, onSave }: AddCustomerModalProps) {
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors cursor-pointer"
+              className="px-4 py-2 text-gray-700 bg-[rgba(215,233,255,0.55)] hover:bg-gray-200 rounded-lg transition-colors cursor-pointer"
             >
               Batal
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors cursor-pointer flex items-center gap-2"
+              className="px-4 py-2 clay-blue clay-pressable text-white rounded-lg transition-colors cursor-pointer flex items-center gap-2"
             >
               <UserPlus className="w-4 h-4" />
               Tambah Pelanggan

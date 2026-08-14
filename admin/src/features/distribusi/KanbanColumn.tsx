@@ -39,7 +39,7 @@ export function KanbanColumn({
 
       <div
         ref={drop}
-        className={`bg-gray-50 rounded-b-lg p-4 flex-1 min-h-[500px] space-y-3 transition-colors ${
+        className={`bg-[rgba(215,233,255,0.4)] rounded-b-lg p-4 flex-1 min-h-[500px] space-y-3 transition-colors ${
           isOver ? "bg-blue-50 ring-2 ring-blue-300" : ""
         }`}
       >

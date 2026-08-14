@@ -92,13 +92,13 @@ export function SystemSettings() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
           {error && (
-            <div className="p-4 bg-red-50 border border-red-200 rounded-xl flex gap-3">
+            <div className="p-4 clay-inset-red border-0 rounded-xl flex gap-3">
               <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
               <p className="text-sm text-red-700">{error}</p>
             </div>
           )}
 
-          <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <div className="clay-raised rounded-xl p-6">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                 <Building2 className="w-5 h-5 text-blue-600" />
@@ -117,7 +117,7 @@ export function SystemSettings() {
                   type="text"
                   value={settings.company_name}
                   onChange={(e) => handleChange("company_name", e.target.value)}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2.5 clay-inset border-0 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
                 />
               </div>
 
@@ -131,7 +131,7 @@ export function SystemSettings() {
                     handleChange("company_address", e.target.value)
                   }
                   rows={2}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  className="w-full px-4 py-2.5 clay-inset border-0 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40 resize-none"
                 />
               </div>
 
@@ -145,7 +145,7 @@ export function SystemSettings() {
                     value={settings.phone}
                     onChange={(e) => handleChange("phone", e.target.value)}
                     placeholder="08xxxxxxxxxx"
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-2.5 clay-inset border-0 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
                   />
                 </div>
                 <div>
@@ -157,14 +157,14 @@ export function SystemSettings() {
                     value={settings.email}
                     onChange={(e) => handleChange("email", e.target.value)}
                     placeholder="info@arroyyan99.com"
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-2.5 clay-inset border-0 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
                   />
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <div className="clay-raised rounded-xl p-6">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
                 <FileText className="w-5 h-5 text-purple-600" />
@@ -186,7 +186,7 @@ export function SystemSettings() {
                     handleChange("receipt_header", e.target.value)
                   }
                   placeholder="Contoh: Air Minum Dalam Kemasan"
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2.5 clay-inset border-0 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
                 />
                 <p className="text-xs text-gray-400 mt-1">
                   Ditampilkan di bawah nama perusahaan pada struk
@@ -204,7 +204,7 @@ export function SystemSettings() {
                   }
                   rows={3}
                   placeholder="Contoh: Terima kasih atas pembelian Anda!"
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  className="w-full px-4 py-2.5 clay-inset border-0 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40 resize-none"
                 />
                 <p className="text-xs text-gray-400 mt-1">
                   Teks penutup di bagian bawah struk. Tekan Enter untuk baris
@@ -226,7 +226,7 @@ export function SystemSettings() {
             <button
               onClick={handleSave}
               disabled={saving}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl flex items-center gap-2 transition-colors cursor-pointer disabled:opacity-70"
+              className="clay-blue clay-pressable text-white px-6 py-2.5 rounded-xl flex items-center gap-2 transition-colors cursor-pointer disabled:opacity-70"
             >
               {saving ? (
                 <RefreshCw className="w-4 h-4 animate-spin" />
@@ -240,9 +240,9 @@ export function SystemSettings() {
 
         <div className="space-y-6">
           {/* Preview Struk */}
-          <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <div className="clay-raised rounded-xl p-6">
             <h3 className="font-semibold text-gray-900 mb-4">Preview Struk</h3>
-            <div className="border-2 border-dashed border-gray-300 rounded-xl p-5 font-mono text-xs bg-gray-50">
+            <div className="border-2 border-dashed border-[rgba(140,172,214,0.4)] rounded-xl p-5 font-mono text-xs bg-[rgba(215,233,255,0.4)]">
               <div className="text-center mb-4">
                 <p className="text-base font-bold">
                   {settings.company_name || "—"}
@@ -261,7 +261,7 @@ export function SystemSettings() {
                 )}
               </div>
 
-              <div className="border-t border-b border-gray-300 py-2 my-3 space-y-1">
+              <div className="border-t border-b border-[rgba(140,172,214,0.4)] py-2 my-3 space-y-1">
                 <div className="flex justify-between">
                   <span>Tanggal:</span>
                   <span>{previewDate}</span>
@@ -274,14 +274,14 @@ export function SystemSettings() {
 
               <table className="w-full mb-3">
                 <thead>
-                  <tr className="border-b border-gray-300">
+                  <tr className="border-b border-[rgba(140,172,214,0.4)]">
                     <th className="text-left py-1">Item</th>
                     <th className="text-center py-1">Qty</th>
                     <th className="text-right py-1">Total</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr className="border-b border-gray-200">
+                  <tr className="border-b border-[rgba(140,172,214,0.35)]">
                     <td className="py-1">Cup Sedang</td>
                     <td className="text-center py-1">10</td>
                     <td className="text-right py-1">50.000</td>
@@ -289,7 +289,7 @@ export function SystemSettings() {
                 </tbody>
               </table>
 
-              <div className="border-t border-gray-300 pt-2 mb-3">
+              <div className="border-t border-[rgba(140,172,214,0.4)] pt-2 mb-3">
                 <div className="flex justify-between font-bold">
                   <span>TOTAL:</span>
                   <span>Rp 50.000</span>
@@ -319,7 +319,7 @@ export function SystemSettings() {
             </div>
           </div>
 
-          <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <div className="clay-raised rounded-xl p-6">
             <h3 className="font-semibold text-gray-900 mb-4">
               Informasi Sistem
             </h3>

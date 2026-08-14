@@ -193,7 +193,7 @@ export function BonusManagement() {
         </div>
       </div>
 
-      <div className="flex gap-1 mb-6 border-b border-gray-200">
+      <div className="flex gap-1 mb-6 border-b border-[rgba(140,172,214,0.35)]">
         {[
           { id: "aturan", label: "Aturan Bonus" },
           { id: "rekap", label: "Rekap Bonus per Periode" },
@@ -220,7 +220,7 @@ export function BonusManagement() {
                 setEditingRule(null);
                 setIsRuleModalOpen(true);
               }}
-              className="flex items-center gap-2 px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-sm font-medium transition-colors cursor-pointer"
+              className="flex items-center gap-2 px-4 py-2.5 clay-amber clay-pressable text-white rounded-lg text-sm font-medium transition-colors cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               Tambah Aturan
@@ -228,13 +228,13 @@ export function BonusManagement() {
           </div>
 
           {rulesError && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3">
+            <div className="mb-6 p-4 clay-inset-red border-0 rounded-lg flex items-center gap-3">
               <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
               <p className="text-sm text-red-700">{rulesError}</p>
             </div>
           )}
 
-          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <div className="clay-raised rounded-lg overflow-hidden">
             {loadingRules ? (
               <div className="py-12 text-center">
                 <RefreshCw className="w-6 h-6 animate-spin text-gray-400 mx-auto" />
@@ -243,7 +243,7 @@ export function BonusManagement() {
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b border-gray-200 bg-gray-50">
+                    <tr className="border-b border-[rgba(140,172,214,0.35)] bg-[rgba(215,233,255,0.4)]">
                       {[
                         "Mode",
                         "Threshold / Per Dus",
@@ -276,7 +276,7 @@ export function BonusManagement() {
                       rules.map((r) => (
                         <tr
                           key={r.id}
-                          className="border-b border-gray-100 hover:bg-gray-50"
+                          className="border-b border-[rgba(140,172,214,0.2)] hover:bg-[rgba(215,233,255,0.5)]"
                         >
                           <td className="py-3 px-4">
                             <span
@@ -312,7 +312,7 @@ export function BonusManagement() {
                               className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
                                 r.is_active
                                   ? "bg-green-100 text-green-700"
-                                  : "bg-gray-100 text-gray-500"
+                                  : "bg-[rgba(215,233,255,0.55)] text-gray-500"
                               }`}
                             >
                               {r.is_active ? "Aktif" : "Nonaktif"}
@@ -356,7 +356,7 @@ export function BonusManagement() {
 
       {activeTab === "rekap" && (
         <div>
-          <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+          <div className="clay-raised rounded-lg p-6 mb-6">
             <div className="flex flex-wrap items-end gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">
@@ -366,13 +366,13 @@ export function BonusManagement() {
                   type="month"
                   value={periode}
                   onChange={(e) => setPeriode(e.target.value)}
-                  className="px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="px-4 py-2.5 clay-inset border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
                 />
               </div>
               <button
                 onClick={handleCalculate}
                 disabled={calculating}
-                className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors cursor-pointer disabled:opacity-60"
+                className="flex items-center gap-2 px-4 py-2.5 clay-blue clay-pressable text-white rounded-lg text-sm font-medium transition-colors cursor-pointer disabled:opacity-60"
               >
                 {calculating ? (
                   <RefreshCw className="w-4 h-4 animate-spin" />
@@ -385,7 +385,7 @@ export function BonusManagement() {
                 <button
                   onClick={handleSaveRekap}
                   disabled={saving}
-                  className="flex items-center gap-2 px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors cursor-pointer disabled:opacity-60"
+                  className="flex items-center gap-2 px-4 py-2.5 clay-green clay-pressable text-white rounded-lg text-sm font-medium transition-colors cursor-pointer disabled:opacity-60"
                 >
                   {saving ? (
                     <RefreshCw className="w-4 h-4 animate-spin" />
@@ -404,15 +404,15 @@ export function BonusManagement() {
           </div>
 
           {rekapError && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3">
+            <div className="mb-6 p-4 clay-inset-red border-0 rounded-lg flex items-center gap-3">
               <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
               <p className="text-sm text-red-700">{rekapError}</p>
             </div>
           )}
 
           {preview.length > 0 && (
-            <div className="bg-white rounded-lg border border-gray-200 mb-8 overflow-hidden">
-              <div className="border-b border-gray-200 px-6 py-4">
+            <div className="clay-raised rounded-lg mb-8 overflow-hidden">
+              <div className="border-b border-[rgba(140,172,214,0.35)] px-6 py-4">
                 <h2 className="text-lg font-semibold text-gray-900">
                   Preview Hasil Hitung — Periode {periode}
                 </h2>
@@ -423,7 +423,7 @@ export function BonusManagement() {
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b border-gray-200 bg-gray-50">
+                    <tr className="border-b border-[rgba(140,172,214,0.35)] bg-[rgba(215,233,255,0.4)]">
                       {[
                         "Karyawan",
                         "Total Dus Terjual",
@@ -445,7 +445,7 @@ export function BonusManagement() {
                     {preview.map((row) => (
                       <tr
                         key={row.karyawan_id}
-                        className="border-b border-gray-100 hover:bg-gray-50"
+                        className="border-b border-[rgba(140,172,214,0.2)] hover:bg-[rgba(215,233,255,0.5)]"
                       >
                         <td className="py-3 px-4 text-sm font-medium text-gray-900">
                           {row.nama}
@@ -471,7 +471,7 @@ export function BonusManagement() {
                               )
                             }
                             placeholder="0"
-                            className="w-24 px-2 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-24 px-2 py-1.5 clay-inset border-0 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
                           />
                         </td>
                         <td className="py-3 px-4">
@@ -487,7 +487,7 @@ export function BonusManagement() {
                               )
                             }
                             placeholder="0"
-                            className="w-20 px-2 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-20 px-2 py-1.5 clay-inset border-0 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
                           />
                         </td>
                         <td className="py-3 px-4">
@@ -507,7 +507,7 @@ export function BonusManagement() {
                               )
                             }
                             placeholder="0"
-                            className="w-32 px-2 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-32 px-2 py-1.5 clay-inset border-0 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
                           />
                         </td>
                         <td className="py-3 px-4">
@@ -522,7 +522,7 @@ export function BonusManagement() {
                               )
                             }
                             placeholder="opsional"
-                            className="w-40 px-2 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-40 px-2 py-1.5 clay-inset border-0 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
                           />
                         </td>
                       </tr>
@@ -533,8 +533,8 @@ export function BonusManagement() {
             </div>
           )}
 
-          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-            <div className="border-b border-gray-200 px-6 py-4 flex items-center gap-2">
+          <div className="clay-raised rounded-lg overflow-hidden">
+            <div className="border-b border-[rgba(140,172,214,0.35)] px-6 py-4 flex items-center gap-2">
               <Award className="w-5 h-5 text-amber-600" />
               <h2 className="text-lg font-semibold text-gray-900">
                 Rekap Tersimpan — Periode {periode}
@@ -548,7 +548,7 @@ export function BonusManagement() {
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b border-gray-200 bg-gray-50">
+                    <tr className="border-b border-[rgba(140,172,214,0.35)] bg-[rgba(215,233,255,0.4)]">
                       {[
                         "Karyawan",
                         "Total Dus Terjual",
@@ -581,7 +581,7 @@ export function BonusManagement() {
                       savedRecords.map((rec) => (
                         <tr
                           key={rec.id}
-                          className="border-b border-gray-100 hover:bg-gray-50"
+                          className="border-b border-[rgba(140,172,214,0.2)] hover:bg-[rgba(215,233,255,0.5)]"
                         >
                           <td className="py-3 px-4 text-sm font-medium text-gray-900">
                             {rec.karyawan?.nama ?? "—"}
@@ -657,13 +657,13 @@ export function BonusManagement() {
             <div className="flex gap-3">
               <button
                 onClick={() => setConfirmDeleteRule(null)}
-                className="flex-1 px-4 py-2.5 border border-gray-300 rounded-xl text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+                className="flex-1 px-4 py-2.5 clay-inset-sm border-0 rounded-xl text-sm text-gray-700 cursor-pointer"
               >
                 Batal
               </button>
               <button
                 onClick={handleDeleteRuleConfirm}
-                className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-medium cursor-pointer"
+                className="flex-1 px-4 py-2.5 clay-red clay-pressable text-white rounded-xl text-sm font-medium cursor-pointer"
               >
                 Ya, Hapus
               </button>
@@ -693,13 +693,13 @@ export function BonusManagement() {
             <div className="flex gap-3">
               <button
                 onClick={() => setConfirmDeleteRecord(null)}
-                className="flex-1 px-4 py-2.5 border border-gray-300 rounded-xl text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+                className="flex-1 px-4 py-2.5 clay-inset-sm border-0 rounded-xl text-sm text-gray-700 cursor-pointer"
               >
                 Batal
               </button>
               <button
                 onClick={handleDeleteRecordConfirm}
-                className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-medium cursor-pointer"
+                className="flex-1 px-4 py-2.5 clay-red clay-pressable text-white rounded-xl text-sm font-medium cursor-pointer"
               >
                 Ya, Hapus
               </button>

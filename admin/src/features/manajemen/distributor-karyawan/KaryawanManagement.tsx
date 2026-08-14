@@ -222,14 +222,14 @@ export function KaryawanManagement() {
           <button
             onClick={fetchKaryawan}
             disabled={loading}
-            className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 cursor-pointer"
+            className="flex items-center gap-2 px-4 py-2 clay-inset border-0 rounded-lg text-sm text-gray-700 hover:bg-[rgba(215,233,255,0.5)] transition-colors disabled:opacity-50 cursor-pointer"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
             Refresh
           </button>
           <button
             onClick={openCreateForm}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors cursor-pointer"
+            className="flex items-center gap-2 px-4 py-2 clay-blue clay-pressable text-white rounded-lg text-sm font-medium transition-colors cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             Tambah Karyawan
@@ -264,10 +264,10 @@ export function KaryawanManagement() {
           <button
             key={key}
             onClick={() => setFilter(key as FilterType)}
-            className={`bg-white rounded-lg border p-6 text-left transition-all cursor-pointer ${
+            className={`clay-raised clay-pressable rounded-lg p-6 text-left transition-all cursor-pointer ${
               filter === key
                 ? `border-${color}-500 ring-2 ring-${color}-100`
-                : "border-gray-200 hover:border-gray-300"
+                : "clay-raised-sm border-0"
             }`}
           >
             <div
@@ -281,8 +281,8 @@ export function KaryawanManagement() {
         ))}
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200">
-        <div className="border-b border-gray-200 px-6 py-4 flex items-center gap-4">
+      <div className="clay-raised rounded-lg">
+        <div className="border-b border-[rgba(140,172,214,0.35)] px-6 py-4 flex items-center gap-4">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
@@ -290,7 +290,7 @@ export function KaryawanManagement() {
               placeholder="Cari nama atau nomor HP..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-9 pr-4 py-2 clay-inset border-0 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
             />
           </div>
           <span className="text-sm text-gray-500">
@@ -299,7 +299,7 @@ export function KaryawanManagement() {
         </div>
 
         {error && (
-          <div className="mx-6 mt-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3">
+          <div className="mx-6 mt-4 p-4 clay-inset-red border-0 rounded-lg flex items-center gap-3">
             <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
             <p className="text-sm text-red-700">{error}</p>
           </div>
@@ -324,8 +324,8 @@ export function KaryawanManagement() {
                     key={k.id}
                     className={`border rounded-xl p-5 transition-all ${
                       !k.is_active
-                        ? "border-gray-200 bg-gray-50"
-                        : "border-gray-200 bg-white hover:shadow-sm"
+                        ? "border-[rgba(140,172,214,0.35)] bg-[rgba(215,233,255,0.4)]"
+                        : "border-[rgba(140,172,214,0.35)] bg-white hover:shadow-sm"
                     }`}
                   >
                     <div className="flex items-start justify-between gap-4">
@@ -333,7 +333,7 @@ export function KaryawanManagement() {
                         <div
                           className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-lg flex-shrink-0 ${
                             k.is_active
-                              ? "bg-blue-600 text-white"
+                              ? "clay-blue text-white"
                               : "bg-gray-300 text-white"
                           }`}
                         >
@@ -407,7 +407,7 @@ export function KaryawanManagement() {
                             </button>
                             <button
                               onClick={() => openEditForm(k)}
-                              className="flex items-center gap-1.5 px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm rounded-lg transition-colors cursor-pointer"
+                              className="flex items-center gap-1.5 px-3 py-2 bg-[rgba(215,233,255,0.55)] hover:bg-gray-200 text-gray-700 text-sm rounded-lg transition-colors cursor-pointer"
                             >
                               <Pencil className="w-4 h-4" /> Edit
                             </button>
@@ -433,13 +433,13 @@ export function KaryawanManagement() {
       {showForm && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+            <div className="border-b border-[rgba(140,172,214,0.35)] px-6 py-4 flex items-center justify-between">
               <h3 className="text-lg font-semibold text-gray-900">
                 {form.id ? "Edit Karyawan" : "Tambah Karyawan"}
               </h3>
               <button
                 onClick={() => setShowForm(false)}
-                className="p-1.5 hover:bg-gray-100 rounded-lg cursor-pointer"
+                className="p-1.5 hover:bg-[rgba(215,233,255,0.55)] rounded-lg cursor-pointer"
               >
                 <X className="w-5 h-5 text-gray-500" />
               </button>
@@ -447,7 +447,7 @@ export function KaryawanManagement() {
 
             <div className="p-6 space-y-4">
               {formError && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
+                <div className="p-3 clay-inset-red border-0 rounded-lg flex items-center gap-2">
                   <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
                   <p className="text-sm text-red-700">{formError}</p>
                 </div>
@@ -461,7 +461,7 @@ export function KaryawanManagement() {
                   type="text"
                   value={form.nama}
                   onChange={(e) => setForm({ ...form, nama: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 clay-inset border-0 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
                   placeholder="Nama lengkap karyawan"
                 />
               </div>
@@ -477,7 +477,7 @@ export function KaryawanManagement() {
                     onChange={(e) =>
                       setForm({ ...form, phone: e.target.value })
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 clay-inset border-0 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
                   />
                 </div>
                 <div>
@@ -490,7 +490,7 @@ export function KaryawanManagement() {
                     onChange={(e) =>
                       setForm({ ...form, address: e.target.value })
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 clay-inset border-0 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
                   />
                 </div>
               </div>
@@ -509,14 +509,14 @@ export function KaryawanManagement() {
                       className={`flex items-center gap-2 px-3 py-2 border rounded-lg text-sm cursor-pointer transition-colors ${
                         form.roles.includes(opt.value)
                           ? "border-blue-500 bg-blue-50 text-blue-700"
-                          : "border-gray-200 text-gray-700 hover:border-gray-300"
+                          : "border-[rgba(140,172,214,0.35)] text-gray-700 hover:border-[rgba(140,172,214,0.4)]"
                       }`}
                     >
                       <input
                         type="checkbox"
                         checked={form.roles.includes(opt.value)}
                         onChange={() => toggleRole(opt.value)}
-                        className="rounded border-gray-300"
+                        className="rounded border-[rgba(140,172,214,0.5)]"
                       />
                       {opt.label}
                     </label>
@@ -532,7 +532,7 @@ export function KaryawanManagement() {
                     onChange={(e) =>
                       setForm({ ...form, bonus_khusus: e.target.checked })
                     }
-                    className="rounded border-gray-300"
+                    className="rounded border-[rgba(140,172,214,0.5)]"
                   />
                   Bonus khusus (ditandai manual oleh admin)
                 </label>
@@ -543,24 +543,24 @@ export function KaryawanManagement() {
                     onChange={(e) =>
                       setForm({ ...form, is_active: e.target.checked })
                     }
-                    className="rounded border-gray-300"
+                    className="rounded border-[rgba(140,172,214,0.5)]"
                   />
                   Aktif
                 </label>
               </div>
             </div>
 
-            <div className="border-t border-gray-200 px-6 py-4 flex gap-3">
+            <div className="border-t border-[rgba(140,172,214,0.35)] px-6 py-4 flex gap-3">
               <button
                 onClick={() => setShowForm(false)}
-                className="flex-1 px-4 py-2.5 border border-gray-300 rounded-xl text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+                className="flex-1 px-4 py-2.5 clay-inset-sm border-0 rounded-xl text-sm text-gray-700 cursor-pointer"
               >
                 Batal
               </button>
               <button
                 onClick={handleSubmit}
                 disabled={saving}
-                className="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-medium cursor-pointer disabled:opacity-50"
+                className="flex-1 px-4 py-2.5 clay-blue clay-pressable text-white rounded-xl text-sm font-medium cursor-pointer disabled:opacity-50"
               >
                 {saving
                   ? "Menyimpan..."
@@ -589,13 +589,13 @@ export function KaryawanManagement() {
             <div className="flex gap-3">
               <button
                 onClick={() => setConfirmDelete(null)}
-                className="flex-1 px-4 py-2.5 border border-gray-300 rounded-xl text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+                className="flex-1 px-4 py-2.5 clay-inset-sm border-0 rounded-xl text-sm text-gray-700 cursor-pointer"
               >
                 Batal
               </button>
               <button
                 onClick={() => handleDelete(confirmDelete)}
-                className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-medium cursor-pointer"
+                className="flex-1 px-4 py-2.5 clay-red clay-pressable text-white rounded-xl text-sm font-medium cursor-pointer"
               >
                 Ya, Hapus
               </button>

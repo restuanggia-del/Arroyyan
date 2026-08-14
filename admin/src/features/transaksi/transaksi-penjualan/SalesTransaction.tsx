@@ -268,7 +268,7 @@ export function SalesTransaction({ role, salesId }: SalesTransactionProps) {
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
+            <div className="clay-raised rounded-xl p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">
                 Pilih Produk
               </h2>
@@ -288,14 +288,14 @@ export function SalesTransaction({ role, salesId }: SalesTransactionProps) {
                         disabled={stock === 0}
                         className={`border-2 rounded-xl p-4 text-left transition-all relative ${
                           stock === 0
-                            ? "border-gray-200 opacity-50 cursor-not-allowed bg-gray-50"
+                            ? "border-[rgba(140,172,214,0.35)] opacity-50 cursor-not-allowed bg-[rgba(215,233,255,0.4)]"
                             : inCart
                               ? "border-blue-500 bg-blue-50 cursor-pointer"
-                              : "border-gray-200 hover:border-blue-400 hover:bg-blue-50 cursor-pointer"
+                              : "border-[rgba(140,172,214,0.35)] hover:border-blue-400 hover:bg-blue-50 cursor-pointer"
                         }`}
                       >
                         {inCart && (
-                          <span className="absolute top-2 right-2 bg-blue-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+                          <span className="absolute top-2 right-2 clay-blue text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
                             {inCart.quantity}
                           </span>
                         )}
@@ -334,14 +334,14 @@ export function SalesTransaction({ role, salesId }: SalesTransactionProps) {
               )}
             </div>
 
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
+            <div className="clay-raised rounded-xl p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-3">
                 Pelanggan
               </h2>
               <select
                 value={selectedCustomerId}
                 onChange={(e) => setSelectedCustomerId(e.target.value)}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                className="w-full px-4 py-2.5 clay-inset border-0 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40 cursor-pointer"
               >
                 <option value="">Pelanggan Umum (tanpa data)</option>
                 {customers.map((c) => (
@@ -356,7 +356,7 @@ export function SalesTransaction({ role, salesId }: SalesTransactionProps) {
           </div>
 
           <div>
-            <div className="bg-white rounded-xl border border-gray-200 p-6 sticky top-8">
+            <div className="clay-raised rounded-xl p-6 sticky top-8">
               <div className="flex items-center gap-2 mb-4">
                 <ShoppingCart className="w-5 h-5 text-blue-600" />
                 <h2 className="text-lg font-semibold text-gray-900">
@@ -368,7 +368,7 @@ export function SalesTransaction({ role, salesId }: SalesTransactionProps) {
               </div>
 
               {checkoutError && (
-                <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-xl flex gap-2 text-sm text-red-700">
+                <div className="mb-3 p-3 clay-inset-red border-0 rounded-xl flex gap-2 text-sm text-red-700">
                   <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
                   <span>{checkoutError}</span>
                 </div>
@@ -386,7 +386,7 @@ export function SalesTransaction({ role, salesId }: SalesTransactionProps) {
                     return (
                       <div
                         key={item.product.id}
-                        className="border border-gray-200 rounded-xl p-3"
+                        className="border border-[rgba(140,172,214,0.35)] rounded-xl p-3"
                       >
                         <div className="flex items-start justify-between mb-2">
                           <p className="text-sm font-medium text-gray-900 flex-1 leading-tight">
@@ -418,7 +418,7 @@ export function SalesTransaction({ role, salesId }: SalesTransactionProps) {
                                     : Number(e.target.value),
                                 )
                               }
-                              className="w-full pl-7 pr-2 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              className="w-full pl-7 pr-2 py-1.5 clay-inset border-0 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
                             />
                           </div>
                           {(priceOptionsMap[item.product.id]?.length ?? 0) >
@@ -432,7 +432,7 @@ export function SalesTransaction({ role, salesId }: SalesTransactionProps) {
                                     Number(e.target.value),
                                   );
                               }}
-                              className="px-2 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer bg-blue-50/50"
+                              className="px-2 py-1.5 border border-[rgba(140,172,214,0.35)] rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40 cursor-pointer bg-blue-50/50"
                               title="Pilih dari daftar harga"
                             >
                               <option value="">Pilih...</option>
@@ -453,7 +453,7 @@ export function SalesTransaction({ role, salesId }: SalesTransactionProps) {
                           <div className="flex items-center gap-1.5">
                             <button
                               onClick={() => updateQty(item.product.id, -1)}
-                              className="w-7 h-7 border border-gray-300 rounded-lg flex items-center justify-center hover:bg-gray-50 cursor-pointer"
+                              className="w-7 h-7 clay-raised-sm clay-pressable border-0 rounded-lg flex items-center justify-center cursor-pointer"
                             >
                               <Minus className="w-3.5 h-3.5" />
                             </button>
@@ -462,7 +462,7 @@ export function SalesTransaction({ role, salesId }: SalesTransactionProps) {
                             </span>
                             <button
                               onClick={() => updateQty(item.product.id, 1)}
-                              className="w-7 h-7 border border-gray-300 rounded-lg flex items-center justify-center hover:bg-gray-50 cursor-pointer"
+                              className="w-7 h-7 clay-raised-sm clay-pressable border-0 rounded-lg flex items-center justify-center cursor-pointer"
                             >
                               <Plus className="w-3.5 h-3.5" />
                             </button>
@@ -490,7 +490,7 @@ export function SalesTransaction({ role, salesId }: SalesTransactionProps) {
                 )}
               </div>
 
-              <div className="border-t border-gray-200 pt-4 mb-4 space-y-2">
+              <div className="border-t border-[rgba(140,172,214,0.35)] pt-4 mb-4 space-y-2">
                 <div className="flex justify-between text-sm text-gray-600">
                   <span>Subtotal</span>
                   <span>{formatRp(subtotal)}</span>
@@ -529,7 +529,7 @@ export function SalesTransaction({ role, salesId }: SalesTransactionProps) {
                     className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border-2 transition-all cursor-pointer text-sm font-medium ${
                       paymentMethod === method
                         ? "border-blue-500 bg-blue-50 text-blue-600"
-                        : "border-gray-200 hover:border-gray-300 text-gray-700"
+                        : "clay-raised-sm border-0 text-gray-700"
                     }`}
                   >
                     {method === "cash" ? (
@@ -545,7 +545,7 @@ export function SalesTransaction({ role, salesId }: SalesTransactionProps) {
               <button
                 onClick={handleCheckout}
                 disabled={cart.length === 0 || saving}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full clay-blue clay-pressable text-white py-3 rounded-xl font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 cursor-pointer"
               >
                 {saving && <RefreshCw className="w-4 h-4 animate-spin" />}
                 {saving ? "Memproses..." : "Proses Pembayaran"}
@@ -558,13 +558,13 @@ export function SalesTransaction({ role, salesId }: SalesTransactionProps) {
       {showReceipt && lastTransaction && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl">
-            <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between print:hidden">
+            <div className="border-b border-[rgba(140,172,214,0.35)] px-6 py-4 flex items-center justify-between print:hidden">
               <h2 className="text-lg font-semibold text-gray-900">
                 Struk Pembayaran
               </h2>
               <button
                 onClick={() => setShowReceipt(false)}
-                className="p-2 hover:bg-gray-100 rounded-lg cursor-pointer"
+                className="p-2 hover:bg-[rgba(215,233,255,0.55)] rounded-lg cursor-pointer"
               >
                 <X className="w-5 h-5 text-gray-500" />
               </button>
@@ -597,7 +597,7 @@ export function SalesTransaction({ role, salesId }: SalesTransactionProps) {
                 )}
               </div>
 
-              <div className="border-t border-b border-gray-300 py-3 mb-3 text-xs space-y-1">
+              <div className="border-t border-b border-[rgba(140,172,214,0.4)] py-3 mb-3 text-xs space-y-1">
                 <div className="flex justify-between">
                   <span>No</span>
                   <span>#{lastTransaction.id}</span>
@@ -624,7 +624,7 @@ export function SalesTransaction({ role, salesId }: SalesTransactionProps) {
 
               <table className="w-full mb-3 text-xs">
                 <thead>
-                  <tr className="border-b border-gray-300">
+                  <tr className="border-b border-[rgba(140,172,214,0.4)]">
                     <th className="text-left py-1">Item</th>
                     <th className="text-center py-1">Qty</th>
                     <th className="text-right py-1">Harga</th>
@@ -633,7 +633,7 @@ export function SalesTransaction({ role, salesId }: SalesTransactionProps) {
                 </thead>
                 <tbody>
                   {lastTransaction.items.map((item: CartItem, i: number) => (
-                    <tr key={i} className="border-b border-gray-100">
+                    <tr key={i} className="border-b border-[rgba(140,172,214,0.2)]">
                       <td className="py-1 leading-tight">
                         {item.product.product_name}
                         {item.product.size ? ` (${item.product.size})` : ""}
@@ -652,7 +652,7 @@ export function SalesTransaction({ role, salesId }: SalesTransactionProps) {
                 </tbody>
               </table>
 
-              <div className="border-t border-gray-300 pt-3 mb-3 space-y-1 text-xs">
+              <div className="border-t border-[rgba(140,172,214,0.4)] pt-3 mb-3 space-y-1 text-xs">
                 <div className="flex justify-between">
                   <span>Subtotal</span>
                   <span>{formatRp(lastTransaction.subtotal)}</span>
@@ -663,7 +663,7 @@ export function SalesTransaction({ role, salesId }: SalesTransactionProps) {
                 </div>
               </div>
 
-              <div className="border-t border-gray-300 pt-3 mb-4 text-xs">
+              <div className="border-t border-[rgba(140,172,214,0.4)] pt-3 mb-4 text-xs">
                 <div className="flex justify-between">
                   <span>Pembayaran</span>
                   <span className="font-bold uppercase">
@@ -679,17 +679,17 @@ export function SalesTransaction({ role, salesId }: SalesTransactionProps) {
               </div>
             </div>
 
-            <div className="border-t border-gray-200 px-6 py-4 flex gap-3 print:hidden">
+            <div className="border-t border-[rgba(140,172,214,0.35)] px-6 py-4 flex gap-3 print:hidden">
               <button
                 onClick={() => window.print()}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl flex items-center justify-center gap-2 text-sm cursor-pointer transition-colors"
+                className="flex-1 clay-blue clay-pressable text-white px-4 py-2.5 rounded-xl flex items-center justify-center gap-2 text-sm cursor-pointer transition-colors"
               >
                 <Printer className="w-4 h-4" />
                 Cetak Struk
               </button>
               <button
                 onClick={handleNewTransaction}
-                className="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2.5 rounded-xl text-sm font-medium cursor-pointer transition-colors"
+                className="flex-1 clay-green clay-pressable text-white px-4 py-2.5 rounded-xl text-sm font-medium cursor-pointer transition-colors"
               >
                 Transaksi Baru
               </button>

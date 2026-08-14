@@ -157,8 +157,8 @@ export function StockTransactionModal({
             title: "Stok Masuk",
             bg: "bg-green-100",
             text: "text-green-600",
-            solidBg: "bg-green-600 hover:bg-green-700",
-            softBg: "bg-green-50 border border-green-200",
+            solidBg: "clay-green clay-pressable",
+            softBg: "clay-inset-green border-0",
             softText: "text-green-800",
             softTextLight: "text-green-700",
             icon: <TrendingUp className="w-5 h-5 text-green-600" />,
@@ -171,8 +171,8 @@ export function StockTransactionModal({
             title: "Stok Keluar",
             bg: "bg-red-100",
             text: "text-red-600",
-            solidBg: "bg-red-600 hover:bg-red-700",
-            softBg: "bg-red-50 border border-red-200",
+            solidBg: "clay-red clay-pressable",
+            softBg: "clay-inset-red border-0",
             softText: "text-red-800",
             softTextLight: "text-red-700",
             icon: <TrendingDown className="w-5 h-5 text-red-600" />,
@@ -184,7 +184,7 @@ export function StockTransactionModal({
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl">
-        <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+        <div className="border-b border-[rgba(140,172,214,0.35)] px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div
               className={`w-10 h-10 rounded-xl flex items-center justify-center ${theme.bg}`}
@@ -197,7 +197,7 @@ export function StockTransactionModal({
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
+            className="p-2 hover:bg-[rgba(215,233,255,0.55)] rounded-lg transition-colors cursor-pointer"
           >
             <X className="w-5 h-5 text-gray-500" />
           </button>
@@ -205,7 +205,7 @@ export function StockTransactionModal({
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {formError && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-sm text-red-700">
+            <div className="p-3 clay-inset-red border-0 rounded-lg flex items-center gap-2 text-sm text-red-700">
               <AlertCircle className="w-4 h-4 flex-shrink-0" />
               {formError}
             </div>
@@ -225,7 +225,7 @@ export function StockTransactionModal({
                 required
                 value={formData.productId}
                 onChange={(e) => handleChange("productId", e.target.value)}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                className="w-full px-4 py-2.5 clay-inset border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40 cursor-pointer"
               >
                 <option value="">-- Pilih Produk --</option>
                 {products.map((p) => (
@@ -246,7 +246,7 @@ export function StockTransactionModal({
               required
               value={formData.movementType}
               onChange={(e) => handleChange("movementType", e.target.value)}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+              className="w-full px-4 py-2.5 clay-inset border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40 cursor-pointer"
             >
               {categories.map((cat) => (
                 <option key={cat.value} value={cat.value}>
@@ -273,7 +273,7 @@ export function StockTransactionModal({
                 )
               }
               placeholder="0"
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2.5 clay-inset border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
             />
           </div>
 
@@ -287,7 +287,7 @@ export function StockTransactionModal({
               onChange={(e) => handleChange("note", e.target.value)}
               placeholder={theme.notePlaceholder}
               rows={3}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              className="w-full px-4 py-2.5 clay-inset border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40 resize-none"
             />
           </div>
 
@@ -303,7 +303,7 @@ export function StockTransactionModal({
               type="button"
               onClick={onClose}
               disabled={saving}
-              className="px-5 py-2.5 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors cursor-pointer disabled:opacity-50"
+              className="px-5 py-2.5 text-gray-700 bg-[rgba(215,233,255,0.55)] hover:bg-gray-200 rounded-xl transition-colors cursor-pointer disabled:opacity-50"
             >
               Batal
             </button>

@@ -211,8 +211,8 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
   ];
 
   return (
-    <aside className="w-64 bg-white border-r border-gray-200 h-screen flex flex-col">
-      <nav className="flex-1 py-4 overflow-y-auto">
+    <aside className="w-64 clay-sidebar h-screen flex flex-col rounded-r-[32px] shadow-[10px_0_28px_rgba(15,23,42,0.10)]">
+      <nav className="flex-1 py-4 px-3 overflow-y-auto">
         {menuItems.map((item) => {
           const hasChildren = Boolean(item.children?.length);
           const isExpanded = expandedGroups[item.id];
@@ -221,7 +221,7 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
             item.children!.some((child) => activeMenu === child.id);
 
           return (
-            <div key={item.id}>
+            <div key={item.id} className="mb-1">
               <button
                 onClick={() => {
                   if (hasChildren) {
@@ -230,10 +230,10 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
                     onMenuChange(item.id);
                   }
                 }}
-                className={`w-full flex items-center justify-between gap-3 px-6 py-3 text-sm transition-colors cursor-pointer ${
+                className={`w-full flex items-center justify-between gap-3 px-4 py-3 text-sm rounded-2xl transition-all cursor-pointer clay-pressable ${
                   activeMenu === item.id || isParentActive
-                    ? "bg-blue-50 text-blue-600 border-r-4 border-blue-600 font-medium"
-                    : "text-gray-700 hover:bg-gray-50"
+                    ? "clay-sidebar-item-active font-semibold"
+                    : "text-slate-700 hover:text-slate-900 hover:bg-slate-100/80"
                 }`}
               >
                 <span className="flex items-center gap-3">
@@ -241,7 +241,7 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
                   <span className="flex-1 text-left">{item.label}</span>
                 </span>
                 {hasChildren && (
-                  <span className="text-gray-400">
+                  <span className="text-slate-400">
                     {isExpanded ? (
                       <ChevronDown className="w-4 h-4" />
                     ) : (
@@ -252,18 +252,18 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
               </button>
 
               {hasChildren && isExpanded && (
-                <div className="bg-gray-50/70 py-1">
+                <div className="py-1 pl-3">
                   {item.children!.map((child) => (
                     <button
                       key={child.id}
                       onClick={() => onMenuChange(child.id)}
-                      className={`w-full flex items-center gap-3 px-8 py-2.5 text-sm transition-colors cursor-pointer ${
+                      className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm rounded-xl transition-all cursor-pointer clay-pressable ${
                         activeMenu === child.id
-                          ? "bg-blue-100 text-blue-700 font-medium"
-                          : "text-gray-600 hover:bg-gray-100"
+                          ? "clay-sidebar-item-active font-semibold"
+                          : "text-slate-600 hover:text-slate-800 hover:bg-slate-100/80"
                       }`}
                     >
-                      <span className="w-2 h-2 rounded-full bg-current opacity-60" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-current opacity-70" />
                       <span className="flex-1 text-left">{child.label}</span>
                     </button>
                   ))}

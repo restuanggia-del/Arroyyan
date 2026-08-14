@@ -31,7 +31,7 @@ export function KanbanCard({ card }: KanbanCardProps) {
   return (
     <div
       ref={drag}
-      className={`bg-white rounded-lg border border-gray-200 p-4 cursor-move hover:shadow-md transition-shadow ${
+      className={`clay-raised rounded-lg p-4 cursor-move hover:shadow-md transition-shadow ${
         isDragging ? 'opacity-50' : 'opacity-100'
       }`}
     >

@@ -150,7 +150,7 @@ function RekapPembayaran({
 
   return (
     <div>
-      <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+      <div className="clay-raised rounded-lg p-6 mb-6">
         <div className="flex flex-wrap items-end gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
@@ -160,14 +160,14 @@ function RekapPembayaran({
               type="month"
               value={periode}
               onChange={(e) => setPeriode(e.target.value)}
-              className="px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="px-4 py-2.5 clay-inset border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
             />
           </div>
           {extraControls}
           <button
             onClick={handleCalculate}
             disabled={calculating}
-            className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors cursor-pointer disabled:opacity-60"
+            className="flex items-center gap-2 px-4 py-2.5 clay-blue clay-pressable text-white rounded-lg text-sm font-medium transition-colors cursor-pointer disabled:opacity-60"
           >
             {calculating ? (
               <RefreshCw className="w-4 h-4 animate-spin" />
@@ -180,7 +180,7 @@ function RekapPembayaran({
             <button
               onClick={handleSave}
               disabled={saving}
-              className="flex items-center gap-2 px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors cursor-pointer disabled:opacity-60"
+              className="flex items-center gap-2 px-4 py-2.5 clay-green clay-pressable text-white rounded-lg text-sm font-medium transition-colors cursor-pointer disabled:opacity-60"
             >
               {saving ? (
                 <RefreshCw className="w-4 h-4 animate-spin" />
@@ -198,15 +198,15 @@ function RekapPembayaran({
       </div>
 
       {error && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3">
+        <div className="mb-6 p-4 clay-inset-red border-0 rounded-lg flex items-center gap-3">
           <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
           <p className="text-sm text-red-700">{error}</p>
         </div>
       )}
 
       {preview.length > 0 && (
-        <div className="bg-white rounded-lg border border-gray-200 mb-8 overflow-hidden">
-          <div className="border-b border-gray-200 px-6 py-4">
+        <div className="clay-raised rounded-lg mb-8 overflow-hidden">
+          <div className="border-b border-[rgba(140,172,214,0.35)] px-6 py-4">
             <h2 className="text-lg font-semibold text-gray-900">
               Preview Hasil Hitung — Periode {periode}
             </h2>
@@ -215,7 +215,7 @@ function RekapPembayaran({
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-gray-200 bg-gray-50">
+                <tr className="border-b border-[rgba(140,172,214,0.35)] bg-[rgba(215,233,255,0.4)]">
                   {["Karyawan", "Jumlah Dihitung", "Jumlah Dibayar"].map(
                     (h) => (
                       <th
@@ -232,7 +232,7 @@ function RekapPembayaran({
                 {preview.map((row) => (
                   <tr
                     key={row.karyawan_id}
-                    className="border-b border-gray-100 hover:bg-gray-50"
+                    className="border-b border-[rgba(140,172,214,0.2)] hover:bg-[rgba(215,233,255,0.5)]"
                   >
                     <td className="py-3 px-4 text-sm font-medium text-gray-900">
                       {row.nama}
@@ -257,7 +257,7 @@ function RekapPembayaran({
                           updateJumlahDibayar(row.karyawan_id, e.target.value)
                         }
                         placeholder="0"
-                        className="w-32 px-2 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-32 px-2 py-1.5 clay-inset border-0 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
                       />
                     </td>
                   </tr>
@@ -268,9 +268,9 @@ function RekapPembayaran({
         </div>
       )}
 
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+      <div className="clay-raised rounded-lg overflow-hidden">
         <div
-          className={`border-b border-gray-200 px-6 py-4 flex items-center gap-2`}
+          className={`border-b border-[rgba(140,172,214,0.35)] px-6 py-4 flex items-center gap-2`}
         >
           <TrendingUp className={`w-5 h-5 ${accentClass}`} />
           <h2 className="text-lg font-semibold text-gray-900">
@@ -285,7 +285,7 @@ function RekapPembayaran({
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-gray-200 bg-gray-50">
+                <tr className="border-b border-[rgba(140,172,214,0.35)] bg-[rgba(215,233,255,0.4)]">
                   {[
                     "Karyawan",
                     "Jumlah Dihitung",
@@ -319,7 +319,7 @@ function RekapPembayaran({
                     return (
                       <tr
                         key={p.id}
-                        className="border-b border-gray-100 hover:bg-gray-50"
+                        className="border-b border-[rgba(140,172,214,0.2)] hover:bg-[rgba(215,233,255,0.5)]"
                       >
                         <td className="py-3 px-4 text-sm font-medium text-gray-900">
                           {p.karyawan?.nama ?? "—"}
@@ -385,13 +385,13 @@ function RekapPembayaran({
             <div className="flex gap-3">
               <button
                 onClick={() => setConfirmDelete(null)}
-                className="flex-1 px-4 py-2.5 border border-gray-300 rounded-xl text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+                className="flex-1 px-4 py-2.5 clay-inset-sm border-0 rounded-xl text-sm text-gray-700 cursor-pointer"
               >
                 Batal
               </button>
               <button
                 onClick={handleDeleteConfirm}
-                className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-medium cursor-pointer"
+                className="flex-1 px-4 py-2.5 clay-red clay-pressable text-white rounded-xl text-sm font-medium cursor-pointer"
               >
                 Ya, Hapus
               </button>
@@ -461,14 +461,14 @@ function InsentifProduksiTab() {
       </div>
 
       {error && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3">
+        <div className="mb-6 p-4 clay-inset-red border-0 rounded-lg flex items-center gap-3">
           <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
           <p className="text-sm text-red-700">{error}</p>
         </div>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="clay-raised rounded-lg p-6">
           <div className="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center mb-4">
             <Factory className="w-6 h-6 text-teal-600" />
           </div>
@@ -477,7 +477,7 @@ function InsentifProduksiTab() {
             {loading ? "—" : formatRp(totalInsentif)}
           </p>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="clay-raised rounded-lg p-6">
           <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
             <Boxes className="w-6 h-6 text-blue-600" />
           </div>
@@ -486,7 +486,7 @@ function InsentifProduksiTab() {
             {loading ? "—" : totalDus.toLocaleString("id-ID")}
           </p>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="clay-raised rounded-lg p-6">
           <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
             <Users className="w-6 h-6 text-green-600" />
           </div>
@@ -497,7 +497,7 @@ function InsentifProduksiTab() {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden mb-10">
+      <div className="clay-raised rounded-lg overflow-hidden mb-10">
         {loading ? (
           <div className="py-12 text-center">
             <RefreshCw className="w-6 h-6 animate-spin text-gray-400 mx-auto" />
@@ -506,7 +506,7 @@ function InsentifProduksiTab() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-gray-200 bg-gray-50">
+                <tr className="border-b border-[rgba(140,172,214,0.35)] bg-[rgba(215,233,255,0.4)]">
                   {[
                     "Tanggal",
                     "Kategori",
@@ -539,7 +539,7 @@ function InsentifProduksiTab() {
                   records.map((r) => (
                     <tr
                       key={r.id}
-                      className="border-b border-gray-100 hover:bg-gray-50"
+                      className="border-b border-[rgba(140,172,214,0.2)] hover:bg-[rgba(215,233,255,0.5)]"
                     >
                       <td className="py-3 px-4 text-sm text-gray-600">
                         {formatDate(r.tanggal)}
@@ -632,13 +632,13 @@ function InsentifProduksiTab() {
             <div className="flex gap-3">
               <button
                 onClick={() => setConfirmDelete(null)}
-                className="flex-1 px-4 py-2.5 border border-gray-300 rounded-xl text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+                className="flex-1 px-4 py-2.5 clay-inset-sm border-0 rounded-xl text-sm text-gray-700 cursor-pointer"
               >
                 Batal
               </button>
               <button
                 onClick={handleDeleteConfirm}
-                className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-medium cursor-pointer"
+                className="flex-1 px-4 py-2.5 clay-red clay-pressable text-white rounded-xl text-sm font-medium cursor-pointer"
               >
                 Ya, Hapus
               </button>
@@ -677,7 +677,7 @@ function FeePenjualanTab() {
               value={rate === 0 ? "" : rate}
               onChange={(e) => handleRateChange(e.target.value)}
               placeholder="500"
-              className="w-40 px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-40 px-4 py-2.5 clay-inset border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
             />
           </div>
         }
@@ -703,7 +703,7 @@ export function InsentifProduksiManagement() {
         </p>
       </div>
 
-      <div className="flex gap-1 mb-6 border-b border-gray-200">
+      <div className="flex gap-1 mb-6 border-b border-[rgba(140,172,214,0.35)]">
         {[
           { id: "produksi", label: "Insentif Produksi" },
           { id: "fee_penjualan", label: "Fee Penjualan" },

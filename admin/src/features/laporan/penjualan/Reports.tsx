@@ -103,7 +103,7 @@ function ProductCell({ items }: { items: string }) {
       <span className="truncate text-sm text-gray-800">{first}</span>
       {rest > 0 && (
         <span
-          className="flex-shrink-0 px-1.5 py-0.5 bg-gray-100 text-gray-500 text-xs rounded-full cursor-default"
+          className="flex-shrink-0 px-1.5 py-0.5 bg-[rgba(215,233,255,0.55)] text-gray-500 text-xs rounded-full cursor-default"
           title={parts.slice(1).join(", ")}
         >
           +{rest}
@@ -330,7 +330,7 @@ export function Reports() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b-2 border-gray-200">
+              <tr className="border-b-2 border-[rgba(140,172,214,0.35)]">
                 {[
                   "Tanggal",
                   "No. Transaksi",
@@ -353,7 +353,7 @@ export function Reports() {
               {salesData.map((row) => (
                 <tr
                   key={row.id}
-                  className="border-b border-gray-100 hover:bg-gray-50"
+                  className="border-b border-[rgba(140,172,214,0.2)] hover:bg-[rgba(215,233,255,0.5)]"
                 >
                   <td className="py-3 px-3 whitespace-nowrap">{row.date}</td>
                   <td className="py-3 px-3 font-mono font-medium">#{row.id}</td>
@@ -406,7 +406,7 @@ export function Reports() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b-2 border-gray-200">
+              <tr className="border-b-2 border-[rgba(140,172,214,0.35)]">
                 {[
                   "Tanggal",
                   "No. Distribusi",
@@ -428,7 +428,7 @@ export function Reports() {
               {distData.map((row) => (
                 <tr
                   key={row.id}
-                  className="border-b border-gray-100 hover:bg-gray-50"
+                  className="border-b border-[rgba(140,172,214,0.2)] hover:bg-[rgba(215,233,255,0.5)]"
                 >
                   <td className="py-3 px-3 whitespace-nowrap">{row.date}</td>
                   <td className="py-3 px-3 font-mono font-medium">#{row.id}</td>
@@ -479,7 +479,7 @@ export function Reports() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b-2 border-gray-200">
+              <tr className="border-b-2 border-[rgba(140,172,214,0.35)]">
                 {["#", "Produk", "Kategori", "Total Terjual", "Pendapatan"].map(
                   (h) => (
                     <th
@@ -496,7 +496,7 @@ export function Reports() {
               {topData.map((row, i) => (
                 <tr
                   key={row.product_id}
-                  className="border-b border-gray-100 hover:bg-gray-50"
+                  className="border-b border-[rgba(140,172,214,0.2)] hover:bg-[rgba(215,233,255,0.5)]"
                 >
                   <td className="py-3 px-3">
                     <span
@@ -554,7 +554,7 @@ export function Reports() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b-2 border-gray-200">
+              <tr className="border-b-2 border-[rgba(140,172,214,0.35)]">
                 {[
                   "Produk",
                   "Kategori",
@@ -577,7 +577,7 @@ export function Reports() {
               {stockData.map((row, i) => (
                 <tr
                   key={i}
-                  className="border-b border-gray-100 hover:bg-gray-50"
+                  className="border-b border-[rgba(140,172,214,0.2)] hover:bg-[rgba(215,233,255,0.5)]"
                 >
                   <td className="py-3 px-3 font-medium">{row.product_name}</td>
                   <td className="py-3 px-3">
@@ -657,7 +657,7 @@ export function Reports() {
             className={`p-4 rounded-xl border-2 transition-all cursor-pointer text-left ${
               activeReport === id
                 ? "border-blue-500 bg-blue-50"
-                : "border-gray-200 hover:border-gray-300 bg-white"
+                : "clay-raised-sm border-0 bg-white"
             }`}
           >
             <Icon
@@ -672,8 +672,8 @@ export function Reports() {
         ))}
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-200">
-        <div className="border-b border-gray-200 px-6 py-4 flex items-end justify-between flex-wrap gap-4">
+      <div className="clay-raised rounded-xl">
+        <div className="border-b border-[rgba(140,172,214,0.35)] px-6 py-4 flex items-end justify-between flex-wrap gap-4">
           <div className="flex items-end gap-3 flex-wrap">
             <Calendar className="w-5 h-5 text-gray-500 mb-2.5" />
             <div>
@@ -684,7 +684,7 @@ export function Reports() {
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-3 py-2 clay-inset border-0 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
               />
             </div>
             <span className="text-gray-400 mb-2.5">—</span>
@@ -696,7 +696,7 @@ export function Reports() {
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-3 py-2 clay-inset border-0 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
               />
             </div>
           </div>
@@ -706,7 +706,7 @@ export function Reports() {
               disabled={
                 loading || (exportingType !== null && exportingType !== "pdf")
               }
-              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer disabled:opacity-60"
+              className="clay-red clay-pressable text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer disabled:opacity-60"
             >
               {exportingType === "pdf" ? (
                 <RefreshCw className="w-4 h-4 animate-spin" />
@@ -720,7 +720,7 @@ export function Reports() {
               disabled={
                 loading || (exportingType !== null && exportingType !== "excel")
               }
-              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer disabled:opacity-60"
+              className="clay-green clay-pressable text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer disabled:opacity-60"
             >
               {exportingType === "excel" ? (
                 <RefreshCw className="w-4 h-4 animate-spin" />
@@ -734,7 +734,7 @@ export function Reports() {
 
         <div className="p-6">
           {error && (
-            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl flex gap-3">
+            <div className="mb-4 p-4 clay-inset-red border-0 rounded-xl flex gap-3">
               <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
               <p className="text-sm text-red-700">{error}</p>
             </div>

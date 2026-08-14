@@ -132,7 +132,7 @@ export function PotonganSetoranManagement({
         <button
           onClick={fetchAll}
           disabled={loading}
-          className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50 cursor-pointer transition-colors"
+          className="flex items-center gap-2 px-4 py-2 clay-inset border-0 rounded-lg text-sm text-gray-700 hover:bg-[rgba(215,233,255,0.5)] disabled:opacity-50 cursor-pointer transition-colors"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
           Refresh
@@ -140,7 +140,7 @@ export function PotonganSetoranManagement({
       </div>
 
       {error && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3">
+        <div className="mb-6 p-4 clay-inset-red border-0 rounded-lg flex items-center gap-3">
           <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
           <p className="text-sm text-red-700">{error}</p>
         </div>
@@ -148,7 +148,7 @@ export function PotonganSetoranManagement({
 
       {/* Ringkasan */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="clay-raised rounded-lg p-6">
           <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mb-4">
             <MinusCircle className="w-6 h-6 text-red-600" />
           </div>
@@ -157,7 +157,7 @@ export function PotonganSetoranManagement({
             {loading ? "—" : formatRp(totalPotongan)}
           </p>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="clay-raised rounded-lg p-6">
           <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
             <Wallet className="w-6 h-6 text-green-600" />
           </div>
@@ -166,7 +166,7 @@ export function PotonganSetoranManagement({
             {loading ? "—" : formatRp(totalSetoran)}
           </p>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="clay-raised rounded-lg p-6">
           <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
             <PiggyBank className="w-6 h-6 text-blue-600" />
           </div>
@@ -184,8 +184,8 @@ export function PotonganSetoranManagement({
       </div>
 
       {/* Sisa Dana per Karyawan */}
-      <div className="bg-white rounded-lg border border-gray-200 mb-8">
-        <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+      <div className="clay-raised rounded-lg mb-8">
+        <div className="border-b border-[rgba(140,172,214,0.35)] px-6 py-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-gray-900">
             Sisa Dana Penjualan per Karyawan
           </h2>
@@ -213,7 +213,7 @@ export function PotonganSetoranManagement({
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-gray-200">
+                  <tr className="border-b border-[rgba(140,172,214,0.35)]">
                     {[
                       "Karyawan",
                       "Cash Masuk",
@@ -234,7 +234,7 @@ export function PotonganSetoranManagement({
                   {sisaDana.map((k) => (
                     <tr
                       key={k.karyawan_id}
-                      className="border-b border-gray-100 hover:bg-gray-50"
+                      className="border-b border-[rgba(140,172,214,0.2)] hover:bg-[rgba(215,233,255,0.5)]"
                     >
                       <td className="py-3 px-4 text-sm font-medium text-gray-900">
                         {k.nama}
@@ -265,15 +265,15 @@ export function PotonganSetoranManagement({
       </div>
 
       {/* Riwayat */}
-      <div className="bg-white rounded-lg border border-gray-200">
-        <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between flex-wrap gap-3">
+      <div className="clay-raised rounded-lg">
+        <div className="border-b border-[rgba(140,172,214,0.35)] px-6 py-4 flex items-center justify-between flex-wrap gap-3">
           <div className="flex gap-2">
             <button
               onClick={() => setActiveTab("potongan")}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
                 activeTab === "potongan"
                   ? "bg-blue-50 text-blue-600"
-                  : "text-gray-600 hover:bg-gray-50"
+                  : "text-gray-600 hover:bg-[rgba(215,233,255,0.5)]"
               }`}
             >
               Riwayat Potongan
@@ -283,7 +283,7 @@ export function PotonganSetoranManagement({
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
                 activeTab === "setoran"
                   ? "bg-blue-50 text-blue-600"
-                  : "text-gray-600 hover:bg-gray-50"
+                  : "text-gray-600 hover:bg-[rgba(215,233,255,0.5)]"
               }`}
             >
               Riwayat Setoran ke Owner
@@ -293,7 +293,7 @@ export function PotonganSetoranManagement({
             {activeTab === "potongan" ? (
               <button
                 onClick={() => setIsPotonganModalOpen(true)}
-                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer"
+                className="clay-red clay-pressable text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
                 Tambah Potongan
@@ -301,7 +301,7 @@ export function PotonganSetoranManagement({
             ) : (
               <button
                 onClick={() => setIsSetoranModalOpen(true)}
-                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer"
+                className="clay-green clay-pressable text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
                 Tambah Setoran
@@ -320,7 +320,7 @@ export function PotonganSetoranManagement({
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-gray-200">
+                  <tr className="border-b border-[rgba(140,172,214,0.35)]">
                     {[
                       "Tanggal",
                       "Kategori",
@@ -352,7 +352,7 @@ export function PotonganSetoranManagement({
                     potonganList.map((p) => (
                       <tr
                         key={p.id}
-                        className="border-b border-gray-100 hover:bg-gray-50"
+                        className="border-b border-[rgba(140,172,214,0.2)] hover:bg-[rgba(215,233,255,0.5)]"
                       >
                         <td className="py-3 px-4 text-sm text-gray-600">
                           {formatDate(p.tanggal)}
@@ -400,7 +400,7 @@ export function PotonganSetoranManagement({
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-gray-200">
+                  <tr className="border-b border-[rgba(140,172,214,0.35)]">
                     {[
                       "Tanggal",
                       "Disetorkan Oleh",
@@ -432,7 +432,7 @@ export function PotonganSetoranManagement({
                     setoranList.map((s) => (
                       <tr
                         key={s.id}
-                        className="border-b border-gray-100 hover:bg-gray-50"
+                        className="border-b border-[rgba(140,172,214,0.2)] hover:bg-[rgba(215,233,255,0.5)]"
                       >
                         <td className="py-3 px-4 text-sm text-gray-600">
                           {formatDate(s.tanggal)}
@@ -511,13 +511,13 @@ export function PotonganSetoranManagement({
             <div className="flex gap-3">
               <button
                 onClick={() => setConfirmDelete(null)}
-                className="flex-1 px-4 py-2.5 border border-gray-300 rounded-xl text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+                className="flex-1 px-4 py-2.5 clay-inset-sm border-0 rounded-xl text-sm text-gray-700 cursor-pointer"
               >
                 Batal
               </button>
               <button
                 onClick={handleDeleteConfirm}
-                className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-medium cursor-pointer"
+                className="flex-1 px-4 py-2.5 clay-red clay-pressable text-white rounded-xl text-sm font-medium cursor-pointer"
               >
                 Ya, Hapus
               </button>
