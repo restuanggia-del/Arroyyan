@@ -1,0 +1,133 @@
+/* ==========================================================================
+   Claymorphism design system — blue theme
+   Soft, puffy, tactile surfaces using dual soft shadows (light + dark) to
+   simulate clay/foam pushed out of (raised) or into (inset) the background.
+   ========================================================================== */
+
+:root {
+  /* Blue palette */
+  --clay-bg: #dfeeff;
+  --clay-bg-2: #cfe4fb;
+  --clay-surface: #f3f8ff;
+  --clay-surface-2: #ffffff;
+
+  --clay-blue-50: #eaf3ff;
+  --clay-blue-100: #d7e9ff;
+  --clay-blue-200: #b9d9fc;
+  --clay-blue-300: #8fbbfa;
+  --clay-blue-400: #5c92f2;
+  --clay-blue-500: #2f6fed;
+  --clay-blue-600: #0249e1;
+  --clay-blue-700: #023dbb;
+  --clay-blue-800: #0a2e86;
+  --clay-blue-900: #0b1e4d;
+
+  --clay-ink: #10193a;
+  --clay-ink-soft: rgba(16, 25, 58, 0.55);
+  --clay-lime: #dafb71;
+  --clay-red: #ee3d5a;
+
+  /* Shadow tones (relative to the light-blue background) */
+  --clay-shadow-dark: rgba(140, 172, 214, 0.55);
+  --clay-shadow-light: rgba(255, 255, 255, 0.95);
+  --clay-shadow-dark-strong: rgba(112, 148, 196, 0.6);
+}
+
+/* ---- Page surface -------------------------------------------------- */
+.clay-page-bg {
+  background:
+    radial-gradient(circle at 15% -10%, rgba(255, 255, 255, 0.65) 0%, rgba(255, 255, 255, 0) 45%),
+    linear-gradient(160deg, var(--clay-bg) 0%, var(--clay-bg-2) 55%, #c3ddfb 100%);
+}
+
+/* ---- Raised clay surfaces (cards, tiles, buttons) ------------------- */
+.clay-raised {
+  background: linear-gradient(150deg, #ffffff 0%, #eef5ff 100%);
+  box-shadow:
+    8px 8px 18px var(--clay-shadow-dark),
+    -8px -8px 18px var(--clay-shadow-light);
+}
+
+.clay-raised-sm {
+  background: linear-gradient(150deg, #ffffff 0%, #eef5ff 100%);
+  box-shadow:
+    5px 5px 10px var(--clay-shadow-dark),
+    -5px -5px 10px var(--clay-shadow-light);
+}
+
+.clay-raised-lg {
+  background: linear-gradient(150deg, #ffffff 0%, #eef5ff 100%);
+  box-shadow:
+    12px 12px 28px var(--clay-shadow-dark-strong),
+    -10px -10px 24px var(--clay-shadow-light);
+}
+
+/* ---- Inset / pressed clay (inputs, wells, track backgrounds) -------- */
+.clay-inset {
+  background: linear-gradient(150deg, #e2edfb 0%, #f2f8ff 100%);
+  box-shadow:
+    inset 5px 5px 10px var(--clay-shadow-dark),
+    inset -5px -5px 10px var(--clay-shadow-light);
+}
+
+.clay-inset-sm {
+  background: linear-gradient(150deg, #e2edfb 0%, #f2f8ff 100%);
+  box-shadow:
+    inset 3px 3px 6px var(--clay-shadow-dark),
+    inset -3px -3px 6px var(--clay-shadow-light);
+}
+
+/* ---- Colored clay (primary blue surfaces) ---------------------------- */
+.clay-blue {
+  background: linear-gradient(150deg, #4a86f4 0%, #0249e1 65%, #023dbb 100%);
+  box-shadow:
+    8px 8px 18px rgba(2, 55, 150, 0.4),
+    -6px -6px 14px rgba(150, 195, 255, 0.35),
+    inset 1px 1px 1px rgba(255, 255, 255, 0.35);
+  color: #fff;
+}
+
+.clay-blue-soft {
+  background: linear-gradient(150deg, #eaf3ff 0%, #cfe1fb 100%);
+  box-shadow:
+    6px 6px 14px var(--clay-shadow-dark),
+    -6px -6px 14px var(--clay-shadow-light);
+  color: var(--clay-blue-700);
+}
+
+/* ---- Dark clay (ink surfaces, e.g. primary CTA / avatar chip) -------- */
+.clay-dark {
+  background: linear-gradient(150deg, #202b52 0%, #0c1330 100%);
+  box-shadow:
+    8px 8px 18px rgba(4, 8, 26, 0.5),
+    -6px -6px 14px rgba(90, 120, 200, 0.18),
+    inset 1px 1px 1px rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+/* ---- Interaction states ---------------------------------------------- */
+.clay-pressable {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.clay-pressable:active {
+  transform: translateY(1px) scale(0.98);
+  box-shadow:
+    inset 4px 4px 9px var(--clay-shadow-dark),
+    inset -4px -4px 9px var(--clay-shadow-light);
+}
+
+.clay-blue.clay-pressable:active,
+.clay-dark.clay-pressable:active {
+  box-shadow:
+    inset 3px 3px 8px rgba(0, 0, 0, 0.35),
+    inset -2px -2px 6px rgba(255, 255, 255, 0.12);
+}
+
+/* ---- Focus ring (accessible, still soft) ------------------------------ */
+.clay-focus:focus-visible {
+  outline: none;
+  box-shadow:
+    inset 5px 5px 10px var(--clay-shadow-dark),
+    inset -5px -5px 10px var(--clay-shadow-light),
+    0 0 0 3px rgba(47, 111, 237, 0.35);
+}

@@ -102,11 +102,11 @@ export default function ProfilePage({
 
   return (
     <div className="p-4">
-      <div className="bg-gradient-to-br from-[#0249E1] to-[#80B0EC] rounded-[28px] p-5 text-white mb-4 relative overflow-hidden">
+      <div className="bg-gradient-to-br from-[#4a86f4] to-[#0249E1] rounded-[28px] p-5 text-white mb-4 relative overflow-hidden shadow-[10px_10px_24px_rgba(2,55,150,0.35),-6px_-6px_16px_rgba(150,195,255,0.25)]">
         <div className="absolute w-28 h-28 rounded-full bg-[#DAFB71]/20 blur-2xl -top-6 -right-6" />
         <button
           onClick={() => setShowEdit(true)}
-          className="absolute top-4 right-4 w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center cursor-pointer"
+          className="absolute top-4 right-4 w-8 h-8 bg-white/20 rounded-xl flex items-center justify-center cursor-pointer clay-pressable"
         >
           <Pencil className="w-4 h-4" />
         </button>
@@ -127,7 +127,7 @@ export default function ProfilePage({
         )}
       </div>
 
-      <div className="flex gap-1 mb-4 bg-[#F4F7FE] rounded-xl p-1">
+      <div className="flex gap-1 mb-4 clay-inset-sm rounded-xl p-1">
         {(
           [
             { key: "profil", label: "Akun" },
@@ -140,7 +140,7 @@ export default function ProfilePage({
             onClick={() => setTab(t.key)}
             className={`flex-1 py-2 rounded-lg text-sm font-medium cursor-pointer transition-colors ${
               tab === t.key
-                ? "bg-white text-[#0249E1] shadow-sm"
+                ? "clay-raised-sm text-[#0249E1]"
                 : "text-[#111111]/45"
             }`}
           >
@@ -150,7 +150,7 @@ export default function ProfilePage({
       </div>
 
       {error && (
-        <div className="mb-3 p-3 bg-[#EE3D5A]/10 border border-[#EE3D5A]/25 rounded-xl flex gap-2 text-sm text-[#EE3D5A]">
+        <div className="mb-3 p-3 clay-inset-sm border-0 rounded-xl flex gap-2 text-sm text-[#EE3D5A]">
           <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
           {error}
         </div>
@@ -181,7 +181,7 @@ export default function ProfilePage({
             {history.map((t) => (
               <div
                 key={t.fullId}
-                className="bg-white border border-black/5 rounded-xl p-3.5"
+                className="clay-raised rounded-xl p-3.5"
               >
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-xs text-[#111111]/35">
@@ -238,13 +238,13 @@ export default function ProfilePage({
               </p>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <div className="bg-white border border-black/5 rounded-xl p-3.5">
+              <div className="clay-raised rounded-xl p-3.5">
                 <p className="text-xs text-[#111111]/45 mb-1">Dus Terjual</p>
                 <p className="text-base font-bold text-[#111111]">
                   {komisi.totalDus}
                 </p>
               </div>
-              <div className="bg-white border border-black/5 rounded-xl p-3.5">
+              <div className="clay-raised rounded-xl p-3.5">
                 <p className="text-xs text-[#111111]/45 mb-1">
                   Omzet Harga Jual
                 </p>
@@ -253,7 +253,7 @@ export default function ProfilePage({
                 </p>
               </div>
             </div>
-            <div className="bg-[#F4F7FE] border border-black/5 rounded-xl p-3.5">
+            <div className="clay-raised rounded-xl p-3.5">
               <p className="text-xs text-[#111111]/45 flex items-center gap-1.5">
                 <Receipt className="w-3.5 h-3.5" />
                 Omzet harga pabrik (dipakai laporan resmi):{" "}
@@ -326,12 +326,12 @@ function EditProfileModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
-      <div className="bg-white rounded-t-3xl w-full">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-black/5">
+      <div className="clay-raised-lg rounded-t-3xl w-full">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[rgba(140,172,214,0.35)]">
           <h2 className="font-bold text-[#111111]">Edit Profil</h2>
           <button
             onClick={onClose}
-            className="p-1.5 hover:bg-[#F4F7FE] rounded-lg cursor-pointer"
+            className="p-1.5 clay-raised-sm clay-pressable rounded-xl cursor-pointer"
           >
             <X className="w-5 h-5 text-[#111111]/45" />
           </button>
@@ -345,7 +345,7 @@ function EditProfileModal({
         ) : (
           <div className="px-5 py-4 space-y-4">
             {error && (
-              <div className="p-3 bg-[#EE3D5A]/10 border border-[#EE3D5A]/25 rounded-xl flex gap-2 text-sm text-[#EE3D5A]">
+              <div className="p-3 clay-inset-sm border-0 rounded-xl flex gap-2 text-sm text-[#EE3D5A]">
                 <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
                 {error}
               </div>
@@ -358,7 +358,7 @@ function EditProfileModal({
                 type="text"
                 value={namaSales}
                 onChange={(e) => setNamaSales(e.target.value)}
-                className="w-full px-3 py-2.5 border border-black/5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]"
+                className="w-full px-3 py-2.5 clay-raised rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]"
               />
             </div>
             <div>
@@ -369,7 +369,7 @@ function EditProfileModal({
                 type="text"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="w-full px-3 py-2.5 border border-black/5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]"
+                className="w-full px-3 py-2.5 clay-raised rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]"
               />
             </div>
             <div>
@@ -380,13 +380,13 @@ function EditProfileModal({
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
                 rows={2}
-                className="w-full px-3 py-2 border border-black/5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]"
+                className="w-full px-3 py-2 clay-raised rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]"
               />
             </div>
             <button
               onClick={handleSubmit}
               disabled={saving}
-              className="w-full bg-[#0249E1] text-white py-3.5 rounded-xl font-semibold disabled:opacity-60 flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full clay-blue clay-pressable text-white py-3.5 rounded-xl font-semibold disabled:opacity-60 flex items-center justify-center gap-2 cursor-pointer"
             >
               {saving && <RefreshCw className="w-4 h-4 animate-spin" />}
               {saving ? "Menyimpan..." : "Simpan Perubahan"}

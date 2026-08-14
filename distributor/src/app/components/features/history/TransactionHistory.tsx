@@ -79,8 +79,8 @@ export default function TransactionHistory({ salesId }: TransactionHistoryProps)
           onClick={() => setFilterMode("today")}
           className={`flex-1 py-2 rounded-xl text-sm font-medium cursor-pointer transition-colors ${
             filterMode === "today"
-              ? "bg-[#0249E1] text-white"
-              : "bg-[#F4F7FE] text-[#111111]/50"
+              ? "clay-blue text-white"
+              : "text-[#111111]/50"
           }`}
         >
           Hari Ini
@@ -89,8 +89,8 @@ export default function TransactionHistory({ salesId }: TransactionHistoryProps)
           onClick={() => setFilterMode("all")}
           className={`flex-1 py-2 rounded-xl text-sm font-medium cursor-pointer transition-colors ${
             filterMode === "all"
-              ? "bg-[#0249E1] text-white"
-              : "bg-[#F4F7FE] text-[#111111]/50"
+              ? "clay-blue text-white"
+              : "text-[#111111]/50"
           }`}
         >
           Semua
@@ -99,8 +99,8 @@ export default function TransactionHistory({ salesId }: TransactionHistoryProps)
           onClick={() => setFilterMode("custom")}
           className={`flex-1 py-2 rounded-xl text-sm font-medium cursor-pointer transition-colors flex items-center justify-center gap-1.5 ${
             filterMode === "custom"
-              ? "bg-[#0249E1] text-white"
-              : "bg-[#F4F7FE] text-[#111111]/50"
+              ? "clay-blue text-white"
+              : "text-[#111111]/50"
           }`}
         >
           <Calendar className="w-3.5 h-3.5" /> Tanggal
@@ -112,12 +112,12 @@ export default function TransactionHistory({ salesId }: TransactionHistoryProps)
           type="date"
           value={customDate}
           onChange={(e) => setCustomDate(e.target.value)}
-          className="w-full mb-3 px-3 py-2.5 border border-black/5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]"
+          className="w-full mb-3 px-3 py-2.5 clay-raised rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]"
         />
       )}
 
       {error && (
-        <div className="mb-3 p-3 bg-[#EE3D5A]/10 border border-[#EE3D5A]/25 rounded-xl flex gap-2 text-sm text-[#EE3D5A]">
+        <div className="mb-3 p-3 clay-inset-sm border-0 rounded-xl flex gap-2 text-sm text-[#EE3D5A]">
           <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
           {error}
         </div>
@@ -139,7 +139,7 @@ export default function TransactionHistory({ salesId }: TransactionHistoryProps)
             <button
               key={t.fullId}
               onClick={() => setSelected(t)}
-              className="w-full text-left bg-white border border-black/5 rounded-xl p-3.5 cursor-pointer"
+              className="w-full text-left clay-raised rounded-xl p-3.5 cursor-pointer"
             >
               <div className="flex items-center justify-between mb-1">
                 <span className="text-xs text-[#111111]/35">
@@ -172,15 +172,15 @@ export default function TransactionHistory({ salesId }: TransactionHistoryProps)
 
       {selected && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
-          <div className="bg-white rounded-t-3xl w-full max-h-[85vh] flex flex-col">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-black/5">
+          <div className="clay-raised-lg rounded-t-3xl w-full max-h-[85vh] flex flex-col">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-[rgba(140,172,214,0.35)]">
               <h2 className="font-bold text-[#111111] flex items-center gap-2">
                 <Receipt className="w-4.5 h-4.5 text-[#0249E1]" />
                 Detail Transaksi
               </h2>
               <button
                 onClick={() => setSelected(null)}
-                className="p-1.5 hover:bg-[#F4F7FE] rounded-lg cursor-pointer"
+                className="p-1.5 clay-raised-sm clay-pressable rounded-xl cursor-pointer"
               >
                 <X className="w-5 h-5 text-[#111111]/45" />
               </button>
@@ -206,7 +206,7 @@ export default function TransactionHistory({ salesId }: TransactionHistoryProps)
                 </span>
               </div>
 
-              <div className="border-t border-black/5 pt-3">
+              <div className="border-t border-[rgba(140,172,214,0.35)] pt-3">
                 <p className="text-xs font-bold text-[#111111]/45 uppercase tracking-wide mb-2">
                   Item
                 </p>
@@ -227,7 +227,7 @@ export default function TransactionHistory({ salesId }: TransactionHistoryProps)
                 </div>
               </div>
 
-              <div className="border-t border-black/5 pt-3 flex items-center justify-between">
+              <div className="border-t border-[rgba(140,172,214,0.35)] pt-3 flex items-center justify-between">
                 <span className="font-bold text-[#111111]">TOTAL</span>
                 <span className="text-lg font-extrabold text-[#0249E1]">
                   {formatRp(selected.total)}
@@ -250,10 +250,10 @@ export default function TransactionHistory({ salesId }: TransactionHistoryProps)
               )}
             </div>
 
-            <div className="border-t border-black/5 px-5 py-4">
+            <div className="border-t border-[rgba(140,172,214,0.35)] px-5 py-4">
               <button
                 onClick={() => setSelected(null)}
-                className="w-full bg-[#0249E1] text-white py-3 rounded-xl font-semibold cursor-pointer"
+                className="w-full clay-blue clay-pressable text-white py-3 rounded-xl font-semibold cursor-pointer"
               >
                 Tutup
               </button>

@@ -101,12 +101,12 @@ export default function DistributionPage({ salesId }: DistributionPageProps) {
 
   return (
     <div className="p-4">
-      <div className="flex gap-1 mb-4 bg-[#F4F7FE] rounded-xl p-1">
+      <div className="flex gap-1 mb-4 clay-inset-sm rounded-xl p-1">
         <button
           onClick={() => setTab("distribusi")}
           className={`flex-1 py-2 rounded-lg text-sm font-medium cursor-pointer transition-colors ${
             tab === "distribusi"
-              ? "bg-white text-[#0249E1] shadow-sm"
+              ? "clay-raised-sm text-[#0249E1]"
               : "text-[#111111]/45"
           }`}
         >
@@ -116,7 +116,7 @@ export default function DistributionPage({ salesId }: DistributionPageProps) {
           onClick={() => setTab("retur")}
           className={`flex-1 py-2 rounded-lg text-sm font-medium cursor-pointer transition-colors ${
             tab === "retur"
-              ? "bg-white text-[#0249E1] shadow-sm"
+              ? "clay-raised-sm text-[#0249E1]"
               : "text-[#111111]/45"
           }`}
         >
@@ -125,7 +125,7 @@ export default function DistributionPage({ salesId }: DistributionPageProps) {
       </div>
 
       {error && (
-        <div className="mb-3 p-3 bg-[#EE3D5A]/10 border border-[#EE3D5A]/25 rounded-xl flex gap-2 text-sm text-[#EE3D5A]">
+        <div className="mb-3 p-3 clay-inset-sm border-0 rounded-xl flex gap-2 text-sm text-[#EE3D5A]">
           <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
           {error}
         </div>
@@ -147,7 +147,7 @@ export default function DistributionPage({ salesId }: DistributionPageProps) {
             {distributions.map((dist) => (
               <div
                 key={dist.id}
-                className="bg-white border border-black/5 rounded-2xl p-4"
+                className="clay-raised rounded-2xl p-4"
               >
                 <div className="flex items-center justify-between mb-2.5">
                   <span className="text-xs text-[#111111]/35">
@@ -180,7 +180,7 @@ export default function DistributionPage({ salesId }: DistributionPageProps) {
                   <button
                     onClick={() => handleConfirm(dist)}
                     disabled={confirmingId === dist.id}
-                    className="w-full bg-[#0249E1] text-white py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+                    className="w-full clay-blue clay-pressable text-white py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
                   >
                     {confirmingId === dist.id ? (
                       <RefreshCw className="w-4 h-4 animate-spin" />
@@ -224,7 +224,7 @@ export default function DistributionPage({ salesId }: DistributionPageProps) {
           {returns.map((ret) => (
             <div
               key={ret.id}
-              className="bg-white border border-black/5 rounded-2xl p-4"
+              className="clay-raised rounded-2xl p-4"
             >
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs text-[#111111]/35">
@@ -331,14 +331,14 @@ function ReturnModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
-      <div className="bg-white rounded-t-3xl w-full max-h-[85vh] flex flex-col">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-black/5">
+      <div className="clay-raised-lg rounded-t-3xl w-full max-h-[85vh] flex flex-col">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[rgba(140,172,214,0.35)]">
           <h2 className="font-bold text-[#111111]">
             Ajukan Retur — #{distribution.shortId}
           </h2>
           <button
             onClick={onClose}
-            className="p-1.5 hover:bg-[#F4F7FE] rounded-lg cursor-pointer"
+            className="p-1.5 clay-raised-sm clay-pressable rounded-xl cursor-pointer"
           >
             <X className="w-5 h-5 text-[#111111]/45" />
           </button>
@@ -346,7 +346,7 @@ function ReturnModal({
 
         <div className="overflow-y-auto flex-1 px-5 py-4 space-y-3">
           {error && (
-            <div className="p-3 bg-[#EE3D5A]/10 border border-[#EE3D5A]/25 rounded-xl flex gap-2 text-sm text-[#EE3D5A]">
+            <div className="p-3 clay-inset-sm border-0 rounded-xl flex gap-2 text-sm text-[#EE3D5A]">
               <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
               {error}
             </div>
@@ -355,7 +355,7 @@ function ReturnModal({
           {distribution.items.map((item) => (
             <div
               key={item.productId}
-              className="border border-black/5 rounded-xl p-3"
+              className="clay-raised rounded-xl p-3"
             >
               <div className="flex items-center justify-between mb-2">
                 <p className="text-sm font-medium text-[#111111]">
@@ -374,7 +374,7 @@ function ReturnModal({
                       (quantities[item.productId] ?? 0) - 1,
                     )
                   }
-                  className="w-8 h-8 border border-black/5 rounded-lg cursor-pointer text-[#111111]/60"
+                  className="w-8 h-8 clay-raised rounded-lg cursor-pointer text-[#111111]/60"
                 >
                   −
                 </button>
@@ -390,7 +390,7 @@ function ReturnModal({
                       Number(e.target.value) || 0,
                     )
                   }
-                  className="w-16 text-center border border-black/5 rounded-lg py-1.5 text-sm"
+                  className="w-16 text-center clay-raised rounded-lg py-1.5 text-sm"
                 />
                 <button
                   onClick={() =>
@@ -400,7 +400,7 @@ function ReturnModal({
                       (quantities[item.productId] ?? 0) + 1,
                     )
                   }
-                  className="w-8 h-8 border border-black/5 rounded-lg cursor-pointer text-[#111111]/60"
+                  className="w-8 h-8 clay-raised rounded-lg cursor-pointer text-[#111111]/60"
                 >
                   +
                 </button>
@@ -417,16 +417,16 @@ function ReturnModal({
               onChange={(e) => setReason(e.target.value)}
               rows={2}
               placeholder="mis. produk rusak, tidak laku, dsb."
-              className="w-full px-3 py-2 border border-black/5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]"
+              className="w-full px-3 py-2 clay-raised rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]"
             />
           </div>
         </div>
 
-        <div className="border-t border-black/5 px-5 py-4">
+        <div className="border-t border-[rgba(140,172,214,0.35)] px-5 py-4">
           <button
             onClick={handleSubmit}
             disabled={saving}
-            className="w-full bg-[#EE3D5A] text-white py-3.5 rounded-xl font-semibold disabled:opacity-60 flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full clay-pressable bg-gradient-to-br from-[#f4657d] to-[#EE3D5A] text-white shadow-[6px_6px_14px_rgba(238,61,90,0.35),-4px_-4px_10px_rgba(255,255,255,0.3)] py-3.5 rounded-xl font-semibold disabled:opacity-60 flex items-center justify-center gap-2 cursor-pointer"
           >
             {saving && <RefreshCw className="w-4 h-4 animate-spin" />}
             {saving ? "Mengirim..." : "Kirim Pengajuan Retur"}

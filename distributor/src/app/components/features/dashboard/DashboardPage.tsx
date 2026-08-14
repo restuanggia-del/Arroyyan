@@ -19,6 +19,14 @@ interface DashboardPageProps {
 
 const formatRp = (n: number) => "Rp " + Math.round(n).toLocaleString("id-ID");
 
+const getGreeting = () => {
+  const hour = new Date().getHours();
+  if (hour >= 5 && hour < 12) return "Selamat Pagi";
+  if (hour >= 12 && hour < 15) return "Selamat Siang";
+  if (hour >= 15 && hour < 18) return "Selamat Sore";
+  return "Selamat Malam";
+};
+
 export default function DashboardPage({
   user,
   onNavigate,
@@ -63,16 +71,32 @@ export default function DashboardPage({
 
   return (
     <div className="p-4 space-y-4">
-      <div className="bg-gradient-to-br from-[#0249E1] to-[#80B0EC] rounded-[28px] p-5 text-white relative overflow-hidden">
+      <div className="bg-gradient-to-br from-[#4a86f4] to-[#0249E1] rounded-[28px] p-5 text-white relative overflow-hidden shadow-[10px_10px_24px_rgba(2,55,150,0.35),-6px_-6px_16px_rgba(150,195,255,0.25)]">
         <div className="absolute w-32 h-32 rounded-full bg-[#DAFB71]/20 blur-2xl -top-8 -right-8" />
-        <p className="text-sm text-white/80 font-medium relative">
-          Selamat datang,
-        </p>
-        <p className="text-xl font-extrabold relative">{user.namaSales}</p>
+        <div className="flex items-start justify-between relative">
+          <div className="flex-1">
+            <p className="text-sm text-white/80 font-medium">
+              Selamat Datang 👋
+            </p>
+            <p className="text-xl font-extrabold">{user.namaSales}</p>
+            <p className="text-sm text-white/80 font-medium mt-1">
+              {getGreeting()}
+            </p>
+          </div>
+          <div className="text-5xl ml-4">
+            {new Date().getHours() >= 5 && new Date().getHours() < 12
+              ? "🌅"
+              : new Date().getHours() >= 12 && new Date().getHours() < 15
+                ? "☀️"
+                : new Date().getHours() >= 15 && new Date().getHours() < 18
+                  ? "🌇"
+                  : "🌙"}
+          </div>
+        </div>
       </div>
 
       {error && (
-        <div className="p-3 bg-[#EE3D5A]/10 border border-[#EE3D5A]/25 rounded-2xl flex items-center gap-2">
+        <div className="p-3 clay-inset-sm rounded-2xl flex items-center gap-2">
           <AlertTriangle className="w-4 h-4 text-[#EE3D5A] flex-shrink-0" />
           <p className="text-sm text-[#EE3D5A] font-medium">{error}</p>
         </div>
@@ -88,8 +112,8 @@ export default function DashboardPage({
       ) : stats ? (
         <>
           <div className="grid grid-cols-2 gap-3">
-            <div className="bg-white rounded-3xl p-4 shadow-sm shadow-black/[0.03]">
-              <div className="w-10 h-10 bg-[#DAFB71] rounded-2xl flex items-center justify-center mb-3">
+            <div className="clay-raised rounded-3xl p-4">
+              <div className="w-10 h-10 bg-gradient-to-br from-[#f0ff9e] to-[#DAFB71] rounded-2xl flex items-center justify-center mb-3 shadow-[3px_3px_8px_rgba(163,190,225,0.5),-2px_-2px_6px_rgba(255,255,255,0.8)]">
                 <ShoppingBag className="w-5 h-5 text-[#111111]" />
               </div>
               <p className="text-[11px] font-bold text-[#111111]/45 uppercase tracking-wide">
@@ -103,8 +127,8 @@ export default function DashboardPage({
               </p>
             </div>
 
-            <div className="bg-white rounded-3xl p-4 shadow-sm shadow-black/[0.03]">
-              <div className="w-10 h-10 bg-[#0249E1] rounded-2xl flex items-center justify-center mb-3">
+            <div className="clay-raised rounded-3xl p-4">
+              <div className="w-10 h-10 bg-gradient-to-br from-[#4a86f4] to-[#0249E1] rounded-2xl flex items-center justify-center mb-3 shadow-[3px_3px_8px_rgba(163,190,225,0.5),-2px_-2px_6px_rgba(255,255,255,0.8)]">
                 {stats.komisiToday >= 0 ? (
                   <TrendingUp className="w-5 h-5 text-white" />
                 ) : (
@@ -123,8 +147,8 @@ export default function DashboardPage({
               </p>
             </div>
 
-            <div className="bg-white rounded-3xl p-4 shadow-sm shadow-black/[0.03]">
-              <div className="w-10 h-10 bg-[#80B0EC] rounded-2xl flex items-center justify-center mb-3">
+            <div className="clay-raised rounded-3xl p-4">
+              <div className="w-10 h-10 bg-gradient-to-br from-[#a9c9f7] to-[#80B0EC] rounded-2xl flex items-center justify-center mb-3 shadow-[3px_3px_8px_rgba(163,190,225,0.5),-2px_-2px_6px_rgba(255,255,255,0.8)]">
                 <Package className="w-5 h-5 text-white" />
               </div>
               <p className="text-[11px] font-bold text-[#111111]/45 uppercase tracking-wide">
@@ -137,9 +161,9 @@ export default function DashboardPage({
 
             <button
               onClick={() => onNavigate("setoran")}
-              className="bg-white rounded-3xl p-4 shadow-sm shadow-black/[0.03] text-left cursor-pointer active:scale-[0.98] transition-transform"
+              className="clay-raised clay-pressable rounded-3xl p-4 text-left cursor-pointer"
             >
-              <div className="w-10 h-10 bg-[#EE3D5A] rounded-2xl flex items-center justify-center mb-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-[#f4657d] to-[#EE3D5A] rounded-2xl flex items-center justify-center mb-3 shadow-[3px_3px_8px_rgba(163,190,225,0.5),-2px_-2px_6px_rgba(255,255,255,0.8)]">
                 <Wallet className="w-5 h-5 text-white" />
               </div>
               <p className="text-[11px] font-bold text-[#111111]/45 uppercase tracking-wide">
@@ -152,7 +176,7 @@ export default function DashboardPage({
           </div>
 
           {stats.hasStock && (
-            <div className="bg-white rounded-3xl p-5 shadow-sm shadow-black/[0.03] flex items-center gap-4">
+            <div className="clay-raised rounded-3xl p-5 flex items-center gap-4">
               <div className="relative w-16 h-16 flex-shrink-0">
                 <svg viewBox="0 0 64 64" className="w-16 h-16 -rotate-90">
                   <circle
@@ -160,7 +184,7 @@ export default function DashboardPage({
                     cy="32"
                     r="27"
                     fill="none"
-                    stroke="#F4F7FE"
+                    stroke="#dfeeff"
                     strokeWidth="7"
                   />
                   <circle
@@ -194,7 +218,7 @@ export default function DashboardPage({
           )}
 
           {stats.lowStockCount > 0 && (
-            <div className="bg-[#EE3D5A]/[0.06] border border-[#EE3D5A]/15 rounded-3xl p-4">
+            <div className="clay-inset rounded-3xl p-4">
               <div className="flex items-center gap-2 mb-3">
                 <AlertTriangle className="w-4.5 h-4.5 text-[#EE3D5A]" />
                 <p className="text-sm font-bold text-[#111111]">
@@ -221,10 +245,10 @@ export default function DashboardPage({
 
           <button
             onClick={() => onNavigate("transaction")}
-            className="w-full flex items-center justify-between bg-[#111111] rounded-3xl p-4 cursor-pointer active:scale-[0.98] transition-transform"
+            className="clay-pressable w-full flex items-center justify-between rounded-3xl p-4 cursor-pointer bg-gradient-to-br from-[#202b52] to-[#0c1330] shadow-[8px_8px_18px_rgba(4,8,26,0.4),-6px_-6px_14px_rgba(90,120,200,0.15)]"
           >
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-[#DAFB71] rounded-2xl flex items-center justify-center">
+              <div className="w-10 h-10 bg-gradient-to-br from-[#f0ff9e] to-[#DAFB71] rounded-2xl flex items-center justify-center shadow-[3px_3px_8px_rgba(0,0,0,0.3)]">
                 <ShoppingBag className="w-5 h-5 text-[#111111]" />
               </div>
               <div className="text-left">
@@ -241,10 +265,10 @@ export default function DashboardPage({
 
           <button
             onClick={() => onNavigate("history")}
-            className="w-full flex items-center justify-between bg-white border border-black/5 rounded-3xl p-4 cursor-pointer active:scale-[0.98] transition-transform"
+            className="clay-raised clay-pressable w-full flex items-center justify-between rounded-3xl p-4 cursor-pointer"
           >
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-[#F4F7FE] rounded-2xl flex items-center justify-center">
+              <div className="w-10 h-10 clay-inset-sm rounded-2xl flex items-center justify-center">
                 <History className="w-5 h-5 text-[#0249E1]" />
               </div>
               <div className="text-left">

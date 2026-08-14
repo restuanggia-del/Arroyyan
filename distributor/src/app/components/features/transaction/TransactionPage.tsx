@@ -196,7 +196,7 @@ export default function TransactionPage({
 
   return (
     <div className="pb-24">
-      <div className="p-4 sticky top-0 bg-[#F4F7FE] z-10 flex items-center gap-2">
+      <div className="p-4 sticky top-0 clay-page-bg z-10 flex items-center gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#111111]/35" />
           <input
@@ -204,14 +204,14 @@ export default function TransactionPage({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Cari produk..."
-            className="w-full pl-9 pr-4 py-2.5 border border-black/5 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#0249E1]"
+            className="w-full pl-9 pr-4 py-2.5 clay-inset-sm border-0 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
           />
         </div>
         {onNavigate && (
           <button
             onClick={() => onNavigate("history")}
             title="Riwayat Transaksi"
-            className="w-10 h-10 flex-shrink-0 bg-white border border-black/5 rounded-xl flex items-center justify-center cursor-pointer"
+            className="w-10 h-10 flex-shrink-0 clay-raised rounded-xl flex items-center justify-center cursor-pointer"
           >
             <History className="w-4 h-4 text-[#111111]/60" />
           </button>
@@ -219,7 +219,7 @@ export default function TransactionPage({
       </div>
 
       {error && !showCart && (
-        <div className="mx-4 mb-3 p-3 bg-[#EE3D5A]/10 border border-[#EE3D5A]/25 rounded-xl flex gap-2 text-sm text-[#EE3D5A]">
+        <div className="mx-4 mb-3 p-3 clay-inset-sm border-0 rounded-xl flex gap-2 text-sm text-[#EE3D5A]">
           <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
           {error}
         </div>
@@ -235,14 +235,14 @@ export default function TransactionPage({
               disabled={product.stock === 0}
               className={`text-left border-2 rounded-2xl p-3 relative transition-all ${
                 product.stock === 0
-                  ? "border-black/5 bg-[#F4F7FE] opacity-50"
+                  ? "clay-inset-sm border-2 border-transparent opacity-50"
                   : inCart
-                    ? "border-[#0249E1] bg-[#0249E1]/10"
-                    : "border-black/5 bg-white active:border-[#80B0EC]"
+                    ? "border-2 border-[#0249E1] clay-blue-soft"
+                    : "clay-raised-sm border-0"
               }`}
             >
               {inCart && (
-                <span className="absolute top-2 right-2 bg-[#0249E1] text-white text-[10px] rounded-full w-5 h-5 flex items-center justify-center font-bold">
+                <span className="absolute top-2 right-2 clay-blue text-white text-[10px] rounded-full w-5 h-5 flex items-center justify-center font-bold">
                   {inCart.quantity}
                 </span>
               )}
@@ -272,7 +272,7 @@ export default function TransactionPage({
       {cart.length > 0 && !showCart && (
         <button
           onClick={() => setShowCart(true)}
-          className="fixed bottom-[76px] left-4 right-4 bg-[#0249E1] text-white rounded-2xl py-3.5 px-5 flex items-center justify-between shadow-lg shadow-[#0249E1]/30 cursor-pointer z-20"
+          className="fixed bottom-[76px] left-4 right-4 clay-blue clay-pressable text-white rounded-2xl py-3.5 px-5 flex items-center justify-between cursor-pointer z-20"
         >
           <span className="flex items-center gap-2 font-semibold text-sm">
             <ShoppingCart className="w-4.5 h-4.5" />
@@ -284,12 +284,12 @@ export default function TransactionPage({
 
       {showCart && (
         <div className="fixed inset-0 bg-black/50 z-40 flex items-end">
-          <div className="bg-white rounded-t-3xl w-full max-h-[88vh] flex flex-col">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-black/5">
+          <div className="clay-raised-lg rounded-t-3xl w-full max-h-[88vh] flex flex-col">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-[rgba(140,172,214,0.35)]">
               <h2 className="font-bold text-[#111111]">Keranjang</h2>
               <button
                 onClick={() => setShowCart(false)}
-                className="p-1.5 hover:bg-[#F4F7FE] rounded-lg cursor-pointer"
+                className="p-1.5 clay-raised-sm clay-pressable rounded-xl cursor-pointer"
               >
                 <X className="w-5 h-5 text-[#111111]/45" />
               </button>
@@ -297,7 +297,7 @@ export default function TransactionPage({
 
             <div className="overflow-y-auto flex-1 px-5 py-3 space-y-3">
               {error && (
-                <div className="p-3 bg-[#EE3D5A]/10 border border-[#EE3D5A]/25 rounded-xl flex gap-2 text-sm text-[#EE3D5A]">
+                <div className="p-3 clay-inset-sm border-0 rounded-xl flex gap-2 text-sm text-[#EE3D5A]">
                   <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
                   {error}
                 </div>
@@ -309,7 +309,7 @@ export default function TransactionPage({
                 return (
                   <div
                     key={item.product.id}
-                    className="border border-black/5 rounded-xl p-3"
+                    className="clay-raised rounded-xl p-3"
                   >
                     <div className="flex items-start justify-between mb-2">
                       <p className="text-sm font-semibold text-[#111111] flex-1">
@@ -337,7 +337,7 @@ export default function TransactionPage({
                             Number(e.target.value) || 0,
                           )
                         }
-                        className="w-full pl-8 pr-3 py-2 border border-black/5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]"
+                        className="w-full pl-8 pr-3 py-2 clay-raised rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]"
                       />
                     </div>
 
@@ -345,7 +345,7 @@ export default function TransactionPage({
                       <div className="flex items-center gap-1.5">
                         <button
                           onClick={() => updateQty(item.product.id, -1)}
-                          className="w-7 h-7 border border-black/5 rounded-lg flex items-center justify-center cursor-pointer"
+                          className="w-7 h-7 clay-raised rounded-lg flex items-center justify-center cursor-pointer"
                         >
                           <Minus className="w-3.5 h-3.5" />
                         </button>
@@ -354,7 +354,7 @@ export default function TransactionPage({
                         </span>
                         <button
                           onClick={() => updateQty(item.product.id, 1)}
-                          className="w-7 h-7 border border-black/5 rounded-lg flex items-center justify-center cursor-pointer"
+                          className="w-7 h-7 clay-raised rounded-lg flex items-center justify-center cursor-pointer"
                         >
                           <Plus className="w-3.5 h-3.5" />
                         </button>
@@ -380,7 +380,7 @@ export default function TransactionPage({
                   Pelanggan (opsional)
                 </label>
                 {selectedCustomer ? (
-                  <div className="flex items-center justify-between px-3 py-2.5 border border-black/5 rounded-xl">
+                  <div className="flex items-center justify-between px-3 py-2.5 clay-raised rounded-xl">
                     <div>
                       <p className="text-sm font-medium text-[#111111]">
                         {selectedCustomer.name}
@@ -426,8 +426,8 @@ export default function TransactionPage({
                       onClick={() => setPaymentMethod(m.key)}
                       className={`flex flex-col items-center gap-1 py-2.5 rounded-xl border-2 text-xs font-medium cursor-pointer ${
                         paymentMethod === m.key
-                          ? "border-[#0249E1] bg-[#0249E1]/10 text-[#0249E1]"
-                          : "border-black/5 text-[#111111]/60"
+                          ? "border-2 border-[#0249E1] clay-blue-soft text-[#0249E1]"
+                          : "clay-inset-sm border-2 border-transparent text-[#111111]/60"
                       }`}
                     >
                       <m.icon className="w-4 h-4" />
@@ -443,7 +443,7 @@ export default function TransactionPage({
               </div>
             </div>
 
-            <div className="border-t border-black/5 px-5 py-4 space-y-2">
+            <div className="border-t border-[rgba(140,172,214,0.35)] px-5 py-4 space-y-2">
               <div className="flex justify-between text-sm text-[#111111]/60">
                 <span>Subtotal</span>
                 <span>{formatRp(subtotal)}</span>
@@ -465,7 +465,7 @@ export default function TransactionPage({
               <button
                 onClick={handleCheckout}
                 disabled={saving || cart.length === 0}
-                className="w-full bg-[#0249E1] text-white py-3.5 rounded-xl font-semibold disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full clay-blue clay-pressable text-white py-3.5 rounded-xl font-semibold disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
               >
                 {saving && <RefreshCw className="w-4 h-4 animate-spin" />}
                 {saving ? "Memproses..." : `Bayar ${formatRp(subtotal)}`}

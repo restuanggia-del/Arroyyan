@@ -126,9 +126,9 @@ export default function MainApp({
   };
 
   return (
-    <div className="h-[100dvh] flex flex-col bg-[#F4F7FE] overflow-hidden relative">
+    <div className="h-[100dvh] flex flex-col clay-page-bg overflow-hidden relative">
       {/* Top bar — gradient identitas Portal Sales */}
-      <header className="fixed top-0 left-0 right-0 z-30 h-16 bg-gradient-to-r from-[#0249E1] to-[#80B0EC] rounded-b-[28px] flex items-center px-5 gap-3 shadow-lg shadow-[#0249E1]/15">
+      <header className="fixed top-0 left-0 right-0 z-30 h-16 bg-gradient-to-r from-[#0249E1] to-[#4a86f4] rounded-b-[28px] flex items-center px-5 gap-3 shadow-[0_10px_24px_rgba(2,55,150,0.35)]">
         <div className="flex-1 min-w-0">
           <p className="text-[15px] font-extrabold text-white leading-tight truncate">
             {titleMap[activeTab]}
@@ -141,7 +141,7 @@ export default function MainApp({
         <div className="relative">
           <button
             onClick={() => setShowMenu((s) => !s)}
-            className="w-9 h-9 rounded-2xl bg-[#111111] flex items-center justify-center text-[#DAFB71] text-xs font-extrabold cursor-pointer"
+            className="clay-pressable w-9 h-9 rounded-2xl bg-gradient-to-br from-[#202b52] to-[#0c1330] flex items-center justify-center text-[#DAFB71] text-xs font-extrabold cursor-pointer shadow-[3px_3px_8px_rgba(4,8,26,0.4),-2px_-2px_6px_rgba(120,150,230,0.2)]"
           >
             {initials}
           </button>
@@ -152,8 +152,8 @@ export default function MainApp({
                 className="fixed inset-0 z-30"
                 onClick={() => setShowMenu(false)}
               />
-              <div className="absolute right-0 top-11 w-52 bg-white rounded-2xl shadow-xl border border-black/5 z-40 overflow-hidden">
-                <div className="px-4 py-3 border-b border-black/5">
+              <div className="absolute right-0 top-11 w-52 bg-gradient-to-br from-white to-[#eef5ff] rounded-2xl shadow-[10px_10px_24px_rgba(2,30,90,0.25),-8px_-8px_18px_rgba(255,255,255,0.9)] z-40 overflow-hidden">
+                <div className="px-4 py-3 border-b border-[#8cacd6]/20">
                   <p className="text-sm font-bold text-[#111111] truncate">
                     {localUser.namaSales}
                   </p>
@@ -166,7 +166,7 @@ export default function MainApp({
                     setShowMenu(false);
                     setActiveTab("history");
                   }}
-                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium text-[#111111] hover:bg-[#F4F7FE] cursor-pointer"
+                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium text-[#111111] hover:bg-[#0249E1]/5 cursor-pointer"
                 >
                   <History className="w-4 h-4" /> Riwayat Transaksi
                 </button>
@@ -175,21 +175,21 @@ export default function MainApp({
                     setShowMenu(false);
                     setActiveTab("customers");
                   }}
-                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium text-[#111111] hover:bg-[#F4F7FE] cursor-pointer"
+                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium text-[#111111] hover:bg-[#0249E1]/5 cursor-pointer"
                 >
                   <Users className="w-4 h-4" /> Kelola Pelanggan
                 </button>
-                <div className="border-t border-black/5" />
+                <div className="border-t border-[#8cacd6]/20" />
                 <button
                   onClick={() => {
                     setShowMenu(false);
                     setActiveTab("profile");
                   }}
-                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium text-[#111111] hover:bg-[#F4F7FE] cursor-pointer"
+                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium text-[#111111] hover:bg-[#0249E1]/5 cursor-pointer"
                 >
                   <User className="w-4 h-4" /> Profil Saya
                 </button>
-                <div className="border-t border-black/5" />
+                <div className="border-t border-[#8cacd6]/20" />
                 <button
                   onClick={() => {
                     setShowMenu(false);
@@ -213,7 +213,7 @@ export default function MainApp({
       </main>
 
       <nav className="fixed bottom-0 left-0 right-0 z-30 pb-[calc(env(safe-area-inset-bottom)+14px)] pt-2 px-4">
-        <div className="relative bg-white rounded-[28px] shadow-xl shadow-black/10 h-[64px] flex items-stretch px-2">
+        <div className="relative bg-gradient-to-br from-white to-[#eef5ff] rounded-[28px] shadow-[10px_10px_24px_rgba(2,30,90,0.28),-8px_-8px_20px_rgba(255,255,255,0.9)] h-[64px] flex items-stretch px-2">
           {SIDE_TABS_LEFT.map((tab) => {
             const Icon = tab.icon;
             const active = activeTab === tab.key;
@@ -261,7 +261,7 @@ export default function MainApp({
           <div className="absolute left-1/2 -translate-x-1/2 -top-5 flex flex-col items-center gap-1">
             <button
               onClick={() => setActiveTab("transaction")}
-              className="w-16 h-16 rounded-full bg-[#111111] shadow-lg shadow-black/25 flex items-center justify-center cursor-pointer active:scale-95 transition-transform"
+              className="clay-pressable w-16 h-16 rounded-full bg-gradient-to-br from-[#4a86f4] to-[#0249e1] shadow-[8px_8px_18px_rgba(2,55,150,0.45),-4px_-4px_12px_rgba(150,195,255,0.35)] flex items-center justify-center cursor-pointer"
             >
               {activeTab === "transaction" ? (
                 <ShoppingCart className="w-6 h-6 text-[#DAFB71]" />

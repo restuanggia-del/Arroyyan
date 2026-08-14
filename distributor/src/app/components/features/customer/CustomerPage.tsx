@@ -124,7 +124,7 @@ export default function CustomerPage({
               setEditingCustomer(null);
               setShowForm(true);
             }}
-            className="flex items-center gap-1.5 bg-[#0249E1] text-white px-3.5 py-2 rounded-xl text-sm font-medium cursor-pointer"
+            className="flex items-center gap-1.5 clay-blue clay-pressable text-white px-3.5 py-2 rounded-xl text-sm font-medium cursor-pointer"
           >
             <Plus className="w-4 h-4" /> Tambah
           </button>
@@ -138,7 +138,7 @@ export default function CustomerPage({
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Cari nama atau nomor HP..."
-          className="w-full pl-9 pr-4 py-2.5 border border-black/5 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#0249E1]"
+          className="w-full pl-9 pr-4 py-2.5 clay-inset-sm border-0 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
         />
       </div>
 
@@ -155,7 +155,7 @@ export default function CustomerPage({
       )}
 
       {error && (
-        <div className="mb-3 p-3 bg-[#EE3D5A]/10 border border-[#EE3D5A]/25 rounded-xl flex gap-2 text-sm text-[#EE3D5A]">
+        <div className="mb-3 p-3 clay-inset-sm border-0 rounded-xl flex gap-2 text-sm text-[#EE3D5A]">
           <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
           {error}
         </div>
@@ -183,7 +183,7 @@ export default function CustomerPage({
                   onSelect?.({ id: c.id, name: c.name, phone: c.phone });
                   onClose?.();
                 }}
-                className="w-full text-left bg-white border border-black/5 rounded-xl p-3.5 flex items-center justify-between cursor-pointer active:border-[#0249E1]"
+                className="w-full text-left clay-raised rounded-xl p-3.5 flex items-center justify-between cursor-pointer active:border-[#0249E1]"
               >
                 <div>
                   <p className="text-sm font-semibold text-[#111111]">{c.name}</p>
@@ -196,7 +196,7 @@ export default function CustomerPage({
             ) : (
               <div
                 key={c.id}
-                className="bg-white border border-black/5 rounded-xl p-3.5"
+                className="clay-raised rounded-xl p-3.5"
               >
                 <div className="flex items-start justify-between mb-1.5">
                   <div className="flex-1 min-w-0">
@@ -219,7 +219,7 @@ export default function CustomerPage({
                       setEditingCustomer(c);
                       setShowForm(true);
                     }}
-                    className="p-1.5 hover:bg-[#F4F7FE] rounded-lg cursor-pointer flex-shrink-0"
+                    className="p-1.5 clay-raised-sm clay-pressable rounded-xl cursor-pointer flex-shrink-0"
                   >
                     <Pencil className="w-4 h-4 text-[#111111]/40" />
                   </button>
@@ -242,12 +242,12 @@ export default function CustomerPage({
     <>
       {mode === "picker" ? (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
-          <div className="bg-white rounded-t-3xl w-full max-h-[88vh] flex flex-col">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-black/5">
+          <div className="clay-raised-lg rounded-t-3xl w-full max-h-[88vh] flex flex-col">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-[rgba(140,172,214,0.35)]">
               <h2 className="font-bold text-[#111111]">Pilih Pelanggan</h2>
               <button
                 onClick={onClose}
-                className="p-1.5 hover:bg-[#F4F7FE] rounded-lg cursor-pointer"
+                className="p-1.5 clay-raised-sm clay-pressable rounded-xl cursor-pointer"
               >
                 <X className="w-5 h-5 text-[#111111]/45" />
               </button>
@@ -278,15 +278,15 @@ export default function CustomerPage({
 
       {historyCustomer && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
-          <div className="bg-white rounded-t-3xl w-full max-h-[85vh] flex flex-col">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-black/5">
+          <div className="clay-raised-lg rounded-t-3xl w-full max-h-[85vh] flex flex-col">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-[rgba(140,172,214,0.35)]">
               <div>
                 <h2 className="font-bold text-[#111111]">Riwayat Pembelian</h2>
                 <p className="text-xs text-[#111111]/45">{historyCustomer.name}</p>
               </div>
               <button
                 onClick={() => setHistoryCustomer(null)}
-                className="p-1.5 hover:bg-[#F4F7FE] rounded-lg cursor-pointer"
+                className="p-1.5 clay-raised-sm clay-pressable rounded-xl cursor-pointer"
               >
                 <X className="w-5 h-5 text-[#111111]/45" />
               </button>
@@ -308,7 +308,7 @@ export default function CustomerPage({
                 historyData.map((t) => (
                   <div
                     key={t.fullId}
-                    className="border border-black/5 rounded-xl p-3.5"
+                    className="clay-raised rounded-xl p-3.5"
                   >
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-xs text-[#111111]/35">

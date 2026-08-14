@@ -45,8 +45,10 @@ export default function App() {
 
   if (loading) {
     return (
-      <div className="h-screen flex flex-col items-center justify-center gap-3 bg-gradient-to-br from-blue-900 to-cyan-600">
-        <Loader2 className="w-9 h-9 text-white animate-spin" />
+      <div className="h-screen flex flex-col items-center justify-center gap-3 bg-gradient-to-br from-[#0249E1] via-[#1A5CE8] to-[#8FBBFA]">
+        <div className="w-16 h-16 rounded-[26px] flex items-center justify-center bg-gradient-to-br from-[#202b52] to-[#0c1330] shadow-[8px_8px_18px_rgba(4,8,26,0.45),-6px_-6px_14px_rgba(120,150,230,0.25)]">
+          <Loader2 className="w-8 h-8 text-[#DAFB71] animate-spin" />
+        </div>
         <p className="text-sm text-white/80">Memuat sesi...</p>
       </div>
     );

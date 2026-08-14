@@ -38,14 +38,15 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-[#0249E1] flex items-center justify-center p-4 relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-[#0249E1] via-[#0249E1] to-[#80B0EC]" />
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-gradient-to-br from-[#0249E1] via-[#1A5CE8] to-[#8FBBFA]">
+      {/* Soft clay blobs for ambience */}
       <div className="absolute w-80 h-80 rounded-full bg-[#DAFB71]/20 blur-3xl -top-24 -right-16" />
       <div className="absolute w-64 h-64 rounded-full bg-white/10 blur-2xl -bottom-16 -left-16" />
+      <div className="absolute w-40 h-40 rounded-full bg-white/10 blur-2xl top-1/3 -left-10" />
 
       <div className="w-full max-w-sm relative z-10">
         <div className="text-center mb-7">
-          <div className="w-16 h-16 bg-[#111111] rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-xl shadow-black/20 rotate-3">
+          <div className="w-16 h-16 rounded-[26px] flex items-center justify-center mx-auto mb-4 rotate-3 bg-gradient-to-br from-[#202b52] to-[#0c1330] shadow-[8px_8px_18px_rgba(4,8,26,0.45),-6px_-6px_14px_rgba(120,150,230,0.25)]">
             <Droplet className="w-8 h-8 text-[#DAFB71] fill-[#DAFB71]" />
           </div>
           <h1 className="text-2xl font-extrabold text-white tracking-tight">
@@ -56,9 +57,9 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
           </p>
         </div>
 
-        <div className="bg-white rounded-[32px] shadow-2xl p-7">
+        <div className="bg-gradient-to-br from-white to-[#eef5ff] rounded-[32px] p-7 shadow-[14px_14px_30px_rgba(2,30,90,0.35),-10px_-10px_24px_rgba(255,255,255,0.25)]">
           {error && (
-            <div className="mb-5 p-3 bg-[#EE3D5A]/10 border border-[#EE3D5A]/25 rounded-2xl flex items-start gap-2">
+            <div className="mb-5 p-3 clay-inset-sm rounded-2xl flex items-start gap-2">
               <AlertCircle className="w-4 h-4 text-[#EE3D5A] flex-shrink-0 mt-0.5" />
               <p className="text-sm text-[#EE3D5A] font-medium">{error}</p>
             </div>
@@ -77,7 +78,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                 disabled={loading}
                 autoFocus
                 autoComplete="email"
-                className="w-full px-4 py-3.5 bg-[#F4F7FE] border-2 border-transparent rounded-2xl text-sm font-medium text-[#111111] focus:outline-none focus:border-[#0249E1] focus:bg-white transition-colors"
+                className="w-full px-4 py-3.5 clay-inset rounded-2xl text-sm font-medium text-[#111111] border-0 focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40 transition-all"
                 placeholder="nama@email.com"
               />
             </div>
@@ -94,7 +95,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                   required
                   disabled={loading}
                   autoComplete="current-password"
-                  className="w-full px-4 py-3.5 pr-12 bg-[#F4F7FE] border-2 border-transparent rounded-2xl text-sm font-medium text-[#111111] focus:outline-none focus:border-[#0249E1] focus:bg-white transition-colors"
+                  className="w-full px-4 py-3.5 pr-12 clay-inset rounded-2xl text-sm font-medium text-[#111111] border-0 focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40 transition-all"
                   placeholder="••••••••"
                 />
                 <button
@@ -115,7 +116,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-4 rounded-2xl font-bold text-white bg-[#111111] hover:bg-[#0249E1] shadow-lg shadow-black/10 transition-colors disabled:opacity-60 flex items-center justify-center gap-2 cursor-pointer mt-2"
+              className="clay-pressable w-full py-4 rounded-2xl font-bold text-white bg-gradient-to-br from-[#4a86f4] to-[#0249e1] shadow-[8px_8px_18px_rgba(2,55,150,0.4),-6px_-6px_14px_rgba(150,195,255,0.35)] transition-colors disabled:opacity-60 flex items-center justify-center gap-2 cursor-pointer mt-2"
             >
               {loading ? (
                 <>

@@ -35,15 +35,15 @@ export default function ReceiptDialog({
 }: ReceiptDialogProps) {
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl w-full max-w-sm max-h-[85vh] overflow-y-auto">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-black/5">
+      <div className="clay-raised-lg rounded-2xl w-full max-w-sm max-h-[85vh] overflow-y-auto">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[rgba(140,172,214,0.35)]">
           <h2 className="font-bold text-[#111111] flex items-center gap-2">
             <CheckCircle2 className="w-5 h-5 text-[#0249E1]" />
             Transaksi Berhasil
           </h2>
           <button
             onClick={onClose}
-            className="p-1.5 hover:bg-[#F4F7FE] rounded-lg cursor-pointer"
+            className="p-1.5 clay-raised-sm clay-pressable rounded-xl cursor-pointer"
           >
             <X className="w-5 h-5 text-[#111111]/45" />
           </button>
@@ -75,7 +75,7 @@ export default function ReceiptDialog({
             </thead>
             <tbody>
               {transaction.items.map((item, i) => (
-                <tr key={i} className="border-b border-black/5">
+                <tr key={i} className="border-b border-[rgba(140,172,214,0.35)]">
                   <td className="py-1">{item.name}</td>
                   <td className="text-center py-1">{item.quantity}</td>
                   <td className="text-right py-1">
@@ -101,7 +101,7 @@ export default function ReceiptDialog({
         <div className="px-5 pb-5 space-y-2">
           <button
             onClick={onClose}
-            className="w-full bg-[#0249E1] text-white py-3 rounded-xl font-semibold cursor-pointer"
+            className="w-full clay-blue clay-pressable text-white py-3 rounded-xl font-semibold cursor-pointer"
           >
             Transaksi Baru
           </button>
