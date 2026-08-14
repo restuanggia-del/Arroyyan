@@ -211,8 +211,8 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
   ];
 
   return (
-    <aside className="w-64 clay-sidebar h-screen flex flex-col rounded-r-[32px] shadow-[10px_0_28px_rgba(15,23,42,0.10)]">
-      <nav className="flex-1 py-4 px-3 overflow-y-auto">
+    <aside className="w-64 clay-sidebar h-screen flex flex-col overflow-hidden rounded-r-[32px] shadow-[10px_0_28px_rgba(15,23,42,0.10)]">
+      <nav className="flex-1 min-h-0 py-4 px-3 overflow-y-auto overscroll-contain">
         {menuItems.map((item) => {
           const hasChildren = Boolean(item.children?.length);
           const isExpanded = expandedGroups[item.id];
@@ -273,6 +273,22 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
           );
         })}
       </nav>
+
+      <div className="shrink-0 border-t border-slate-200/80 bg-white/40 px-4 py-3">
+        <div className="rounded-2xl bg-slate-50/80 px-3 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]">
+          <div className="flex items-center justify-between text-sm text-slate-700">
+            <span className="font-medium">Versi Sistem</span>
+            <span className="font-bold text-slate-900">v1.0.0</span>
+          </div>
+          <div className="mt-2 flex items-center justify-between text-xs text-slate-600">
+            <span>Database</span>
+            <span className="flex items-center gap-1.5 font-medium text-emerald-600">
+              <span className="h-2 w-2 rounded-full bg-emerald-500" />
+              Connected
+            </span>
+          </div>
+        </div>
+      </div>
     </aside>
   );
 }
