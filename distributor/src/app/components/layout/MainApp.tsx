@@ -8,14 +8,18 @@ import {
   LogOut,
   Wallet,
   Plus,
+  History,
+  Users,
 } from "lucide-react";
-import { SalesUser } from "../services/SalesAppService";
-import DashboardPage from "./DashboardPage";
-import TransactionPage from "./TransactionPage";
-import StockPage from "./StockPage";
-import DistributionPage from "./DistributionPage";
-import SetoranPage from "./SetoranPage";
-import ProfilePage from "./ProfilePage";
+import { SalesUser } from "../../services";
+import DashboardPage from "../features/dashboard/DashboardPage";
+import TransactionPage from "../features/transaction/TransactionPage";
+import StockPage from "../features/stock/StockPage";
+import DistributionPage from "../features/distribution/DistributionPage";
+import SetoranPage from "../features/setoran/SetoranPage";
+import ProfilePage from "../features/profile/ProfilePage";
+import TransactionHistory from "../features/history/TransactionHistory";
+import CustomerPage from "../features/customer/CustomerPage";
 
 interface MainAppProps {
   user: SalesUser;
@@ -29,7 +33,9 @@ type TabKey =
   | "stock"
   | "distribution"
   | "setoran"
-  | "profile";
+  | "profile"
+  | "history"
+  | "customers";
 
 const SIDE_TABS_LEFT: {
   key: TabKey;
@@ -55,6 +61,8 @@ const titleMap: Record<TabKey, string> = {
   distribution: "Distribusi",
   setoran: "Setoran",
   profile: "Profil",
+  history: "Riwayat Transaksi",
+  customers: "Pelanggan",
 };
 
 export default function MainApp({
@@ -88,13 +96,22 @@ export default function MainApp({
           />
         );
       case "transaction":
-        return <TransactionPage salesId={localUser.salesId} />;
+        return (
+          <TransactionPage
+            salesId={localUser.salesId}
+            onNavigate={(t) => setActiveTab(t as TabKey)}
+          />
+        );
       case "stock":
         return <StockPage salesId={localUser.salesId} />;
       case "distribution":
         return <DistributionPage salesId={localUser.salesId} />;
       case "setoran":
         return <SetoranPage salesId={localUser.salesId} />;
+      case "history":
+        return <TransactionHistory salesId={localUser.salesId} />;
+      case "customers":
+        return <CustomerPage salesId={localUser.salesId} mode="manage" />;
       case "profile":
         return (
           <ProfilePage
@@ -144,6 +161,25 @@ export default function MainApp({
                     {localUser.email}
                   </p>
                 </div>
+                <button
+                  onClick={() => {
+                    setShowMenu(false);
+                    setActiveTab("history");
+                  }}
+                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium text-[#111111] hover:bg-[#F4F7FE] cursor-pointer"
+                >
+                  <History className="w-4 h-4" /> Riwayat Transaksi
+                </button>
+                <button
+                  onClick={() => {
+                    setShowMenu(false);
+                    setActiveTab("customers");
+                  }}
+                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium text-[#111111] hover:bg-[#F4F7FE] cursor-pointer"
+                >
+                  <Users className="w-4 h-4" /> Kelola Pelanggan
+                </button>
+                <div className="border-t border-black/5" />
                 <button
                   onClick={() => {
                     setShowMenu(false);

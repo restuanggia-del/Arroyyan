@@ -18,7 +18,7 @@ import {
   updateSalesProfile,
   getTransactionHistory,
   getKomisiSummary,
-} from "../services/SalesAppService";
+} from "../../../services";
 
 interface ProfilePageProps {
   user: SalesUser;

@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import { Toaster, toast } from "sonner";
-import LoginPage from "./components/LoginPage";
-import MainApp from "./components/MainApp";
-import { checkSession, logoutSales, SalesUser } from "./services/SalesAppService";
+import LoginPage from "./components/features/auth/LoginPage";
+import MainApp from "./components/layout/MainApp";
+import { checkSession, logoutSales, SalesUser } from "./services";
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);

@@ -13,19 +13,22 @@ import {
   X,
   Search,
   UserPlus,
+  History,
 } from "lucide-react";
 import {
   getProductsWithSalesStock,
-  getCustomers,
   createSalesTransaction,
-  createCustomer,
   SalesProduct,
   TxItemInput,
-} from "../services/SalesAppService";
+} from "../../../services";
 import ReceiptDialog from "./ReceiptDialog";
+import CustomerPage from "../customer/CustomerPage";
 
 interface TransactionPageProps {
   salesId: string;
+  /** Optional: lets this page hand off to other tabs, e.g. jumping to
+   *  "history" after a successful checkout or via the header shortcut. */
+  onNavigate?: (tab: string) => void;
 }
 
 interface CartItem {
@@ -34,13 +37,19 @@ interface CartItem {
   hargaJual: number;
 }
 
+interface SelectedCustomer {
+  id: string;
+  name: string;
+  phone: string;
+}
+
 const formatRp = (n: number) => "Rp " + Math.round(n).toLocaleString("id-ID");
 
-export default function TransactionPage({ salesId }: TransactionPageProps) {
+export default function TransactionPage({
+  salesId,
+  onNavigate,
+}: TransactionPageProps) {
   const [products, setProducts] = useState<SalesProduct[]>([]);
-  const [customers, setCustomers] = useState<
-    { id: string; name: string; phone: string }[]
-  >([]);
   const [loadingData, setLoadingData] = useState(true);
   const [search, setSearch] = useState("");
 
@@ -49,21 +58,18 @@ export default function TransactionPage({ salesId }: TransactionPageProps) {
   const [paymentMethod, setPaymentMethod] = useState<
     "cash" | "transfer" | "kasbon"
   >("cash");
-  const [customerId, setCustomerId] = useState("");
+  const [selectedCustomer, setSelectedCustomer] =
+    useState<SelectedCustomer | null>(null);
+  const [showCustomerPicker, setShowCustomerPicker] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [receipt, setReceipt] = useState<any>(null);
-  const [showNewCustomer, setShowNewCustomer] = useState(false);
 
   const load = useCallback(async () => {
     setLoadingData(true);
     try {
-      const [prodData, custData] = await Promise.all([
-        getProductsWithSalesStock(salesId),
-        getCustomers(),
-      ]);
+      const prodData = await getProductsWithSalesStock(salesId);
       setProducts(prodData);
-      setCustomers(custData);
     } catch (err: any) {
       setError(err.message ?? "Gagal memuat data.");
     } finally {
@@ -132,7 +138,7 @@ export default function TransactionPage({ salesId }: TransactionPageProps) {
 
   const handleCheckout = async () => {
     if (cart.length === 0) return;
-    if (paymentMethod === "kasbon" && !customerId) {
+    if (paymentMethod === "kasbon" && !selectedCustomer) {
       setError("Transaksi kasbon wajib memilih toko/pelanggan tujuan.");
       return;
     }
@@ -152,13 +158,12 @@ export default function TransactionPage({ salesId }: TransactionPageProps) {
         salesId,
         items,
         paymentMethod,
-        customerId || null,
+        selectedCustomer?.id ?? null,
       );
-      const customer = customers.find((c) => c.id === customerId);
       setReceipt({
         id: trx.id.slice(0, 8).toUpperCase(),
         date: new Date().toLocaleString("id-ID"),
-        customer: customer?.name ?? "Umum",
+        customer: selectedCustomer?.name ?? "Umum",
         items: cart.map((i) => ({
           name: i.product.name,
           quantity: i.quantity,
@@ -169,7 +174,7 @@ export default function TransactionPage({ salesId }: TransactionPageProps) {
         paymentMethod,
       });
       setCart([]);
-      setCustomerId("");
+      setSelectedCustomer(null);
       setPaymentMethod("cash");
       setShowCart(false);
       load();
@@ -191,8 +196,8 @@ export default function TransactionPage({ salesId }: TransactionPageProps) {
 
   return (
     <div className="pb-24">
-      <div className="p-4 sticky top-0 bg-[#F4F7FE] z-10">
-        <div className="relative">
+      <div className="p-4 sticky top-0 bg-[#F4F7FE] z-10 flex items-center gap-2">
+        <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#111111]/35" />
           <input
             type="text"
@@ -202,6 +207,15 @@ export default function TransactionPage({ salesId }: TransactionPageProps) {
             className="w-full pl-9 pr-4 py-2.5 border border-black/5 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#0249E1]"
           />
         </div>
+        {onNavigate && (
+          <button
+            onClick={() => onNavigate("history")}
+            title="Riwayat Transaksi"
+            className="w-10 h-10 flex-shrink-0 bg-white border border-black/5 rounded-xl flex items-center justify-center cursor-pointer"
+          >
+            <History className="w-4 h-4 text-[#111111]/60" />
+          </button>
+        )}
       </div>
 
       {error && !showCart && (
@@ -365,28 +379,34 @@ export default function TransactionPage({ salesId }: TransactionPageProps) {
                 <label className="block text-xs font-medium text-[#111111]/45 mb-1.5">
                   Pelanggan (opsional)
                 </label>
-                <div className="flex gap-2">
-                  <select
-                    value={customerId}
-                    onChange={(e) => setCustomerId(e.target.value)}
-                    className="flex-1 px-3 py-2.5 border border-black/5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]"
-                  >
-                    <option value="">Umum (tanpa data)</option>
-                    {customers.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                        {c.phone ? ` — ${c.phone}` : ""}
-                      </option>
-                    ))}
-                  </select>
+                {selectedCustomer ? (
+                  <div className="flex items-center justify-between px-3 py-2.5 border border-black/5 rounded-xl">
+                    <div>
+                      <p className="text-sm font-medium text-[#111111]">
+                        {selectedCustomer.name}
+                      </p>
+                      {selectedCustomer.phone && (
+                        <p className="text-xs text-[#111111]/40">
+                          {selectedCustomer.phone}
+                        </p>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => setSelectedCustomer(null)}
+                      className="text-xs text-[#EE3D5A] font-medium cursor-pointer"
+                    >
+                      Hapus
+                    </button>
+                  </div>
+                ) : (
                   <button
-                    onClick={() => setShowNewCustomer(true)}
-                    className="px-3 border border-black/5 rounded-xl text-[#0249E1] cursor-pointer flex-shrink-0"
-                    title="Tambah toko baru"
+                    onClick={() => setShowCustomerPicker(true)}
+                    className="w-full flex items-center justify-center gap-2 border border-dashed border-black/15 text-[#111111]/60 py-2.5 rounded-xl text-sm font-medium cursor-pointer"
                   >
                     <UserPlus className="w-4 h-4" />
+                    Pilih Pelanggan (Umum jika kosong)
                   </button>
-                </div>
+                )}
               </div>
 
               <div>
@@ -456,124 +476,28 @@ export default function TransactionPage({ salesId }: TransactionPageProps) {
       )}
 
       {receipt && (
-        <ReceiptDialog transaction={receipt} onClose={() => setReceipt(null)} />
-      )}
-
-      {showNewCustomer && (
-        <NewCustomerModal
-          onClose={() => setShowNewCustomer(false)}
-          onCreated={(newCust) => {
-            setCustomers((prev) =>
-              [...prev, newCust].sort((a, b) => a.name.localeCompare(b.name)),
-            );
-            setCustomerId(newCust.id);
-            setShowNewCustomer(false);
-          }}
+        <ReceiptDialog
+          transaction={receipt}
+          onClose={() => setReceipt(null)}
+          onViewHistory={
+            onNavigate
+              ? () => {
+                  setReceipt(null);
+                  onNavigate("history");
+                }
+              : undefined
+          }
         />
       )}
-    </div>
-  );
-}
 
-function NewCustomerModal({
-  onClose,
-  onCreated,
-}: {
-  onClose: () => void;
-  onCreated: (customer: { id: string; name: string; phone: string }) => void;
-}) {
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [address, setAddress] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
-
-  const handleSubmit = async () => {
-    if (!name.trim()) {
-      setError("Nama toko/pelanggan wajib diisi.");
-      return;
-    }
-    setSaving(true);
-    setError("");
-    try {
-      const created = await createCustomer({
-        customer_name: name.trim(),
-        phone: phone.trim(),
-        address: address.trim(),
-      });
-      onCreated({
-        id: created.id,
-        name: created.customer_name,
-        phone: created.phone ?? "",
-      });
-    } catch (err: any) {
-      setError(err.message ?? "Gagal menambah toko baru.");
-      setSaving(false);
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
-      <div className="bg-white rounded-t-3xl w-full">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-black/5">
-          <h2 className="font-bold text-[#111111]">Tambah Toko Baru</h2>
-          <button
-            onClick={onClose}
-            className="p-1.5 hover:bg-[#F4F7FE] rounded-lg cursor-pointer"
-          >
-            <X className="w-5 h-5 text-[#111111]/45" />
-          </button>
-        </div>
-        <div className="px-5 py-4 space-y-3">
-          {error && (
-            <div className="p-3 bg-[#EE3D5A]/10 border border-[#EE3D5A]/25 rounded-xl flex gap-2 text-sm text-[#EE3D5A]">
-              <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-              {error}
-            </div>
-          )}
-          <div>
-            <label className="block text-xs font-medium text-[#111111]/45 mb-1.5">
-              Nama Toko/Pelanggan
-            </label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full px-3 py-2.5 border border-black/5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-[#111111]/45 mb-1.5">
-              No. HP
-            </label>
-            <input
-              type="text"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              className="w-full px-3 py-2.5 border border-black/5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-[#111111]/45 mb-1.5">
-              Alamat
-            </label>
-            <textarea
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              rows={2}
-              className="w-full px-3 py-2 border border-black/5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]"
-            />
-          </div>
-          <button
-            onClick={handleSubmit}
-            disabled={saving}
-            className="w-full bg-[#0249E1] text-white py-3.5 rounded-xl font-semibold disabled:opacity-60 flex items-center justify-center gap-2 cursor-pointer"
-          >
-            {saving && <RefreshCw className="w-4 h-4 animate-spin" />}
-            {saving ? "Menyimpan..." : "Simpan Toko"}
-          </button>
-        </div>
-      </div>
+      {showCustomerPicker && (
+        <CustomerPage
+          salesId={salesId}
+          mode="picker"
+          onSelect={(c) => setSelectedCustomer(c)}
+          onClose={() => setShowCustomerPicker(false)}
+        />
+      )}
     </div>
   );
 }

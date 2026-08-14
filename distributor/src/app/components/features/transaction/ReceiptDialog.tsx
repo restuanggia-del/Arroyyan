@@ -1,4 +1,4 @@
-import { X, CheckCircle2 } from "lucide-react";
+import { X, CheckCircle2, History } from "lucide-react";
 
 interface ReceiptDialogProps {
   transaction: {
@@ -15,6 +15,9 @@ interface ReceiptDialogProps {
     paymentMethod: "cash" | "transfer" | "kasbon";
   };
   onClose: () => void;
+  /** Optional: when provided, shows a secondary "Lihat Riwayat Transaksi" button
+   *  that lets the sales rep jump straight to the transaction history page. */
+  onViewHistory?: () => void;
 }
 
 const formatRp = (n: number) => "Rp " + Math.round(n).toLocaleString("id-ID");
@@ -28,6 +31,7 @@ const paymentLabel: Record<string, string> = {
 export default function ReceiptDialog({
   transaction,
   onClose,
+  onViewHistory,
 }: ReceiptDialogProps) {
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
@@ -94,13 +98,22 @@ export default function ReceiptDialog({
           </div>
         </div>
 
-        <div className="px-5 pb-5">
+        <div className="px-5 pb-5 space-y-2">
           <button
             onClick={onClose}
             className="w-full bg-[#0249E1] text-white py-3 rounded-xl font-semibold cursor-pointer"
           >
             Transaksi Baru
           </button>
+          {onViewHistory && (
+            <button
+              onClick={onViewHistory}
+              className="w-full border border-black/10 text-[#111111]/70 py-3 rounded-xl font-semibold cursor-pointer flex items-center justify-center gap-2"
+            >
+              <History className="w-4 h-4" />
+              Lihat Riwayat Transaksi
+            </button>
+          )}
         </div>
       </div>
     </div>

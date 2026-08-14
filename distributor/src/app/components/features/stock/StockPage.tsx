@@ -11,7 +11,7 @@ import {
   getProductsWithSalesStock,
   getStockMovements,
   SalesProduct,
-} from "../services/SalesAppService";
+} from "../../../services";
 
 interface StockPageProps {
   salesId: string;

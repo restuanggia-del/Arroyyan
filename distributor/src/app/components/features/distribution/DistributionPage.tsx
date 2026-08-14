@@ -15,7 +15,7 @@ import {
   confirmDistributionReceived,
   getReturnsForSales,
   createReturn,
-} from "../services/SalesAppService";
+} from "../../../services";
 
 interface DistributionPageProps {
   salesId: string;

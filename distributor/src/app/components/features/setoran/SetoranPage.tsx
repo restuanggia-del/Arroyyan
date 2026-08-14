@@ -10,7 +10,7 @@ import {
 import {
   getSalesDepositHistory,
   createSalesDeposit,
-} from "../services/SalesAppService";
+} from "../../../services";
 
 interface SetoranPageProps {
   salesId: string;

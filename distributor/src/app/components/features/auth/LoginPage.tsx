@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Droplet, Eye, EyeOff, Loader2, AlertCircle } from "lucide-react";
-import { loginSales, SalesUser } from "../services/SalesAppService";
+import { loginSales, SalesUser } from "../../../services";
 
 interface LoginPageProps {
   onLogin: (user: SalesUser) => void;

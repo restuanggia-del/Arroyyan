@@ -8,8 +8,9 @@ import {
   AlertTriangle,
   RefreshCw,
   ArrowRight,
+  History,
 } from "lucide-react";
-import { getDashboardStats, SalesUser } from "../services/SalesAppService";
+import { getDashboardStats, SalesUser } from "../../../services";
 
 interface DashboardPageProps {
   user: SalesUser;
@@ -17,13 +18,6 @@ interface DashboardPageProps {
 }
 
 const formatRp = (n: number) => "Rp " + Math.round(n).toLocaleString("id-ID");
-const formatRpShort = (n: number) => {
-  const abs = Math.abs(n);
-  if (abs >= 1_000_000)
-    return (n / 1_000_000).toFixed(1).replace(".0", "") + "jt";
-  if (abs >= 1_000) return (n / 1_000).toFixed(0) + "rb";
-  return n.toString();
-};
 
 export default function DashboardPage({
   user,
@@ -243,6 +237,26 @@ export default function DashboardPage({
               </div>
             </div>
             <ArrowRight className="w-4 h-4 text-white/50" />
+          </button>
+
+          <button
+            onClick={() => onNavigate("history")}
+            className="w-full flex items-center justify-between bg-white border border-black/5 rounded-3xl p-4 cursor-pointer active:scale-[0.98] transition-transform"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-[#F4F7FE] rounded-2xl flex items-center justify-center">
+                <History className="w-5 h-5 text-[#0249E1]" />
+              </div>
+              <div className="text-left">
+                <p className="text-sm font-bold text-[#111111]">
+                  Lihat Riwayat Transaksi
+                </p>
+                <p className="text-xs text-[#111111]/40 font-medium">
+                  Semua transaksi yang sudah tercatat
+                </p>
+              </div>
+            </div>
+            <ArrowRight className="w-4 h-4 text-[#111111]/30" />
           </button>
         </>
       ) : null}
