@@ -19,12 +19,12 @@ interface DashboardPageProps {
 
 const formatRp = (n: number) => "Rp " + Math.round(n).toLocaleString("id-ID");
 
-const getGreeting = () => {
+const getGreetingInfo = () => {
   const hour = new Date().getHours();
-  if (hour >= 5 && hour < 12) return "Selamat Pagi";
-  if (hour >= 12 && hour < 15) return "Selamat Siang";
-  if (hour >= 15 && hour < 18) return "Selamat Sore";
-  return "Selamat Malam";
+  if (hour >= 4 && hour < 11) return { text: "Selamat Pagi", emoji: "🌅" };
+  if (hour >= 11 && hour < 15) return { text: "Selamat Siang", emoji: "☀️" };
+  if (hour >= 15 && hour < 18) return { text: "Selamat Sore", emoji: "🌇" };
+  return { text: "Selamat Malam", emoji: "🌙" };
 };
 
 export default function DashboardPage({
@@ -54,6 +54,8 @@ export default function DashboardPage({
     load();
   }, [load]);
 
+  const { text: greetingText, emoji: greetingEmoji } = getGreetingInfo();
+
   const stockHealthPct =
     stats && stats.totalStock > 0
       ? Math.max(
@@ -80,18 +82,10 @@ export default function DashboardPage({
             </p>
             <p className="text-xl font-extrabold">{user.namaSales}</p>
             <p className="text-sm text-white/80 font-medium mt-1">
-              {getGreeting()}
+              {greetingText}
             </p>
           </div>
-          <div className="text-5xl ml-4">
-            {new Date().getHours() >= 5 && new Date().getHours() < 12
-              ? "🌅"
-              : new Date().getHours() >= 12 && new Date().getHours() < 15
-                ? "☀️"
-                : new Date().getHours() >= 15 && new Date().getHours() < 18
-                  ? "🌇"
-                  : "🌙"}
-          </div>
+          <div className="text-5xl ml-4">{greetingEmoji}</div>
         </div>
       </div>
 
