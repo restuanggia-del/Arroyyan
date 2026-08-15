@@ -8,6 +8,7 @@ export interface SystemSettingsData {
     email: string;
     receipt_header: string;
     receipt_footer: string;
+    updated_at: string | null;
 }
 
 export const DEFAULT_SYSTEM_SETTINGS: SystemSettingsData = {
@@ -18,6 +19,7 @@ export const DEFAULT_SYSTEM_SETTINGS: SystemSettingsData = {
     email: "",
     receipt_header: "Air Minum Dalam Kemasan",
     receipt_footer: "Terima kasih atas pembelian Anda!\nSemoga sehat selalu 💧",
+    updated_at: null,
 };
 
 export async function getSystemSettings(): Promise<{
@@ -26,7 +28,7 @@ export async function getSystemSettings(): Promise<{
 }> {
     const { data, error } = await supabaseAdmin
         .from("system_settings")
-        .select("id, company_name, company_address, phone, email, receipt_header, receipt_footer")
+        .select("id, company_name, company_address, phone, email, receipt_header, receipt_footer, updated_at, created_at")
         .limit(1)
         .maybeSingle();
 
@@ -42,6 +44,7 @@ export async function getSystemSettings(): Promise<{
             email: data.email ?? "",
             receipt_header: data.receipt_header ?? DEFAULT_SYSTEM_SETTINGS.receipt_header,
             receipt_footer: data.receipt_footer ?? DEFAULT_SYSTEM_SETTINGS.receipt_footer,
+            updated_at: data.updated_at ?? data.created_at ?? null,
         },
         error: null,
     };
@@ -49,8 +52,9 @@ export async function getSystemSettings(): Promise<{
 
 export async function saveSystemSettings(
     id: string | null,
-    settings: Omit<SystemSettingsData, "id">
-): Promise<{ id: string | null; error: unknown }> {
+    settings: Omit<SystemSettingsData, "id" | "updated_at">
+): Promise<{ id: string | null; updated_at: string | null; error: unknown }> {
+    const nowIso = new Date().toISOString();
     const payload = {
         company_name: settings.company_name,
         company_address: settings.company_address,
@@ -58,6 +62,7 @@ export async function saveSystemSettings(
         email: settings.email,
         receipt_header: settings.receipt_header,
         receipt_footer: settings.receipt_footer,
+        updated_at: nowIso,
     };
 
     if (id) {
@@ -65,14 +70,14 @@ export async function saveSystemSettings(
             .from("system_settings")
             .update(payload)
             .eq("id", id);
-        return { id, error };
+        return { id, updated_at: error ? null : nowIso, error };
     }
 
     const { data, error } = await supabaseAdmin
         .from("system_settings")
         .insert([payload])
-        .select("id")
+        .select("id, updated_at")
         .single();
 
-    return { id: data?.id ?? null, error };
+    return { id: data?.id ?? null, updated_at: data?.updated_at ?? null, error };
 }

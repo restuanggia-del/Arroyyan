@@ -15,11 +15,12 @@ import {
   SystemSettingsData,
 } from "../../services/systemSettingsService";
 
-type UISettings = Omit<SystemSettingsData, "id">;
+type UISettings = Omit<SystemSettingsData, "id" | "updated_at">;
 
 export function SystemSettings() {
   const [settings, setSettings] = useState<UISettings>(DEFAULT_SYSTEM_SETTINGS);
   const [settingsId, setSettingsId] = useState<string | null>(null);
+  const [updatedAt, setUpdatedAt] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -32,8 +33,9 @@ export function SystemSettings() {
       if (error) {
         setError("Gagal memuat pengaturan.");
       } else if (data) {
-        const { id, ...rest } = data;
+        const { id, updated_at, ...rest } = data;
         setSettingsId(id || null);
+        setUpdatedAt(updated_at);
         setSettings(rest);
       }
       setLoading(false);
@@ -44,11 +46,16 @@ export function SystemSettings() {
   const handleSave = async () => {
     setSaving(true);
     setError(null);
-    const { id, error: err } = await saveSystemSettings(settingsId, settings);
+    const {
+      id,
+      updated_at,
+      error: err,
+    } = await saveSystemSettings(settingsId, settings);
     if (err) {
       setError("Gagal menyimpan: " + (err as any).message);
     } else {
       if (id && !settingsId) setSettingsId(id);
+      setUpdatedAt(updated_at ?? new Date().toISOString());
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     }
@@ -331,11 +338,13 @@ export function SystemSettings() {
               <div className="flex items-center justify-between">
                 <span className="text-gray-500">Terakhir Update</span>
                 <span className="font-medium text-gray-900">
-                  {new Date().toLocaleDateString("id-ID", {
-                    day: "numeric",
-                    month: "long",
-                    year: "numeric",
-                  })}
+                  {updatedAt
+                    ? new Date(updatedAt).toLocaleDateString("id-ID", {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                      })
+                    : "Belum pernah disimpan"}
                 </span>
               </div>
               <div className="flex items-center justify-between">
