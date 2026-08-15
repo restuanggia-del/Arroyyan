@@ -52,6 +52,7 @@ import {
   DashboardStats,
 } from "../services/reportService";
 import { supabase } from "../lib/supabase";
+import { supabaseAdmin } from "../lib/supabaseAdmin";
 
 const calcMA = (values: number[], n: number): number => {
   if (values.length < n) return 0;
@@ -202,6 +203,19 @@ export default function App() {
     toast.success("Login Berhasil", {
       description: `Selamat datang kembali, ${userData.name}!`,
     });
+
+    const { error: logError } = await supabaseAdmin
+      .from("activity_logs")
+      .insert([
+        {
+          activity_type: "login_admin",
+          description: `${userData.name} login ke panel admin`,
+          user_id: userData.id,
+        },
+      ]);
+    if (logError) {
+      console.error("Gagal mencatat log login:", logError);
+    }
   };
 
   const handleMenuChange = (menuId: string) => {
@@ -209,6 +223,20 @@ export default function App() {
   };
 
   const handleLogout = async () => {
+    if (currentUser) {
+      const { error: logError } = await supabaseAdmin
+        .from("activity_logs")
+        .insert([
+          {
+            activity_type: "logout_admin",
+            description: `${currentUser.name} keluar dari panel admin`,
+            user_id: currentUser.id,
+          },
+        ]);
+      if (logError) {
+        console.error("Gagal mencatat log logout:", logError);
+      }
+    }
     await supabase.auth.signOut();
     setIsAuthenticated(false);
     setAuthReady(true);
@@ -441,7 +469,7 @@ export default function App() {
 
   return (
     <div className="flex h-screen clay-page-bg">
-      <div className="flex w-64 flex-col flex-shrink-0 items-center">
+      <div className="flex flex-col flex-shrink-0">
         <Logo />
         <Sidebar activeMenu={activeMenu} onMenuChange={handleMenuChange} />
       </div>

@@ -20,7 +20,7 @@ type FilterType = "all" | "login" | "transaction" | "product" | "stock";
 const ITEMS_PER_PAGE = 10;
 
 const categorize = (type: string): FilterType => {
-  if (type.includes("login")) return "login";
+  if (type.includes("login") || type.includes("logout")) return "login";
   if (type.includes("transaction")) return "transaction";
   if (type.includes("product")) return "product";
   return "stock";
@@ -69,9 +69,7 @@ export function AuditLog() {
   const [loading, setLoading] = useState(true);
   const [filterType, setFilterType] = useState<FilterType>("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [dateFilter, setDateFilter] = useState(
-    new Date().toISOString().split("T")[0],
-  );
+  const [dateFilter, setDateFilter] = useState("");
   const [page, setPage] = useState(1);
 
   const fetchLogs = useCallback(async () => {
@@ -112,7 +110,11 @@ export function AuditLog() {
     logs.filter((l) => categorize(l.activity_type) === t).length;
 
   const filterBtns: { id: FilterType; label: string; activeCls: string }[] = [
-    { id: "all", label: "Semua", activeCls: "bg-[rgba(215,233,255,0.55)] text-gray-900" },
+    {
+      id: "all",
+      label: "Semua",
+      activeCls: "bg-[rgba(215,233,255,0.55)] text-gray-900",
+    },
     { id: "login", label: "Login", activeCls: "bg-green-100 text-green-700" },
     {
       id: "transaction",
@@ -198,10 +200,7 @@ export function AuditLog() {
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         {statCards.map((card) => (
-          <div
-            key={card.label}
-            className="clay-raised rounded-xl p-5"
-          >
+          <div key={card.label} className="clay-raised rounded-xl p-5">
             <div
               className={`w-10 h-10 ${card.bg} rounded-lg flex items-center justify-center mb-3`}
             >

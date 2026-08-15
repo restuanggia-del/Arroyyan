@@ -301,7 +301,11 @@ export const getAuditLogs = async (dateFilter?: string): Promise<AuditLogRow[]> 
     }
 
     const { data, error } = await query;
-    if (error || !data) return [];
+    if (error) {
+        console.error("Gagal memuat audit log:", error);
+        return [];
+    }
+    if (!data) return [];
 
     return (data as any[]).map((log) => ({
         id: log.id,
