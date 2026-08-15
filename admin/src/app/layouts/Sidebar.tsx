@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   LayoutDashboard,
   Package,
@@ -37,6 +37,162 @@ interface SidebarProps {
   onMenuChange: (menuId: string) => void;
 }
 
+const menuItems: MenuItem[] = [
+  {
+    id: "dashboard",
+    label: "Dashboard",
+    icon: <LayoutDashboard className="w-5 h-5" />,
+  },
+  {
+    id: "manajemen",
+    label: "Manajemen",
+    icon: <Users className="w-5 h-5" />,
+    children: [
+      {
+        id: "karyawan",
+        label: "Manajemen Karyawan",
+        icon: <UserCheck className="w-5 h-5" />,
+      },
+      {
+        id: "sales",
+        label: "Manajemen Sales",
+        icon: <Briefcase className="w-5 h-5" />,
+      },
+      {
+        id: "produk",
+        label: "Manajemen Produk",
+        icon: <Package className="w-5 h-5" />,
+      },
+      {
+        id: "stok",
+        label: "Manajemen Stok",
+        icon: <Warehouse className="w-5 h-5" />,
+      },
+      {
+        id: "bahan",
+        label: "Manajemen Bahan",
+        icon: <Boxes className="w-5 h-5" />,
+      },
+      {
+        id: "pelanggan",
+        label: "Manajemen Pelanggan",
+        icon: <Users className="w-5 h-5" />,
+      },
+    ],
+  },
+  {
+    id: "distribusi",
+    label: "Distribusi ke Sales",
+    icon: <Truck className="w-5 h-5" />,
+  },
+  {
+    id: "transaksi",
+    label: "Transaksi",
+    icon: <ShoppingCart className="w-5 h-5" />,
+    children: [
+      {
+        id: "transaksi",
+        label: "Transaksi Penjualan",
+        icon: <ShoppingCart className="w-5 h-5" />,
+      },
+      {
+        id: "titipan",
+        label: "Transaksi Titipan (Kasbon)",
+        icon: <Wallet className="w-5 h-5" />,
+      },
+    ],
+  },
+  {
+    id: "komisi-keuangan",
+    label: "Komisi & Keuangan",
+    icon: <Wallet2 className="w-5 h-5" />,
+    children: [
+      {
+        id: "potongan-setoran",
+        label: "Potongan & Setoran",
+        icon: <Wallet2 className="w-5 h-5" />,
+      },
+      {
+        id: "bonus",
+        label: "Bonus Karyawan",
+        icon: <Award className="w-5 h-5" />,
+      },
+      {
+        id: "handling-fee",
+        label: "Handling Fee",
+        icon: <HardHat className="w-5 h-5" />,
+      },
+      {
+        id: "insentif",
+        label: "Insentif & Fee Penjualan",
+        icon: <Factory className="w-5 h-5" />,
+      },
+      {
+        id: "fee-rekapan",
+        label: "Fee Rekapan",
+        icon: <FileSpreadsheet className="w-5 h-5" />,
+      },
+    ],
+  },
+  {
+    id: "laporan",
+    label: "Laporan",
+    icon: <FileText className="w-5 h-5" />,
+    children: [
+      {
+        id: "laporan",
+        label: "Laporan Transaksi",
+        icon: <FileText className="w-5 h-5" />,
+      },
+      {
+        id: "laporan-sales",
+        label: "Laporan Penjualan",
+        icon: <HandCoins className="w-5 h-5" />,
+      },
+      {
+        id: "laporan-bonus",
+        label: "Laporan Bonus",
+        icon: <Award className="w-5 h-5" />,
+      },
+      {
+        id: "laporan-handling-fee",
+        label: "Laporan Handling Fee",
+        icon: <HardHat className="w-5 h-5" />,
+      },
+      {
+        id: "laporan-insentif",
+        label: "Laporan Insentif",
+        icon: <Factory className="w-5 h-5" />,
+      },
+      {
+        id: "laporan-tanda-terima-insentif",
+        label: "Tanda Terima Insentif",
+        icon: <ClipboardCheck className="w-5 h-5" />,
+      },
+      {
+        id: "laporan-global",
+        label: "Laporan Global",
+        icon: <FileText className="w-5 h-5" />,
+      },
+    ],
+  },
+  {
+    id: "prediksi",
+    label: "Prediksi Penjualan",
+    icon: <TrendingUp className="w-5 h-5" />,
+  },
+  {
+    id: "log",
+    label: "Audit & Log",
+    icon: <History className="w-5 h-5" />,
+  },
+  {
+    id: "pengaturan",
+    label: "Pengaturan",
+    icon: <Settings className="w-5 h-5" />,
+  },
+];
+
 export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(
     {
@@ -54,161 +210,14 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
     }));
   };
 
-  const menuItems: MenuItem[] = [
-    {
-      id: "dashboard",
-      label: "Dashboard",
-      icon: <LayoutDashboard className="w-5 h-5" />,
-    },
-    {
-      id: "manajemen",
-      label: "Manajemen",
-      icon: <Users className="w-5 h-5" />,
-      children: [
-        {
-          id: "karyawan",
-          label: "Manajemen Karyawan",
-          icon: <UserCheck className="w-5 h-5" />,
-        },
-        {
-          id: "sales",
-          label: "Manajemen Sales",
-          icon: <Briefcase className="w-5 h-5" />,
-        },
-        {
-          id: "produk",
-          label: "Manajemen Produk",
-          icon: <Package className="w-5 h-5" />,
-        },
-        {
-          id: "stok",
-          label: "Manajemen Stok",
-          icon: <Warehouse className="w-5 h-5" />,
-        },
-        {
-          id: "bahan",
-          label: "Manajemen Bahan",
-          icon: <Boxes className="w-5 h-5" />,
-        },
-        {
-          id: "pelanggan",
-          label: "Manajemen Pelanggan",
-          icon: <Users className="w-5 h-5" />,
-        },
-      ],
-    },
-    {
-      id: "distribusi",
-      label: "Distribusi ke Sales",
-      icon: <Truck className="w-5 h-5" />,
-    },
-    {
-      id: "transaksi",
-      label: "Transaksi",
-      icon: <ShoppingCart className="w-5 h-5" />,
-      children: [
-        {
-          id: "transaksi",
-          label: "Transaksi Penjualan",
-          icon: <ShoppingCart className="w-5 h-5" />,
-        },
-        {
-          id: "titipan",
-          label: "Transaksi Titipan (Kasbon)",
-          icon: <Wallet className="w-5 h-5" />,
-        },
-      ],
-    },
-    {
-      id: "komisi-keuangan",
-      label: "Komisi & Keuangan",
-      icon: <Wallet2 className="w-5 h-5" />,
-      children: [
-        {
-          id: "potongan-setoran",
-          label: "Potongan & Setoran",
-          icon: <Wallet2 className="w-5 h-5" />,
-        },
-        {
-          id: "bonus",
-          label: "Bonus Karyawan",
-          icon: <Award className="w-5 h-5" />,
-        },
-        {
-          id: "handling-fee",
-          label: "Handling Fee",
-          icon: <HardHat className="w-5 h-5" />,
-        },
-        {
-          id: "insentif",
-          label: "Insentif & Fee Penjualan",
-          icon: <Factory className="w-5 h-5" />,
-        },
-        {
-          id: "fee-rekapan",
-          label: "Fee Rekapan",
-          icon: <FileSpreadsheet className="w-5 h-5" />,
-        },
-      ],
-    },
-    {
-      id: "laporan",
-      label: "Laporan",
-      icon: <FileText className="w-5 h-5" />,
-      children: [
-        {
-          id: "laporan",
-          label: "Laporan Transaksi",
-          icon: <FileText className="w-5 h-5" />,
-        },
-        {
-          id: "laporan-sales",
-          label: "Laporan Penjualan",
-          icon: <HandCoins className="w-5 h-5" />,
-        },
-        {
-          id: "laporan-bonus",
-          label: "Laporan Bonus",
-          icon: <Award className="w-5 h-5" />,
-        },
-        {
-          id: "laporan-handling-fee",
-          label: "Laporan Handling Fee",
-          icon: <HardHat className="w-5 h-5" />,
-        },
-        {
-          id: "laporan-insentif",
-          label: "Laporan Insentif",
-          icon: <Factory className="w-5 h-5" />,
-        },
-        {
-          id: "laporan-tanda-terima-insentif",
-          label: "Tanda Terima Insentif",
-          icon: <ClipboardCheck className="w-5 h-5" />,
-        },
-        {
-          id: "laporan-global",
-          label: "Laporan Global",
-          icon: <FileText className="w-5 h-5" />,
-        },
-      ],
-    },
-    {
-      id: "prediksi",
-      label: "Prediksi Penjualan",
-      icon: <TrendingUp className="w-5 h-5" />,
-    },
-    {
-      id: "log",
-      label: "Audit & Log",
-      icon: <History className="w-5 h-5" />,
-    },
-    {
-      id: "pengaturan",
-      label: "Pengaturan",
-      icon: <Settings className="w-5 h-5" />,
-    },
-  ];
+  useEffect(() => {
+    const parent = menuItems.find((item) =>
+      item.children?.some((child) => child.id === activeMenu),
+    );
+    if (parent && !expandedGroups[parent.id]) {
+      setExpandedGroups((prev) => ({ ...prev, [parent.id]: true }));
+    }
+  }, [activeMenu]);
 
   return (
     <aside className="w-64 clay-sidebar h-screen flex flex-col overflow-hidden rounded-r-[32px] shadow-[10px_0_28px_rgba(15,23,42,0.10)]">
