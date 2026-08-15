@@ -1,4 +1,4 @@
-import { supabase } from '../../utils/supabaseClient';
+import { supabase } from '../../utils/supabase/client';
 
 export const getSalesDepositHistory = async (salesId: string) => {
     const { data, error } = await supabase

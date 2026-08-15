@@ -1,4 +1,4 @@
-import { supabase } from '../../utils/supabaseClient';
+import { supabase } from '../../utils/supabase/client';
 
 export const getStockMovements = async (salesId: string) => {
     const { data, error } = await supabase

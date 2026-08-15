@@ -1,4 +1,4 @@
-import { supabase } from '../../utils/supabaseClient';
+import { supabase } from '../../utils/supabase/client';
 
 export const getKomisiSummary = async (salesId: string, startDate: string, endDate: string) => {
     const { data, error } = await supabase
