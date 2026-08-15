@@ -397,7 +397,7 @@ export default function App() {
           </div>
         </div>
         <div>
-          <StockAlert />
+          <StockAlert onNavigate={handleMenuChange} />
         </div>
       </div>
 

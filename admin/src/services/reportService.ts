@@ -134,19 +134,35 @@ export interface LowStockItem {
 }
 
 export const getLowStockItems = async (minimum = 100): Promise<LowStockItem[]> => {
-    const { data, error } = await supabaseAdmin
-        .from("stocks")
-        .select("product_id, stock_quantity, products ( product_name )")
-        .is("karyawan_id", null)
-        .lt("stock_quantity", minimum);
+    const { data: products, error: productsError } = await supabaseAdmin
+        .from("products")
+        .select("id, product_name")
+        .eq("is_active", true);
 
-    if (error || !data) return [];
-    return (data as any[]).map((s) => ({
-        product_id: s.product_id,
-        product_name: s.products?.product_name ?? "—",
-        current: s.stock_quantity,
-        minimum,
-    }));
+    if (productsError || !products) return [];
+
+    const { data: stockRows, error: stockError } = await supabaseAdmin
+        .from("stocks")
+        .select("product_id, stock_quantity")
+        .is("karyawan_id", null);
+
+    if (stockError) return [];
+
+    const stockByProduct = new Map<string, number>();
+    for (const row of (stockRows as any[]) ?? []) {
+        const current = stockByProduct.get(row.product_id) ?? 0;
+        stockByProduct.set(row.product_id, current + (row.stock_quantity ?? 0));
+    }
+
+    return (products as any[])
+        .map((p) => ({
+            product_id: p.id,
+            product_name: p.product_name ?? "—",
+            current: stockByProduct.get(p.id) ?? 0,
+            minimum,
+        }))
+        .filter((item) => item.current < minimum)
+        .sort((a, b) => a.current - b.current);
 };
 
 export interface SalesReportRow {

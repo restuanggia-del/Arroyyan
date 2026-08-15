@@ -2,7 +2,11 @@ import { useState, useEffect } from "react";
 import { AlertTriangle } from "lucide-react";
 import { getLowStockItems, LowStockItem } from "../../services/reportService";
 
-export function StockAlert() {
+interface StockAlertProps {
+  onNavigate?: (menuId: string) => void;
+}
+
+export function StockAlert({ onNavigate }: StockAlertProps) {
   const [items, setItems] = useState<LowStockItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -28,7 +32,10 @@ export function StockAlert() {
       {loading ? (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-14 clay-inset-sm animate-pulse rounded-xl" />
+            <div
+              key={i}
+              className="h-14 clay-inset-sm animate-pulse rounded-xl"
+            />
           ))}
         </div>
       ) : items.length === 0 ? (
@@ -62,7 +69,10 @@ export function StockAlert() {
               </div>
             ))}
           </div>
-          <button className="w-full mt-4 px-4 py-2.5 clay-amber clay-pressable text-white text-sm font-semibold rounded-xl cursor-pointer">
+          <button
+            onClick={() => onNavigate?.("stok")}
+            className="w-full mt-4 px-4 py-2.5 clay-amber clay-pressable text-white text-sm font-semibold rounded-xl cursor-pointer"
+          >
             Restok Sekarang
           </button>
         </>
