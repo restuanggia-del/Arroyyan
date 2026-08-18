@@ -1,24 +1,21 @@
 import { useEffect, useState, useCallback } from "react";
 import {
-  User,
   Phone,
   MapPin,
   LogOut,
   Pencil,
   RefreshCw,
   AlertCircle,
-  CheckCircle2,
   History,
   TrendingUp,
-  X,
   Receipt,
 } from "lucide-react";
 import {
   SalesUser,
-  updateSalesProfile,
   getTransactionHistory,
   getKomisiSummary,
 } from "../../../services";
+import ProfileModal from "./ProfileModal";
 
 interface ProfilePageProps {
   user: SalesUser;
@@ -179,10 +176,7 @@ export default function ProfilePage({
         ) : (
           <div className="space-y-2.5">
             {history.map((t) => (
-              <div
-                key={t.fullId}
-                className="clay-raised rounded-xl p-3.5"
-              >
+              <div key={t.fullId} className="clay-raised rounded-xl p-3.5">
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-xs text-[#111111]/35">
                     #{t.id} · {formatDate(t.createdAt)}
@@ -264,7 +258,7 @@ export default function ProfilePage({
         ) : null)}
 
       {showEdit && (
-        <EditProfileModal
+        <ProfileModal
           user={user}
           onClose={() => setShowEdit(false)}
           onSaved={(updated) => {
@@ -273,127 +267,6 @@ export default function ProfilePage({
           }}
         />
       )}
-    </div>
-  );
-}
-
-function EditProfileModal({
-  user,
-  onClose,
-  onSaved,
-}: {
-  user: SalesUser;
-  onClose: () => void;
-  onSaved: (updated: Partial<SalesUser>) => void;
-}) {
-  const [namaSales, setNamaSales] = useState(user.namaSales);
-  const [phone, setPhone] = useState(user.phone ?? "");
-  const [address, setAddress] = useState(user.address ?? "");
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
-  const [done, setDone] = useState(false);
-
-  const handleSubmit = async () => {
-    if (!namaSales.trim()) {
-      setError("Nama tidak boleh kosong.");
-      return;
-    }
-    setSaving(true);
-    setError("");
-    const { error: saveError } = await updateSalesProfile(
-      user.salesId,
-      user.userId,
-      {
-        nama_sales: namaSales.trim(),
-        phone: phone.trim(),
-        address: address.trim(),
-      },
-    );
-    if (saveError) {
-      setError((saveError as any).message ?? "Gagal menyimpan profil.");
-      setSaving(false);
-      return;
-    }
-    setDone(true);
-    setTimeout(() => {
-      onSaved({
-        namaSales: namaSales.trim(),
-        phone: phone.trim(),
-        address: address.trim(),
-      });
-    }, 700);
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
-      <div className="clay-raised-lg rounded-t-3xl w-full">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-[rgba(140,172,214,0.35)]">
-          <h2 className="font-bold text-[#111111]">Edit Profil</h2>
-          <button
-            onClick={onClose}
-            className="p-1.5 clay-raised-sm clay-pressable rounded-xl cursor-pointer"
-          >
-            <X className="w-5 h-5 text-[#111111]/45" />
-          </button>
-        </div>
-
-        {done ? (
-          <div className="py-12 text-center px-5">
-            <CheckCircle2 className="w-12 h-12 text-[#0249E1] mx-auto mb-3" />
-            <p className="font-semibold text-[#111111]">Profil diperbarui</p>
-          </div>
-        ) : (
-          <div className="px-5 py-4 space-y-4">
-            {error && (
-              <div className="p-3 clay-inset-sm border-0 rounded-xl flex gap-2 text-sm text-[#EE3D5A]">
-                <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                {error}
-              </div>
-            )}
-            <div>
-              <label className="block text-xs font-medium text-[#111111]/45 mb-1.5">
-                Nama
-              </label>
-              <input
-                type="text"
-                value={namaSales}
-                onChange={(e) => setNamaSales(e.target.value)}
-                className="w-full px-3 py-2.5 clay-raised rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-[#111111]/45 mb-1.5">
-                No. HP
-              </label>
-              <input
-                type="text"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="w-full px-3 py-2.5 clay-raised rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-[#111111]/45 mb-1.5">
-                Alamat
-              </label>
-              <textarea
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                rows={2}
-                className="w-full px-3 py-2 clay-raised rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]"
-              />
-            </div>
-            <button
-              onClick={handleSubmit}
-              disabled={saving}
-              className="w-full clay-blue clay-pressable text-white py-3.5 rounded-xl font-semibold disabled:opacity-60 flex items-center justify-center gap-2 cursor-pointer"
-            >
-              {saving && <RefreshCw className="w-4 h-4 animate-spin" />}
-              {saving ? "Menyimpan..." : "Simpan Perubahan"}
-            </button>
-          </div>
-        )}
-      </div>
     </div>
   );
 }

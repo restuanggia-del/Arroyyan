@@ -154,3 +154,26 @@ export const updateSalesProfile = async (
 
     return { error: null };
 };
+
+export const updateSalesPassword = async (
+    email: string,
+    currentPassword: string,
+    newPassword: string,
+): Promise<{ error: { message: string } | null }> => {
+    if (newPassword.length < 6) {
+        return { error: { message: 'Password baru minimal 6 karakter.' } };
+    }
+
+    const { error: reauthError } = await supabase.auth.signInWithPassword({
+        email,
+        password: currentPassword,
+    });
+    if (reauthError) {
+        return { error: { message: 'Password saat ini salah.' } };
+    }
+
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) return { error: { message: error.message } };
+
+    return { error: null };
+};
