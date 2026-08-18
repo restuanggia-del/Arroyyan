@@ -72,12 +72,17 @@ export default function MainApp({
 }: MainAppProps) {
   const [activeTab, setActiveTab] = useState<TabKey>("dashboard");
   const [showMenu, setShowMenu] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [localUser, setLocalUser] = useState<SalesUser>(user);
 
   const handleProfileUpdated = (updated: Partial<SalesUser>) => {
     setLocalUser((prev) => ({ ...prev, ...updated }));
     onProfileUpdated?.(updated);
   };
+
+  // Dipanggil dari mana pun tombol "Keluar" berada (menu header ATAU tab
+  // Profil) — keduanya cuma minta konfirmasi muncul, bukan langsung logout.
+  const requestLogout = () => setShowLogoutConfirm(true);
 
   const initials = localUser.namaSales
     .split(" ")
@@ -116,7 +121,7 @@ export default function MainApp({
         return (
           <ProfilePage
             user={localUser}
-            onLogout={onLogout}
+            onLogout={requestLogout}
             onProfileUpdated={handleProfileUpdated}
           />
         );
@@ -127,7 +132,6 @@ export default function MainApp({
 
   return (
     <div className="h-[100dvh] flex flex-col clay-page-bg overflow-hidden relative">
-      {/* Top bar — gradient identitas Portal Sales */}
       <header className="fixed top-0 left-0 right-0 z-30 h-16 bg-gradient-to-r from-[#0249E1] to-[#4a86f4] rounded-b-[28px] flex items-center px-5 gap-3 shadow-[0_10px_24px_rgba(2,55,150,0.35)]">
         <div className="flex-1 min-w-0">
           <p className="text-[15px] font-extrabold text-white leading-tight truncate">
@@ -193,7 +197,7 @@ export default function MainApp({
                 <button
                   onClick={() => {
                     setShowMenu(false);
-                    onLogout();
+                    requestLogout();
                   }}
                   className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium text-[#EE3D5A] hover:bg-[#EE3D5A]/5 cursor-pointer"
                 >
@@ -272,6 +276,39 @@ export default function MainApp({
           </div>
         </div>
       </nav>
+
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-gradient-to-br from-white to-[#eef5ff] rounded-[28px] w-full max-w-xs p-6 shadow-[10px_10px_24px_rgba(2,30,90,0.28),-8px_-8px_20px_rgba(255,255,255,0.9)]">
+            <div className="w-12 h-12 rounded-2xl bg-[#EE3D5A]/10 flex items-center justify-center mx-auto mb-4">
+              <LogOut className="w-6 h-6 text-[#EE3D5A]" />
+            </div>
+            <h3 className="text-center font-bold text-[#111111] text-base mb-1">
+              Keluar dari akun?
+            </h3>
+            <p className="text-center text-sm text-[#111111]/50 mb-6">
+              Anda perlu login kembali untuk mengakses Portal Sales.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowLogoutConfirm(false)}
+                className="flex-1 py-3 rounded-2xl font-semibold text-sm text-[#111111]/70 bg-white shadow-[4px_4px_10px_rgba(2,30,90,0.12),-4px_-4px_10px_rgba(255,255,255,0.9)] cursor-pointer"
+              >
+                Tidak
+              </button>
+              <button
+                onClick={() => {
+                  setShowLogoutConfirm(false);
+                  onLogout();
+                }}
+                className="flex-1 py-3 rounded-2xl font-semibold text-sm text-white bg-gradient-to-br from-[#f4657d] to-[#EE3D5A] shadow-[4px_4px_10px_rgba(238,61,90,0.35),-2px_-2px_8px_rgba(255,255,255,0.3)] cursor-pointer"
+              >
+                Ya, Keluar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
