@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Droplet, Eye, EyeOff, Loader2, AlertCircle } from "lucide-react";
+import { Eye, EyeOff, Loader2, AlertCircle } from "lucide-react";
 import { loginSales, SalesUser } from "../../../services";
 
 interface LoginPageProps {
@@ -38,26 +38,24 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-gradient-to-br from-[#0249E1] via-[#1A5CE8] to-[#8FBBFA]">
-      {/* Soft clay blobs for ambience */}
-      <div className="absolute w-80 h-80 rounded-full bg-[#DAFB71]/20 blur-3xl -top-24 -right-16" />
-      <div className="absolute w-64 h-64 rounded-full bg-white/10 blur-2xl -bottom-16 -left-16" />
-      <div className="absolute w-40 h-40 rounded-full bg-white/10 blur-2xl top-1/3 -left-10" />
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-gradient-to-br from-white via-[#EAF4FE] to-[#BFE3FB]">
+      <div className="absolute w-80 h-80 rounded-full bg-[#DAFB71]/25 blur-3xl -top-24 -right-16" />
+      <div className="absolute w-64 h-64 rounded-full bg-[#0249E1]/8 blur-2xl -bottom-16 -left-16" />
+      <div className="absolute w-40 h-40 rounded-full bg-[#80B0EC]/20 blur-2xl top-1/3 -left-10" />
 
       <div className="w-full max-w-sm relative z-10">
         <div className="text-center mb-7">
-          <div className="w-16 h-16 rounded-[26px] flex items-center justify-center mx-auto mb-4 rotate-3 bg-gradient-to-br from-[#202b52] to-[#0c1330] shadow-[8px_8px_18px_rgba(4,8,26,0.45),-6px_-6px_14px_rgba(120,150,230,0.25)]">
-            <Droplet className="w-8 h-8 text-[#DAFB71] fill-[#DAFB71]" />
-          </div>
-          <h1 className="text-2xl font-extrabold text-white tracking-tight">
-            ARROYYAN99
-          </h1>
-          <p className="text-sm text-white/80 font-medium mt-0.5">
+          <img
+            src="/logo-arroyyan.png"
+            alt="Arroyyan99"
+            className="w-36 h-36 mx-auto mb-1 object-contain drop-shadow-[0_10px_18px_rgba(2,73,225,0.3)]"
+          />
+          <p className="text-sm text-[#111111]/55 font-medium mt-0.5">
             Portal Sales
           </p>
         </div>
 
-        <div className="bg-gradient-to-br from-white to-[#eef5ff] rounded-[32px] p-7 shadow-[14px_14px_30px_rgba(2,30,90,0.35),-10px_-10px_24px_rgba(255,255,255,0.25)]">
+        <div className="bg-gradient-to-br from-white to-[#eef5ff] rounded-[32px] p-7 shadow-[10px_10px_26px_rgba(2,73,225,0.18),-8px_-8px_20px_rgba(255,255,255,0.9)]">
           {error && (
             <div className="mb-5 p-3 clay-inset-sm rounded-2xl flex items-start gap-2">
               <AlertCircle className="w-4 h-4 text-[#EE3D5A] flex-shrink-0 mt-0.5" />
@@ -130,7 +128,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
           </form>
         </div>
 
-        <p className="text-xs text-white/70 text-center leading-relaxed mt-6 font-medium">
+        <p className="text-xs text-[#111111]/45 text-center leading-relaxed mt-6 font-medium">
           Belum punya akun sales?
           <br />
           Hubungi administrator pabrik untuk pendaftaran.
