@@ -8,6 +8,7 @@ import {
   RefreshCw,
   AlertCircle,
   ClipboardList,
+  Briefcase,
 } from "lucide-react";
 import { StockTransactionModal } from "./StockTransactionModal";
 import {
@@ -24,6 +25,7 @@ interface ProductStockSummary {
   category: "cup" | "botol";
   stokPusat: number;
   stokKaryawan: number;
+  stokSales: number;
   minimumStok: number;
 }
 
@@ -39,13 +41,16 @@ function buildSummary(items: StockItem[]): ProductStockSummary[] {
         category: (item.products?.category ?? "cup") as "cup" | "botol",
         stokPusat: 0,
         stokKaryawan: 0,
+        stokSales: 0,
         minimumStok: MINIMUM_STOCK,
       };
     }
-    if (item.karyawan_id === null) {
+    if (item.karyawan_id === null && item.sales_id === null) {
       map[pid].stokPusat += item.stock_quantity;
-    } else {
+    } else if (item.karyawan_id !== null) {
       map[pid].stokKaryawan += item.stock_quantity;
+    } else if (item.sales_id !== null) {
+      map[pid].stokSales += item.stock_quantity;
     }
   }
 
@@ -55,9 +60,13 @@ function buildSummary(items: StockItem[]): ProductStockSummary[] {
 const movementLabel: Record<string, string> = {
   stock_in: "Produksi / Restok",
   stok_awal: "Stok Awal (Opname)",
-  distribution_out: "Kirim ke Karyawan",
-  distribution_in: "Diterima Karyawan",
+  distribution_out: "Kirim ke Karyawan/Sales",
+  distribution_in: "Diterima Karyawan/Sales",
   sale_out: "Penjualan",
+  sodaqoh_out: "Sodaqoh",
+  pribadi_out: "Pemakaian Pribadi",
+  bonus_out: "Bonus / Hadiah Barang",
+  return_out: "Retur ke Pabrik",
 };
 
 const movementColor: Record<string, string> = {
@@ -66,6 +75,10 @@ const movementColor: Record<string, string> = {
   distribution_out: "bg-orange-100 text-orange-700",
   distribution_in: "bg-blue-100 text-blue-700",
   sale_out: "bg-[rgba(215,233,255,0.55)] text-gray-700",
+  sodaqoh_out: "bg-purple-100 text-purple-700",
+  pribadi_out: "bg-gray-100 text-gray-700",
+  bonus_out: "bg-pink-100 text-pink-700",
+  return_out: "bg-red-100 text-red-700",
 };
 
 export function StockManagement() {
@@ -123,6 +136,7 @@ export function StockManagement() {
 
   const totalPusat = stockSummary.reduce((s, i) => s + i.stokPusat, 0);
   const totalDist = stockSummary.reduce((s, i) => s + i.stokKaryawan, 0);
+  const totalSales = stockSummary.reduce((s, i) => s + i.stokSales, 0);
 
   const formatDate = (d: string) =>
     new Date(d).toLocaleString("id-ID", {
@@ -140,7 +154,9 @@ export function StockManagement() {
           <h1 className="text-2xl font-bold text-gray-900 mb-1">
             Manajemen Stok
           </h1>
-          <p className="text-gray-600">Kelola stok pusat dan karyawan</p>
+          <p className="text-gray-600">
+            Kelola stok pusat, karyawan, dan sales
+          </p>
         </div>
         <button
           onClick={fetchAll}
@@ -174,7 +190,7 @@ export function StockManagement() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
         <div className="clay-raised rounded-lg p-6">
           <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
             <Warehouse className="w-6 h-6 text-blue-600" />
@@ -191,6 +207,15 @@ export function StockManagement() {
           <h3 className="text-sm text-gray-600 mb-1">Total Stok Karyawan</h3>
           <p className="text-2xl font-bold text-gray-900">
             {loading ? "—" : `${totalDist} Unit`}
+          </p>
+        </div>
+        <div className="clay-raised rounded-lg p-6">
+          <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
+            <Briefcase className="w-6 h-6 text-purple-600" />
+          </div>
+          <h3 className="text-sm text-gray-600 mb-1">Total Stok Sales</h3>
+          <p className="text-2xl font-bold text-gray-900">
+            {loading ? "—" : `${totalSales} Unit`}
           </p>
         </div>
         <div className="clay-raised rounded-lg p-6">
@@ -276,6 +301,7 @@ export function StockManagement() {
                       "Kategori",
                       "Stok Pusat",
                       "Stok Karyawan",
+                      "Stok Sales",
                       "Total",
                       "Min. Stok",
                       "Status",
@@ -293,7 +319,7 @@ export function StockManagement() {
                   {stockSummary.length === 0 ? (
                     <tr>
                       <td
-                        colSpan={7}
+                        colSpan={8}
                         className="py-12 text-center text-gray-500 text-sm"
                       >
                         Belum ada data stok
@@ -302,7 +328,8 @@ export function StockManagement() {
                   ) : (
                     stockSummary.map((item) => {
                       const isLow = item.stokPusat < item.minimumStok;
-                      const total = item.stokPusat + item.stokKaryawan;
+                      const total =
+                        item.stokPusat + item.stokKaryawan + item.stokSales;
                       return (
                         <tr
                           key={item.product_id}
@@ -327,6 +354,9 @@ export function StockManagement() {
                           </td>
                           <td className="py-3 px-4 text-sm text-gray-900">
                             {item.stokKaryawan}
+                          </td>
+                          <td className="py-3 px-4 text-sm text-gray-900">
+                            {item.stokSales}
                           </td>
                           <td className="py-3 px-4 text-sm font-semibold text-gray-900">
                             {total}
@@ -388,7 +418,11 @@ export function StockManagement() {
                               {mov.products?.product_name ?? "—"}
                             </p>
                             <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-1.5">
-                              <span>{mov.karyawan?.nama ?? "Stok Pusat"}</span>
+                              <span>
+                                {mov.karyawan?.nama ??
+                                  mov.sales?.nama_sales ??
+                                  "Stok Pusat"}
+                              </span>
                               <ArrowRight className="w-3 h-3" />
                               <span>{isIn ? "Stok Masuk" : "Stok Keluar"}</span>
                             </div>
