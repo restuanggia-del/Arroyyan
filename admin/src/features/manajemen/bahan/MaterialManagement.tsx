@@ -462,6 +462,21 @@ function StokSementaraTab({
 
   return (
     <div>
+      <div className="clay-inset-amber border-0 rounded-xl p-4 mb-6 flex items-start gap-3">
+        <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+        <div>
+          <h3 className="font-semibold text-amber-900 mb-1">
+            Sisa Stok Sementara Tidak Dikembalikan ke Gudang
+          </h3>
+          <p className="text-sm text-amber-700">
+            Bahan yang sudah dipindah ke Stok Sementara dianggap satu paket siap
+            pakai untuk sekali produksi. Jika ada sisa, biarkan saja di Stok
+            Sementara (tidak dikembalikan ke Stok Gudang) demi menjaga keamanan,
+            kebersihan, dan sterilitas bahan.
+          </p>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         <div className="clay-raised rounded-lg p-6">
           <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
@@ -510,13 +525,6 @@ function StokSementaraTab({
             </button>
           </div>
           <div className="flex gap-2 flex-wrap">
-            <button
-              onClick={() => onAddTransaction("kembali_gudang")}
-              className="clay-amber clay-pressable text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer"
-            >
-              <ArrowLeftCircle className="w-4 h-4" />
-              Kembali ke Gudang
-            </button>
             <button
               onClick={() => onAddTransaction("produksi")}
               className="clay-purple clay-pressable text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer"

@@ -4,7 +4,6 @@ import {
   TrendingUp,
   TrendingDown,
   ArrowRightCircle,
-  ArrowLeftCircle,
   Factory,
   RefreshCw,
   AlertCircle,
@@ -16,7 +15,6 @@ import {
   addMaterialStock,
   reduceMaterialStock,
   moveToSementara,
-  returnToGudang,
   consumeSementara,
   MOVEMENT_TYPE_LABEL,
 } from "../../../services/materialService";
@@ -26,7 +24,6 @@ export type MaterialTxType =
   | "stok_awal"
   | "keluar"
   | "ke_sementara"
-  | "kembali_gudang"
   | "produksi";
 
 interface MaterialTransactionModalProps {
@@ -72,14 +69,8 @@ const TX_CONFIG: Record<
     color: "blue",
     sourceField: "stock_quantity",
     notePlaceholder: "Contoh: Disiapkan untuk produksi batch pagi",
-    effectText: "→ Stok Gudang berkurang, Stok Sementara bertambah",
-  },
-  kembali_gudang: {
-    icon: <ArrowLeftCircle className="w-5 h-5" />,
-    color: "amber",
-    sourceField: "stock_sementara",
-    notePlaceholder: "Contoh: Batal produksi, bahan dikembalikan",
-    effectText: "← Stok Sementara berkurang, Stok Gudang bertambah",
+    effectText:
+      "→ Stok Gudang berkurang, Stok Sementara bertambah. Catatan: bahan yang sudah masuk Stok Sementara tidak bisa dikembalikan ke Gudang (menjaga kebersihan & sterilitas bahan) — anggap langsung habis terpakai untuk produksi.",
   },
   produksi: {
     icon: <Factory className="w-5 h-5" />,
@@ -177,7 +168,6 @@ export function MaterialTransactionModal({
       const fn = {
         keluar: reduceMaterialStock,
         ke_sementara: moveToSementara,
-        kembali_gudang: returnToGudang,
         produksi: consumeSementara,
       }[type];
       ({ error } = await fn(materialId, quantity, note));

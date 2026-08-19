@@ -269,45 +269,6 @@ export const moveToSementara = async (
     return { error: null };
 };
 
-export const returnToGudang = async (
-    materialId: string,
-    quantity: number,
-    note: string
-) => {
-    const { data: existing, error: fetchErr } = await supabaseAdmin
-        .from("materials")
-        .select("id, stock_quantity, stock_sementara")
-        .eq("id", materialId)
-        .single();
-
-    if (fetchErr) return { error: fetchErr };
-    if (existing.stock_sementara < quantity) {
-        return { error: { message: "Stok sementara tidak mencukupi" } };
-    }
-
-    const { error } = await supabaseAdmin
-        .from("materials")
-        .update({
-            stock_sementara: existing.stock_sementara - quantity,
-            stock_quantity: existing.stock_quantity + quantity,
-        })
-        .eq("id", materialId);
-
-    if (error) return { error };
-
-    const { error: movErr } = await supabaseAdmin
-        .from("material_movements")
-        .insert([{
-            material_id: materialId,
-            movement_type: "kembali_gudang",
-            quantity,
-            note: note || null,
-        }]);
-
-    if (movErr) return { error: movErr };
-    return { error: null };
-};
-
 export const consumeSementara = async (
     materialId: string,
     quantity: number,
