@@ -121,7 +121,9 @@ export function LaporanBonus() {
   const totalBonusDus = data.reduce((s, r) => s + Number(r.bonus_dus), 0);
   const totalBonusKaos = data.reduce((s, r) => s + Number(r.bonus_kaos), 0);
   const totalBonusRp = data.reduce((s, r) => s + Number(r.bonus_target_rp), 0);
-  const jumlahPenerima = new Set(data.map((r) => r.karyawan_id)).size;
+  const jumlahPenerima = new Set(
+    data.map((r) => r.karyawan_id ?? `sales:${r.sales_id}`),
+  ).size;
 
   const handleExportExcel = async () => {
     setExportingType("excel");
@@ -129,7 +131,8 @@ export function LaporanBonus() {
       await exportToExcel(
         data.map((r) => ({
           Periode: r.periode,
-          Karyawan: r.karyawan?.nama ?? "—",
+          Jenis: r.sales_id ? "Sales" : "Karyawan",
+          Nama: r.sales?.nama_sales ?? r.karyawan?.nama ?? "—",
           "Total Dus Terjual": Number(r.total_dus_terjual),
           "Bonus Dus": r.bonus_dus,
           "Bonus Kaos": r.bonus_kaos,
@@ -138,7 +141,8 @@ export function LaporanBonus() {
         })),
         [
           "Periode",
-          "Karyawan",
+          "Jenis",
+          "Nama",
           "Total Dus Terjual",
           "Bonus Dus",
           "Bonus Kaos",
@@ -159,7 +163,8 @@ export function LaporanBonus() {
         `Laporan Bonus (${startPeriode} s/d ${endPeriode})`,
         [
           "Periode",
-          "Karyawan",
+          "Jenis",
+          "Nama",
           "Dus Terjual",
           "Bonus Dus",
           "Bonus Kaos",
@@ -167,7 +172,8 @@ export function LaporanBonus() {
         ],
         data.map((r) => [
           r.periode,
-          r.karyawan?.nama ?? "—",
+          r.sales_id ? "Sales" : "Karyawan",
+          r.sales?.nama_sales ?? r.karyawan?.nama ?? "—",
           formatDus(Number(r.total_dus_terjual)),
           r.bonus_dus,
           r.bonus_kaos,
@@ -185,7 +191,7 @@ export function LaporanBonus() {
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900 mb-1">Laporan Bonus</h1>
         <p className="text-gray-600">
-          Rekap bonus karyawan yang sudah tersimpan, per rentang periode
+          Rekap bonus karyawan & sales yang sudah tersimpan, per rentang periode
         </p>
       </div>
 
@@ -195,7 +201,7 @@ export function LaporanBonus() {
             <Award className="w-6 h-6 text-amber-600" />
           </div>
           <h3 className="text-sm text-gray-600 mb-1">
-            Karyawan Menerima Bonus
+            Penerima Bonus (Karyawan & Sales)
           </h3>
           <p className="text-2xl font-bold text-gray-900">
             {loading ? "—" : jumlahPenerima}
@@ -313,7 +319,8 @@ export function LaporanBonus() {
                   <tr className="border-b-2 border-[rgba(140,172,214,0.35)]">
                     {[
                       "Periode",
-                      "Karyawan",
+                      "Jenis",
+                      "Nama",
                       "Dus Terjual",
                       "Bonus Dus",
                       "Bonus Kaos",
@@ -338,8 +345,19 @@ export function LaporanBonus() {
                       <td className="py-3 px-3 text-gray-600 whitespace-nowrap">
                         {r.periode}
                       </td>
+                      <td className="py-3 px-3">
+                        <span
+                          className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
+                            r.sales_id
+                              ? "bg-cyan-100 text-cyan-700"
+                              : "bg-teal-100 text-teal-700"
+                          }`}
+                        >
+                          {r.sales_id ? "Sales" : "Karyawan"}
+                        </span>
+                      </td>
                       <td className="py-3 px-3 font-medium">
-                        {r.karyawan?.nama ?? "—"}
+                        {r.sales?.nama_sales ?? r.karyawan?.nama ?? "—"}
                         {r.karyawan?.bonus_khusus && (
                           <span className="ml-2 inline-flex px-2 py-0.5 rounded-full text-[10px] font-medium bg-purple-100 text-purple-700">
                             Khusus
