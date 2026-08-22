@@ -23,6 +23,8 @@ import {
   REWARD_TYPE_LABEL,
   APPLIES_TO_LABEL,
   RULE_MODE_LABEL,
+  TARGET_TYPE_LABEL,
+  OWNER_TYPE_LABEL,
 } from "../../services/bonusService";
 
 const formatRp = (n: number) => `Rp ${n.toLocaleString("id-ID")}`;
@@ -122,13 +124,13 @@ export function BonusManagement() {
   };
 
   const updatePreviewRow = (
-    karyawanId: string,
+    ownerId: string,
     field: "bonus_dus" | "bonus_kaos" | "bonus_target_rp" | "catatan",
     value: string,
   ) => {
     setPreview((prev) =>
       prev.map((row) => {
-        if (row.karyawan_id !== karyawanId) return row;
+        if (row.owner_id !== ownerId) return row;
         if (field === "catatan") return { ...row, catatan: value };
         const num = value.replace(/\D/g, "");
         return { ...row, [field]: num === "" ? 0 : parseInt(num, 10) };
@@ -144,7 +146,8 @@ export function BonusManagement() {
     const { error } = await saveBonusRecords(
       periode,
       preview.map((row) => ({
-        karyawan_id: row.karyawan_id,
+        owner_type: row.owner_type,
+        owner_id: row.owner_id,
         total_dus_terjual: row.total_dus_terjual,
         bonus_dus: row.bonus_dus,
         bonus_kaos: row.bonus_kaos,
@@ -184,11 +187,11 @@ export function BonusManagement() {
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 mb-1">
-            Bonus Karyawan
+            Bonus Karyawan & Sales
           </h1>
           <p className="text-gray-600">
             Atur aturan threshold bonus dan hitung rekap bonus penjualan per
-            periode
+            periode, untuk Karyawan maupun Sales
           </p>
         </div>
       </div>
@@ -249,6 +252,7 @@ export function BonusManagement() {
                         "Threshold / Per Dus",
                         "Jenis Reward",
                         "Nilai",
+                        "Untuk",
                         "Berlaku Untuk",
                         "Status",
                         "Aksi",
@@ -266,7 +270,7 @@ export function BonusManagement() {
                     {rules.length === 0 ? (
                       <tr>
                         <td
-                          colSpan={7}
+                          colSpan={8}
                           className="py-12 text-center text-gray-500 text-sm"
                         >
                           Belum ada aturan bonus. Tambahkan aturan pertama.
@@ -304,8 +308,23 @@ export function BonusManagement() {
                               ? formatRp(r.reward_value)
                               : `${r.reward_value} ${r.reward_type === "kaos" ? "pcs" : "dus"}`}
                           </td>
+                          <td className="py-3 px-4">
+                            <span
+                              className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
+                                r.target_type === "sales"
+                                  ? "bg-cyan-100 text-cyan-700"
+                                  : r.target_type === "semua"
+                                    ? "bg-indigo-100 text-indigo-700"
+                                    : "bg-teal-100 text-teal-700"
+                              }`}
+                            >
+                              {TARGET_TYPE_LABEL[r.target_type]}
+                            </span>
+                          </td>
                           <td className="py-3 px-4 text-sm text-gray-600">
-                            {APPLIES_TO_LABEL[r.applies_to]}
+                            {r.target_type === "sales"
+                              ? "—"
+                              : APPLIES_TO_LABEL[r.applies_to]}
                           </td>
                           <td className="py-3 px-4">
                             <span
@@ -425,7 +444,8 @@ export function BonusManagement() {
                   <thead>
                     <tr className="border-b border-[rgba(140,172,214,0.35)] bg-[rgba(215,233,255,0.4)]">
                       {[
-                        "Karyawan",
+                        "Jenis",
+                        "Nama",
                         "Total Dus Terjual",
                         "Bonus Dus",
                         "Bonus Kaos",
@@ -444,9 +464,20 @@ export function BonusManagement() {
                   <tbody>
                     {preview.map((row) => (
                       <tr
-                        key={row.karyawan_id}
+                        key={row.owner_id}
                         className="border-b border-[rgba(140,172,214,0.2)] hover:bg-[rgba(215,233,255,0.5)]"
                       >
+                        <td className="py-3 px-4">
+                          <span
+                            className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
+                              row.owner_type === "sales"
+                                ? "bg-cyan-100 text-cyan-700"
+                                : "bg-teal-100 text-teal-700"
+                            }`}
+                          >
+                            {OWNER_TYPE_LABEL[row.owner_type]}
+                          </span>
+                        </td>
                         <td className="py-3 px-4 text-sm font-medium text-gray-900">
                           {row.nama}
                           {row.bonus_khusus && (
@@ -465,7 +496,7 @@ export function BonusManagement() {
                             value={row.bonus_dus === 0 ? "" : row.bonus_dus}
                             onChange={(e) =>
                               updatePreviewRow(
-                                row.karyawan_id,
+                                row.owner_id,
                                 "bonus_dus",
                                 e.target.value,
                               )
@@ -481,7 +512,7 @@ export function BonusManagement() {
                             value={row.bonus_kaos === 0 ? "" : row.bonus_kaos}
                             onChange={(e) =>
                               updatePreviewRow(
-                                row.karyawan_id,
+                                row.owner_id,
                                 "bonus_kaos",
                                 e.target.value,
                               )
@@ -501,7 +532,7 @@ export function BonusManagement() {
                             }
                             onChange={(e) =>
                               updatePreviewRow(
-                                row.karyawan_id,
+                                row.owner_id,
                                 "bonus_target_rp",
                                 e.target.value,
                               )
@@ -516,7 +547,7 @@ export function BonusManagement() {
                             value={row.catatan}
                             onChange={(e) =>
                               updatePreviewRow(
-                                row.karyawan_id,
+                                row.owner_id,
                                 "catatan",
                                 e.target.value,
                               )
@@ -550,7 +581,8 @@ export function BonusManagement() {
                   <thead>
                     <tr className="border-b border-[rgba(140,172,214,0.35)] bg-[rgba(215,233,255,0.4)]">
                       {[
-                        "Karyawan",
+                        "Jenis",
+                        "Nama",
                         "Total Dus Terjual",
                         "Bonus Dus",
                         "Bonus Kaos",
@@ -571,7 +603,7 @@ export function BonusManagement() {
                     {savedRecords.length === 0 ? (
                       <tr>
                         <td
-                          colSpan={7}
+                          colSpan={8}
                           className="py-12 text-center text-gray-500 text-sm"
                         >
                           Belum ada rekap bonus tersimpan untuk periode ini.
@@ -583,8 +615,19 @@ export function BonusManagement() {
                           key={rec.id}
                           className="border-b border-[rgba(140,172,214,0.2)] hover:bg-[rgba(215,233,255,0.5)]"
                         >
+                          <td className="py-3 px-4">
+                            <span
+                              className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
+                                rec.sales_id
+                                  ? "bg-cyan-100 text-cyan-700"
+                                  : "bg-teal-100 text-teal-700"
+                              }`}
+                            >
+                              {rec.sales_id ? "Sales" : "Karyawan"}
+                            </span>
+                          </td>
                           <td className="py-3 px-4 text-sm font-medium text-gray-900">
-                            {rec.karyawan?.nama ?? "—"}
+                            {rec.sales?.nama_sales ?? rec.karyawan?.nama ?? "—"}
                           </td>
                           <td className="py-3 px-4 text-sm text-gray-700">
                             {formatDus(Number(rec.total_dus_terjual))}
@@ -683,7 +726,9 @@ export function BonusManagement() {
             </h3>
             <p className="text-sm text-gray-600 text-center mb-1">
               <span className="font-medium">
-                {confirmDeleteRecord.karyawan?.nama ?? ""}
+                {confirmDeleteRecord.sales?.nama_sales ??
+                  confirmDeleteRecord.karyawan?.nama ??
+                  ""}
               </span>{" "}
               — periode {confirmDeleteRecord.periode}
             </p>

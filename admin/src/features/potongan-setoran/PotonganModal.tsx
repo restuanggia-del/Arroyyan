@@ -1,10 +1,13 @@
 import { useState, useEffect } from "react";
 import { X, RefreshCw, AlertCircle, MinusCircle } from "lucide-react";
 import { getActiveKaryawan, Karyawan } from "../../services/karyawanService";
+import { getActiveSales, Sales } from "../../services/salesService";
 import {
   createPotongan,
   PotonganKategori,
+  PotonganOwnerType,
   KATEGORI_POTONGAN_LABEL,
+  OWNER_TYPE_LABEL,
 } from "../../services/potonganSetoranService";
 
 interface PotonganModalProps {
@@ -16,25 +19,39 @@ const today = () => new Date().toISOString().slice(0, 10);
 
 export function PotonganModal({ onClose, onSaveSuccess }: PotonganModalProps) {
   const [karyawanList, setKaryawanList] = useState<Karyawan[]>([]);
-  const [loadingKaryawan, setLoadingKaryawan] = useState(true);
+  const [salesList, setSalesList] = useState<Sales[]>([]);
+  const [loadingOptions, setLoadingOptions] = useState(true);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
   const [tanggal, setTanggal] = useState(today());
   const [kategori, setKategori] = useState<PotonganKategori>("bbm");
-  const [karyawanId, setKaryawanId] = useState("");
+  const [ownerType, setOwnerType] = useState<PotonganOwnerType>("karyawan");
+  const [ownerId, setOwnerId] = useState("");
   const [jumlah, setJumlah] = useState(0);
   const [keterangan, setKeterangan] = useState("");
 
   useEffect(() => {
     const load = async () => {
-      setLoadingKaryawan(true);
-      const { data } = await getActiveKaryawan();
-      setKaryawanList(data || []);
-      setLoadingKaryawan(false);
+      setLoadingOptions(true);
+      const [karyawanRes, salesRes] = await Promise.all([
+        getActiveKaryawan(),
+        getActiveSales(),
+      ]);
+      setKaryawanList(karyawanRes.data || []);
+      setSalesList(salesRes.data || []);
+      setLoadingOptions(false);
     };
     load();
   }, []);
+
+  const options = ownerType === "karyawan" ? karyawanList : salesList;
+
+  const handleOwnerTypeChange = (value: PotonganOwnerType) => {
+    setOwnerType(value);
+    setOwnerId("");
+    setFormError(null);
+  };
 
   const handleJumlahChange = (value: string) => {
     const v = value.replace(/\D/g, "");
@@ -45,8 +62,10 @@ export function PotonganModal({ onClose, onSaveSuccess }: PotonganModalProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!karyawanId) {
-      setFormError("Pilih karyawan terlebih dahulu.");
+    if (!ownerId) {
+      setFormError(
+        `Pilih ${ownerType === "karyawan" ? "karyawan" : "sales"} terlebih dahulu.`,
+      );
       return;
     }
     if (jumlah <= 0) {
@@ -60,7 +79,8 @@ export function PotonganModal({ onClose, onSaveSuccess }: PotonganModalProps) {
     const { error } = await createPotongan({
       tanggal,
       kategori,
-      karyawan_id: karyawanId,
+      owner_type: ownerType,
+      owner_id: ownerId,
       jumlah,
       keterangan: keterangan || null,
     });
@@ -77,8 +97,8 @@ export function PotonganModal({ onClose, onSaveSuccess }: PotonganModalProps) {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl">
-        <div className="border-b border-[rgba(140,172,214,0.35)] px-6 py-4 flex items-center justify-between">
+      <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl max-h-[90vh] flex flex-col">
+        <div className="border-b border-[rgba(140,172,214,0.35)] px-6 py-4 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center">
               <MinusCircle className="w-5 h-5 text-red-600" />
@@ -95,13 +115,40 @@ export function PotonganModal({ onClose, onSaveSuccess }: PotonganModalProps) {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form
+          onSubmit={handleSubmit}
+          className="p-6 space-y-4 overflow-y-auto flex-1"
+        >
           {formError && (
             <div className="p-3 clay-inset-red border-0 rounded-lg flex items-center gap-2 text-sm text-red-700">
               <AlertCircle className="w-4 h-4 flex-shrink-0" />
               {formError}
             </div>
           )}
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Jenis Pemilik Potongan <span className="text-red-500">*</span>
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              {(Object.keys(OWNER_TYPE_LABEL) as PotonganOwnerType[]).map(
+                (type) => (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() => handleOwnerTypeChange(type)}
+                    className={`px-4 py-2.5 rounded-lg text-sm font-medium border transition-colors cursor-pointer ${
+                      ownerType === type
+                        ? "clay-red text-white border-transparent"
+                        : "clay-inset border-0 text-gray-700"
+                    }`}
+                  >
+                    {OWNER_TYPE_LABEL[type]}
+                  </button>
+                ),
+              )}
+            </div>
+          </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -141,33 +188,45 @@ export function PotonganModal({ onClose, onSaveSuccess }: PotonganModalProps) {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
-              Karyawan <span className="text-red-500">*</span>
+              {ownerType === "karyawan" ? "Karyawan" : "Sales"}{" "}
+              <span className="text-red-500">*</span>
             </label>
-            {loadingKaryawan ? (
+            {loadingOptions ? (
               <div className="flex items-center gap-2 text-sm text-gray-500 py-2">
                 <RefreshCw className="w-4 h-4 animate-spin" />
-                Memuat daftar karyawan...
+                Memuat daftar {ownerType === "karyawan" ? "karyawan" : "sales"}
+                ...
               </div>
-            ) : karyawanList.length === 0 ? (
+            ) : options.length === 0 ? (
               <p className="text-sm text-gray-500 py-2">
-                Belum ada karyawan aktif. Tambahkan karyawan terlebih dahulu.
+                Belum ada {ownerType === "karyawan" ? "karyawan" : "sales"}{" "}
+                aktif. Tambahkan terlebih dahulu di Manajemen{" "}
+                {ownerType === "karyawan" ? "Karyawan" : "Sales"}.
               </p>
             ) : (
               <select
                 required
-                value={karyawanId}
+                value={ownerId}
                 onChange={(e) => {
-                  setKaryawanId(e.target.value);
+                  setOwnerId(e.target.value);
                   setFormError(null);
                 }}
                 className="w-full px-4 py-2.5 clay-inset border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40 cursor-pointer"
               >
-                <option value="">-- Pilih Karyawan --</option>
-                {karyawanList.map((k) => (
-                  <option key={k.id} value={k.id}>
-                    {k.nama}
-                  </option>
-                ))}
+                <option value="">
+                  -- Pilih {ownerType === "karyawan" ? "Karyawan" : "Sales"} --
+                </option>
+                {ownerType === "karyawan"
+                  ? karyawanList.map((k) => (
+                      <option key={k.id} value={k.id}>
+                        {k.nama}
+                      </option>
+                    ))
+                  : salesList.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.nama_sales}
+                      </option>
+                    ))}
               </select>
             )}
           </div>
@@ -203,8 +262,8 @@ export function PotonganModal({ onClose, onSaveSuccess }: PotonganModalProps) {
 
           <div className="clay-inset-red border-0 rounded-xl p-4">
             <p className="text-sm font-medium text-red-800">
-              ⚠ Potongan ini akan mengurangi Sisa Dana Penjualan karyawan
-              terkait
+              ⚠ Potongan ini akan mengurangi Sisa Dana Penjualan{" "}
+              {ownerType === "karyawan" ? "karyawan" : "sales"} terkait
             </p>
           </div>
 
@@ -219,7 +278,7 @@ export function PotonganModal({ onClose, onSaveSuccess }: PotonganModalProps) {
             </button>
             <button
               type="submit"
-              disabled={saving || loadingKaryawan || karyawanList.length === 0}
+              disabled={saving || loadingOptions || options.length === 0}
               className="px-5 py-2.5 clay-red clay-pressable text-white rounded-xl transition-colors cursor-pointer disabled:opacity-70 flex items-center gap-2"
             >
               {saving && <RefreshCw className="w-4 h-4 animate-spin" />}

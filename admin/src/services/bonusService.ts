@@ -3,6 +3,8 @@ import { supabaseAdmin } from "../lib/supabaseAdmin";
 export type BonusRewardType = "dus_bonus" | "kaos" | "uang";
 export type BonusAppliesTo = "umum" | "khusus";
 export type BonusRuleMode = "ratio" | "threshold";
+export type BonusTargetType = "karyawan" | "sales" | "semua";
+export type BonusOwnerType = "karyawan" | "sales";
 
 export const REWARD_TYPE_LABEL: Record<BonusRewardType, string> = {
     dus_bonus: "Bonus Dus",
@@ -20,6 +22,17 @@ export const RULE_MODE_LABEL: Record<BonusRuleMode, string> = {
     threshold: "Threshold (sekali capai)",
 };
 
+export const TARGET_TYPE_LABEL: Record<BonusTargetType, string> = {
+    karyawan: "Khusus Karyawan",
+    sales: "Khusus Sales",
+    semua: "Karyawan & Sales",
+};
+
+export const OWNER_TYPE_LABEL: Record<BonusOwnerType, string> = {
+    karyawan: "Karyawan",
+    sales: "Sales",
+};
+
 export interface BonusRule {
     id: string;
     threshold_dus: number;
@@ -27,6 +40,7 @@ export interface BonusRule {
     reward_value: number;
     applies_to: BonusAppliesTo;
     rule_mode: BonusRuleMode;
+    target_type: BonusTargetType;
     keterangan: string | null;
     is_active: boolean;
     created_at: string;
@@ -34,7 +48,8 @@ export interface BonusRule {
 
 export interface BonusRecord {
     id: string;
-    karyawan_id: string;
+    karyawan_id: string | null;
+    sales_id: string | null;
     periode: string;
     total_dus_terjual: number;
     bonus_dus: number;
@@ -43,10 +58,12 @@ export interface BonusRecord {
     catatan: string | null;
     created_at: string;
     karyawan: { nama: string; bonus_khusus: boolean } | null;
+    sales: { nama_sales: string } | null;
 }
 
 export interface BonusPreviewRow {
-    karyawan_id: string;
+    owner_type: BonusOwnerType;
+    owner_id: string;
     nama: string;
     bonus_khusus: boolean;
     total_dus_terjual: number;
@@ -56,7 +73,7 @@ export interface BonusPreviewRow {
     matched_rules: BonusRule[];
 }
 
-const RULE_SELECT = `id, threshold_dus, reward_type, reward_value, applies_to, rule_mode, keterangan, is_active, created_at`;
+const RULE_SELECT = `id, threshold_dus, reward_type, reward_value, applies_to, rule_mode, target_type, keterangan, is_active, created_at`;
 
 export const getBonusRules = async () => {
     const { data, error } = await supabaseAdmin
@@ -75,6 +92,7 @@ export const createBonusRule = async (input: {
     reward_value: number;
     applies_to: BonusAppliesTo;
     rule_mode: BonusRuleMode;
+    target_type: BonusTargetType;
     keterangan?: string | null;
     is_active?: boolean;
 }) => {
@@ -86,6 +104,7 @@ export const createBonusRule = async (input: {
             reward_value: input.reward_value,
             applies_to: input.applies_to,
             rule_mode: input.rule_mode,
+            target_type: input.target_type,
             keterangan: input.keterangan || null,
             is_active: input.is_active ?? true,
         }])
@@ -96,7 +115,7 @@ export const createBonusRule = async (input: {
 
     await supabaseAdmin.from("activity_logs").insert([{
         activity_type: "create_bonus_rule",
-        description: `Aturan bonus baru (${RULE_MODE_LABEL[input.rule_mode]}): ${input.threshold_dus} dus -> ${REWARD_TYPE_LABEL[input.reward_type]} (${APPLIES_TO_LABEL[input.applies_to]})`,
+        description: `Aturan bonus baru (${RULE_MODE_LABEL[input.rule_mode]}): ${input.threshold_dus} dus -> ${REWARD_TYPE_LABEL[input.reward_type]} (${TARGET_TYPE_LABEL[input.target_type]})`,
     }]);
 
     return { data: (data as unknown) as BonusRule, error: null };
@@ -110,6 +129,7 @@ export const updateBonusRule = async (
         reward_value: number;
         applies_to: BonusAppliesTo;
         rule_mode: BonusRuleMode;
+        target_type: BonusTargetType;
         keterangan: string | null;
         is_active: boolean;
     }>,
@@ -122,6 +142,7 @@ export const updateBonusRule = async (
             ...(input.reward_value !== undefined && { reward_value: input.reward_value }),
             ...(input.applies_to !== undefined && { applies_to: input.applies_to }),
             ...(input.rule_mode !== undefined && { rule_mode: input.rule_mode }),
+            ...(input.target_type !== undefined && { target_type: input.target_type }),
             ...(input.keterangan !== undefined && { keterangan: input.keterangan || null }),
             ...(input.is_active !== undefined && { is_active: input.is_active }),
         })
@@ -150,8 +171,9 @@ export const deleteBonusRule = async (id: string) => {
 };
 
 const RECORD_SELECT = `
-  id, karyawan_id, periode, total_dus_terjual, bonus_dus, bonus_kaos, bonus_target_rp, catatan, created_at,
-  karyawan ( nama, bonus_khusus )
+  id, karyawan_id, sales_id, periode, total_dus_terjual, bonus_dus, bonus_kaos, bonus_target_rp, catatan, created_at,
+  karyawan ( nama, bonus_khusus ),
+  sales ( nama_sales )
 `;
 
 export const getBonusRecords = async (periode?: string) => {
@@ -191,6 +213,13 @@ export const deleteBonusRecord = async (id: string) => {
     return { error: null };
 };
 
+/**
+ * Hitung preview bonus untuk 1 periode, gabungan Karyawan (dari transaksi
+ * karyawan_id) dan Sales (dari transaksi sales_id). Setiap kelompok dicek
+ * terhadap aturan bonus yang target_type-nya cocok ('karyawan'/'sales'/'semua').
+ * Untuk Sales, filter "khusus" (bonus_khusus) diabaikan karena Sales tidak
+ * punya flag tersebut — rule 'khusus' hanya berlaku untuk Karyawan.
+ */
 export const calculateBonusPreview = async (
     periode: string,
 ): Promise<{ data: BonusPreviewRow[] | null; error: any }> => {
@@ -201,13 +230,13 @@ export const calculateBonusPreview = async (
     const startDate = new Date(Date.UTC(year, month - 1, 1)).toISOString();
     const endDate = new Date(Date.UTC(year, month, 1)).toISOString();
 
-    const [trxRes, rulesRes, karyawanRes] = await Promise.all([
+    const [trxRes, rulesRes, karyawanRes, salesRes] = await Promise.all([
         supabaseAdmin
             .from("transaction_details")
             .select(`
         quantity,
         products ( isi_per_dus ),
-        transactions!inner ( karyawan_id, created_at )
+        transactions!inner ( karyawan_id, sales_id, created_at )
       `)
             .gte("transactions.created_at", startDate)
             .lt("transactions.created_at", endDate),
@@ -220,38 +249,44 @@ export const calculateBonusPreview = async (
             .from("karyawan")
             .select("id, nama, bonus_khusus")
             .eq("is_active", true),
+        supabaseAdmin
+            .from("sales")
+            .select("id, nama_sales")
+            .eq("is_active", true),
     ]);
 
     if (trxRes.error) return { data: null, error: trxRes.error };
     if (rulesRes.error) return { data: null, error: rulesRes.error };
     if (karyawanRes.error) return { data: null, error: karyawanRes.error };
+    if (salesRes.error) return { data: null, error: salesRes.error };
 
     const rules = (rulesRes.data as unknown as BonusRule[]) ?? [];
     const karyawanList = (karyawanRes.data ?? []) as { id: string; nama: string; bonus_khusus: boolean }[];
-    const namaMap = new Map(karyawanList.map((k) => [k.id, k]));
+    const salesList = (salesRes.data ?? []) as { id: string; nama_sales: string }[];
+    const karyawanMap = new Map(karyawanList.map((k) => [k.id, k]));
+    const salesMap = new Map(salesList.map((s) => [s.id, s]));
 
-    const dusMap = new Map<string, number>();
+    const dusMapKaryawan = new Map<string, number>();
+    const dusMapSales = new Map<string, number>();
 
     for (const row of (trxRes.data ?? []) as any[]) {
         const karyawanId: string | null = row.transactions?.karyawan_id ?? null;
-        if (!karyawanId) continue;
+        const salesId: string | null = row.transactions?.sales_id ?? null;
         const isiPerDus: number = row.products?.isi_per_dus ?? 0;
         if (!isiPerDus) continue;
         const dus = Number(row.quantity) / isiPerDus;
-        dusMap.set(karyawanId, (dusMap.get(karyawanId) ?? 0) + dus);
+
+        if (karyawanId) {
+            dusMapKaryawan.set(karyawanId, (dusMapKaryawan.get(karyawanId) ?? 0) + dus);
+        } else if (salesId) {
+            dusMapSales.set(salesId, (dusMapSales.get(salesId) ?? 0) + dus);
+        }
     }
 
-    const result: BonusPreviewRow[] = [];
+    const rulesFor = (ownerType: BonusOwnerType) =>
+        rules.filter((r) => r.target_type === ownerType || r.target_type === "semua");
 
-    for (const [karyawanId, totalDus] of dusMap.entries()) {
-        const k = namaMap.get(karyawanId);
-        const nama = k?.nama ?? "(Karyawan tidak aktif)";
-        const bonusKhusus = k?.bonus_khusus ?? false;
-
-        const eligibleRules = rules.filter(
-            (r) => r.applies_to === "umum" || (r.applies_to === "khusus" && bonusKhusus),
-        );
-
+    const computeRewards = (eligibleRules: BonusRule[], totalDus: number) => {
         const sums: Record<BonusRewardType, number> = { dus_bonus: 0, kaos: 0, uang: 0 };
         const matchedRules: BonusRule[] = [];
 
@@ -277,10 +312,47 @@ export const calculateBonusPreview = async (
             matchedRules.push(rule);
         }
 
+        return { sums, matchedRules };
+    };
+
+    const result: BonusPreviewRow[] = [];
+
+    const karyawanRules = rulesFor("karyawan");
+    for (const [karyawanId, totalDus] of dusMapKaryawan.entries()) {
+        const k = karyawanMap.get(karyawanId);
+        const nama = k?.nama ?? "(Karyawan tidak aktif)";
+        const bonusKhusus = k?.bonus_khusus ?? false;
+
+        const eligibleRules = karyawanRules.filter(
+            (r) => r.applies_to === "umum" || (r.applies_to === "khusus" && bonusKhusus),
+        );
+        const { sums, matchedRules } = computeRewards(eligibleRules, totalDus);
+
         result.push({
-            karyawan_id: karyawanId,
+            owner_type: "karyawan",
+            owner_id: karyawanId,
             nama,
             bonus_khusus: bonusKhusus,
+            total_dus_terjual: Math.round(totalDus * 100) / 100,
+            bonus_dus: sums.dus_bonus,
+            bonus_kaos: sums.kaos,
+            bonus_target_rp: sums.uang,
+            matched_rules: matchedRules,
+        });
+    }
+
+    const salesRules = rulesFor("sales");
+    for (const [salesId, totalDus] of dusMapSales.entries()) {
+        const s = salesMap.get(salesId);
+        const nama = s?.nama_sales ?? "(Sales tidak aktif)";
+
+        const { sums, matchedRules } = computeRewards(salesRules, totalDus);
+
+        result.push({
+            owner_type: "sales",
+            owner_id: salesId,
+            nama,
+            bonus_khusus: false,
             total_dus_terjual: Math.round(totalDus * 100) / 100,
             bonus_dus: sums.dus_bonus,
             bonus_kaos: sums.kaos,
@@ -297,7 +369,8 @@ export const calculateBonusPreview = async (
 export const saveBonusRecords = async (
     periode: string,
     records: {
-        karyawan_id: string;
+        owner_type: BonusOwnerType;
+        owner_id: string;
         total_dus_terjual: number;
         bonus_dus: number;
         bonus_kaos: number;
@@ -309,27 +382,56 @@ export const saveBonusRecords = async (
         return { data: [], error: null };
     }
 
-    const rows = records.map((r) => ({
-        karyawan_id: r.karyawan_id,
-        periode,
-        total_dus_terjual: r.total_dus_terjual,
-        bonus_dus: r.bonus_dus,
-        bonus_kaos: r.bonus_kaos,
-        bonus_target_rp: r.bonus_target_rp,
-        catatan: r.catatan || null,
-    }));
+    const karyawanRows = records
+        .filter((r) => r.owner_type === "karyawan")
+        .map((r) => ({
+            karyawan_id: r.owner_id,
+            sales_id: null,
+            periode,
+            total_dus_terjual: r.total_dus_terjual,
+            bonus_dus: r.bonus_dus,
+            bonus_kaos: r.bonus_kaos,
+            bonus_target_rp: r.bonus_target_rp,
+            catatan: r.catatan || null,
+        }));
 
-    const { data, error } = await supabaseAdmin
-        .from("bonus_records")
-        .upsert(rows, { onConflict: "karyawan_id,periode" })
-        .select(RECORD_SELECT);
+    const salesRows = records
+        .filter((r) => r.owner_type === "sales")
+        .map((r) => ({
+            karyawan_id: null,
+            sales_id: r.owner_id,
+            periode,
+            total_dus_terjual: r.total_dus_terjual,
+            bonus_dus: r.bonus_dus,
+            bonus_kaos: r.bonus_kaos,
+            bonus_target_rp: r.bonus_target_rp,
+            catatan: r.catatan || null,
+        }));
 
-    if (error) return { data: null, error };
+    const results: BonusRecord[] = [];
+
+    if (karyawanRows.length > 0) {
+        const { data, error } = await supabaseAdmin
+            .from("bonus_records")
+            .upsert(karyawanRows, { onConflict: "karyawan_id,periode" })
+            .select(RECORD_SELECT);
+        if (error) return { data: null, error };
+        results.push(...((data as unknown) as BonusRecord[]));
+    }
+
+    if (salesRows.length > 0) {
+        const { data, error } = await supabaseAdmin
+            .from("bonus_records")
+            .upsert(salesRows, { onConflict: "sales_id,periode" })
+            .select(RECORD_SELECT);
+        if (error) return { data: null, error };
+        results.push(...((data as unknown) as BonusRecord[]));
+    }
 
     await supabaseAdmin.from("activity_logs").insert([{
         activity_type: "save_bonus_records",
-        description: `Rekap bonus periode ${periode} disimpan untuk ${records.length} karyawan`,
+        description: `Rekap bonus periode ${periode} disimpan untuk ${karyawanRows.length} karyawan & ${salesRows.length} sales`,
     }]);
 
-    return { data: (data as unknown) as BonusRecord[], error: null };
+    return { data: results, error: null };
 };

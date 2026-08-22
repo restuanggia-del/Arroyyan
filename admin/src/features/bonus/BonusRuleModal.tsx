@@ -5,9 +5,11 @@ import {
   BonusRewardType,
   BonusAppliesTo,
   BonusRuleMode,
+  BonusTargetType,
   REWARD_TYPE_LABEL,
   APPLIES_TO_LABEL,
   RULE_MODE_LABEL,
+  TARGET_TYPE_LABEL,
   createBonusRule,
   updateBonusRule,
 } from "../../services/bonusService";
@@ -32,6 +34,9 @@ export function BonusRuleModal({
   const [rewardValue, setRewardValue] = useState(rule?.reward_value ?? 0);
   const [appliesTo, setAppliesTo] = useState<BonusAppliesTo>(
     rule?.applies_to ?? "umum",
+  );
+  const [targetType, setTargetType] = useState<BonusTargetType>(
+    rule?.target_type ?? "karyawan",
   );
   const [ruleMode, setRuleMode] = useState<BonusRuleMode>(
     rule?.rule_mode ?? "threshold",
@@ -70,6 +75,7 @@ export function BonusRuleModal({
       reward_value: rewardValue,
       applies_to: appliesTo,
       rule_mode: ruleMode,
+      target_type: targetType,
       keterangan: keterangan || null,
       is_active: isActive,
     };
@@ -90,8 +96,8 @@ export function BonusRuleModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl">
-        <div className="border-b border-[rgba(140,172,214,0.35)] px-6 py-4 flex items-center justify-between">
+      <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl max-h-[90vh] flex flex-col">
+        <div className="border-b border-[rgba(140,172,214,0.35)] px-6 py-4 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
               <Award className="w-5 h-5 text-amber-600" />
@@ -108,7 +114,10 @@ export function BonusRuleModal({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form
+          onSubmit={handleSubmit}
+          className="p-6 space-y-4 overflow-y-auto flex-1"
+        >
           {formError && (
             <div className="p-3 clay-inset-red border-0 rounded-lg flex items-center gap-2 text-sm text-red-700">
               <AlertCircle className="w-4 h-4 flex-shrink-0" />
@@ -213,25 +222,54 @@ export function BonusRuleModal({
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
-              Berlaku Untuk <span className="text-red-500">*</span>
+              Untuk Siapa Aturan Ini <span className="text-red-500">*</span>
             </label>
             <select
               required
-              value={appliesTo}
-              onChange={(e) => setAppliesTo(e.target.value as BonusAppliesTo)}
+              value={targetType}
+              onChange={(e) => {
+                const v = e.target.value as BonusTargetType;
+                setTargetType(v);
+                if (v === "sales") setAppliesTo("umum");
+              }}
               className="w-full px-4 py-2.5 clay-inset border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40 cursor-pointer"
             >
-              {Object.entries(APPLIES_TO_LABEL).map(([value, label]) => (
+              {Object.entries(TARGET_TYPE_LABEL).map(([value, label]) => (
                 <option key={value} value={value}>
                   {label}
                 </option>
               ))}
             </select>
             <p className="text-xs text-gray-400 mt-1">
-              "Bonus Khusus Saja" hanya berlaku untuk karyawan yang ditandai
-              centang bonus khusus di Manajemen Karyawan.
+              Sales tidak punya tanda "Bonus Khusus", jadi kalau aturan ini
+              berlaku untuk Sales, opsi "Bonus Khusus Saja" di bawah otomatis
+              tidak dipakai untuk Sales.
             </p>
           </div>
+
+          {targetType !== "sales" && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Berlaku Untuk (Karyawan) <span className="text-red-500">*</span>
+              </label>
+              <select
+                required
+                value={appliesTo}
+                onChange={(e) => setAppliesTo(e.target.value as BonusAppliesTo)}
+                className="w-full px-4 py-2.5 clay-inset border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40 cursor-pointer"
+              >
+                {Object.entries(APPLIES_TO_LABEL).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-gray-400 mt-1">
+                "Bonus Khusus Saja" hanya berlaku untuk karyawan yang ditandai
+                centang bonus khusus di Manajemen Karyawan.
+              </p>
+            </div>
+          )}
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">

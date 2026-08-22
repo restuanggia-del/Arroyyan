@@ -1,11 +1,17 @@
 import { supabaseAdmin } from "../lib/supabaseAdmin";
 
 export type PotonganKategori = "bbm" | "uang_makan" | "lain_lain";
+export type PotonganOwnerType = "karyawan" | "sales";
 
 export const KATEGORI_POTONGAN_LABEL: Record<PotonganKategori, string> = {
     bbm: "BBM",
     uang_makan: "Uang Makan",
     lain_lain: "Lain-lain",
+};
+
+export const OWNER_TYPE_LABEL: Record<PotonganOwnerType, string> = {
+    karyawan: "Karyawan",
+    sales: "Sales",
 };
 
 export interface Potongan {
@@ -14,9 +20,11 @@ export interface Potongan {
     kategori: PotonganKategori;
     keterangan: string | null;
     jumlah: number;
-    karyawan_id: string;
+    karyawan_id: string | null;
+    sales_id: string | null;
     created_at: string;
     karyawan: { nama: string } | null;
+    sales: { nama_sales: string } | null;
 }
 
 export interface SetoranOwner {
@@ -41,8 +49,9 @@ export interface SisaDanaKaryawan {
 }
 
 const POTONGAN_SELECT = `
-  id, tanggal, kategori, keterangan, jumlah, karyawan_id, created_at,
-  karyawan ( nama )
+  id, tanggal, kategori, keterangan, jumlah, karyawan_id, sales_id, created_at,
+  karyawan ( nama ),
+  sales ( nama_sales )
 `;
 
 export const getPotonganList = async (limit = 200) => {
@@ -62,7 +71,8 @@ export const createPotongan = async (input: {
     kategori: PotonganKategori;
     keterangan?: string | null;
     jumlah: number;
-    karyawan_id: string;
+    owner_type: PotonganOwnerType;
+    owner_id: string;
 }) => {
     const { data, error } = await supabaseAdmin
         .from("potongan")
@@ -71,7 +81,8 @@ export const createPotongan = async (input: {
             kategori: input.kategori,
             keterangan: input.keterangan || null,
             jumlah: input.jumlah,
-            karyawan_id: input.karyawan_id,
+            karyawan_id: input.owner_type === "karyawan" ? input.owner_id : null,
+            sales_id: input.owner_type === "sales" ? input.owner_id : null,
         }])
         .select(POTONGAN_SELECT)
         .single();
@@ -80,7 +91,7 @@ export const createPotongan = async (input: {
 
     await supabaseAdmin.from("activity_logs").insert([{
         activity_type: "create_potongan",
-        description: `Potongan ${KATEGORI_POTONGAN_LABEL[input.kategori]} sebesar Rp ${input.jumlah.toLocaleString("id-ID")} dicatat`,
+        description: `Potongan ${KATEGORI_POTONGAN_LABEL[input.kategori]} (${OWNER_TYPE_LABEL[input.owner_type]}) sebesar Rp ${input.jumlah.toLocaleString("id-ID")} dicatat`,
     }]);
 
     return { data: (data as unknown) as Potongan, error: null };
@@ -170,7 +181,7 @@ export const getSisaDanaPenjualan = async (): Promise<{
             supabaseAdmin
                 .from("kasbon_payments")
                 .select("jumlah_cash, jumlah_ke_owner, transactions!inner(karyawan_id)"),
-            supabaseAdmin.from("potongan").select("karyawan_id, jumlah"),
+            supabaseAdmin.from("potongan").select("karyawan_id, jumlah").not("karyawan_id", "is", null),
             supabaseAdmin.from("setoran_owner").select("disetorkan_oleh, jumlah"),
             supabaseAdmin.from("karyawan").select("id, nama").eq("is_active", true),
         ]);

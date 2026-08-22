@@ -146,7 +146,6 @@ export function PotonganSetoranManagement({
         </div>
       )}
 
-      {/* Ringkasan */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="clay-raised rounded-lg p-6">
           <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mb-4">
@@ -183,7 +182,6 @@ export function PotonganSetoranManagement({
         </div>
       </div>
 
-      {/* Sisa Dana per Karyawan */}
       <div className="clay-raised rounded-lg mb-8">
         <div className="border-b border-[rgba(140,172,214,0.35)] px-6 py-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-gray-900">
@@ -264,7 +262,6 @@ export function PotonganSetoranManagement({
         </div>
       </div>
 
-      {/* Riwayat */}
       <div className="clay-raised rounded-lg">
         <div className="border-b border-[rgba(140,172,214,0.35)] px-6 py-4 flex items-center justify-between flex-wrap gap-3">
           <div className="flex gap-2">
@@ -363,7 +360,13 @@ export function PotonganSetoranManagement({
                           </span>
                         </td>
                         <td className="py-3 px-4 text-sm font-medium text-gray-900">
-                          {p.karyawan?.nama ?? "—"}
+                          <span
+                            className={`inline-block w-2 h-2 rounded-full mr-2 align-middle ${
+                              p.sales_id ? "bg-cyan-500" : "bg-teal-500"
+                            }`}
+                            title={p.sales_id ? "Sales" : "Karyawan"}
+                          />
+                          {p.sales?.nama_sales ?? p.karyawan?.nama ?? "—"}
                         </td>
                         <td className="py-3 px-4 text-sm font-semibold text-red-600">
                           {formatRp(Number(p.jumlah))}
@@ -380,7 +383,7 @@ export function PotonganSetoranManagement({
                                 setConfirmDelete({
                                   id: p.id,
                                   type: "potongan",
-                                  label: `${KATEGORI_POTONGAN_LABEL[p.kategori]} — ${p.karyawan?.nama ?? ""}`,
+                                  label: `${KATEGORI_POTONGAN_LABEL[p.kategori]} — ${p.sales?.nama_sales ?? p.karyawan?.nama ?? ""}`,
                                 })
                               }
                               className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
