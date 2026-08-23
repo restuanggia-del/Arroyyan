@@ -11,7 +11,7 @@ export interface StockItem {
     products: {
         id: string;
         product_name: string;
-        category: "cup" | "botol";
+        category: "cup" | "botol" | "galon";
     } | null;
 }
 

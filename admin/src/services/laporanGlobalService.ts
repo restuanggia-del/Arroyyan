@@ -4,7 +4,7 @@ export interface LaporanGlobalRow {
     product_id: string;
     product_name: string;
     size: string | null;
-    category: "cup" | "botol";
+    category: "cup" | "botol" | "galon";
     stok_awal_dus: number;
     total_produksi_dus: number;
     total_keluar_dus: number;
@@ -29,7 +29,7 @@ const emptyRow = (product: {
     id: string;
     product_name: string;
     size: string | null;
-    category: "cup" | "botol";
+    category: "cup" | "botol" | "galon";
 }): LaporanGlobalRow => ({
     product_id: product.id,
     product_name: product.product_name,
@@ -105,7 +105,7 @@ export const getLaporanGlobal = async (
         id: string;
         product_name: string;
         size: string | null;
-        category: "cup" | "botol";
+        category: "cup" | "botol" | "galon";
         isi_per_dus: number | null;
         price: number;
     }[];

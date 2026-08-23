@@ -4,7 +4,7 @@ import { supabaseAdmin } from "../lib/supabaseAdmin";
 export interface Product {
     id: string;
     product_name: string;
-    category: "cup" | "botol";
+    category: "cup" | "botol" | "galon";
     size: string | null;
     price: number;
     unit: string;

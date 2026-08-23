@@ -287,7 +287,7 @@ export const getLaporanPenjualan = async (
         id: string;
         product_name: string;
         size: string | null;
-        category: "cup" | "botol";
+        category: "cup" | "botol" | "galon";
         isi_per_dus: number | null;
         price: number;
     }[];
