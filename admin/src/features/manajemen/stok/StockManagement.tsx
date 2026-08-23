@@ -22,7 +22,7 @@ import {
 interface ProductStockSummary {
   product_id: string;
   product_name: string;
-  category: "cup" | "botol";
+  category: "cup" | "botol" | "galon";
   stokPusat: number;
   stokKaryawan: number;
   stokSales: number;
@@ -38,13 +38,19 @@ function buildSummary(items: StockItem[]): ProductStockSummary[] {
       map[pid] = {
         product_id: pid,
         product_name: item.products?.product_name ?? "—",
-        category: (item.products?.category ?? "cup") as "cup" | "botol",
+        category: (item.products?.category ?? "cup") as
+          | "cup"
+          | "botol"
+          | "galon",
         stokPusat: 0,
         stokKaryawan: 0,
         stokSales: 0,
         minimumStok: MINIMUM_STOCK,
       };
     }
+    // Stok pusat: belum dimiliki karyawan maupun sales.
+    // Stok karyawan: sudah didistribusikan ke karyawan.
+    // Stok sales: sudah didistribusikan ke sales (terhubung otomatis dari app Sales).
     if (item.karyawan_id === null && item.sales_id === null) {
       map[pid].stokPusat += item.stock_quantity;
     } else if (item.karyawan_id !== null) {
@@ -343,10 +349,16 @@ export function StockManagement() {
                               className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
                                 item.category === "cup"
                                   ? "bg-blue-100 text-blue-700"
-                                  : "bg-purple-100 text-purple-700"
+                                  : item.category === "galon"
+                                    ? "bg-cyan-100 text-cyan-700"
+                                    : "bg-purple-100 text-purple-700"
                               }`}
                             >
-                              {item.category === "cup" ? "Cup" : "Botol"}
+                              {item.category === "cup"
+                                ? "Cup"
+                                : item.category === "galon"
+                                  ? "Galon"
+                                  : "Botol"}
                             </span>
                           </td>
                           <td className="py-3 px-4 text-sm text-gray-900">
