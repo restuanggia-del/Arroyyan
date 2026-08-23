@@ -62,7 +62,6 @@ const searchAll = async (query: string): Promise<SearchResult[]> => {
   const results: SearchResult[] = [];
 
   const [prodRes, karyawanRes, custRes, trxRes] = await Promise.all([
-    // Produk
     supabaseAdmin
       .from("products")
       .select("id, product_name, category, price, is_active")
@@ -96,7 +95,7 @@ const searchAll = async (query: string): Promise<SearchResult[]> => {
       id: p.id,
       category: "produk",
       title: p.product_name,
-      subtitle: `${p.category === "cup" ? "Cup" : "Botol"} · ${p.is_active ? "Aktif" : "Nonaktif"}`,
+      subtitle: `${p.category === "cup" ? "Cup" : p.category === "galon" ? "Galon" : "Botol"} · ${p.is_active ? "Aktif" : "Nonaktif"}`,
       meta: `Rp ${(p.price ?? 0).toLocaleString("id-ID")}`,
     });
   }
@@ -307,7 +306,9 @@ export function SearchBar({ onNavigate }: SearchBarProps) {
                           onClick={() => handleSelect(result)}
                           onMouseEnter={() => setActiveIndex(globalIdx)}
                           className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors cursor-pointer ${
-                            isActive ? "bg-[rgba(215,233,255,0.7)]" : "hover:bg-[rgba(215,233,255,0.5)]"
+                            isActive
+                              ? "bg-[rgba(215,233,255,0.7)]"
+                              : "hover:bg-[rgba(215,233,255,0.5)]"
                           }`}
                         >
                           <div
