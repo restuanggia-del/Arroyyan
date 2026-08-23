@@ -7,6 +7,7 @@ export type IncentiveJenis =
     | "handling"
     | "fee_rekapan"
     | "bonus_target";
+export type IncentiveOwnerType = "karyawan" | "sales";
 
 export const RATE_DEFAULT_PER_KATEGORI: Record<ProduksiKategori, number> = {
     cup: 1000,
@@ -21,6 +22,11 @@ export const JENIS_LABEL: Record<IncentiveJenis, string> = {
     handling: "Handling Fee",
     fee_rekapan: "Fee Rekapan",
     bonus_target: "Bonus Target",
+};
+
+export const OWNER_TYPE_LABEL: Record<IncentiveOwnerType, string> = {
+    karyawan: "Karyawan",
+    sales: "Sales",
 };
 
 export interface InsentifProduksiWorker {
@@ -119,15 +125,20 @@ export const deleteInsentifProduksi = async (id: string) => {
     return { error: null };
 };
 
-export interface KaryawanAmount {
-    karyawan_id: string;
+export interface OwnerAmount {
+    owner_type: IncentiveOwnerType;
+    owner_id: string;
     nama: string;
     jumlah_dihitung: number;
+    total_dus_terjual?: number;
 }
+
+/** @deprecated pakai OwnerAmount */
+export type KaryawanAmount = OwnerAmount;
 
 export const calculateInsentifProduksiPerKaryawan = async (
     periode: string,
-): Promise<{ data: KaryawanAmount[] | null; error: any }> => {
+): Promise<{ data: OwnerAmount[] | null; error: any }> => {
     const [year, month] = periode.split("-").map(Number);
     if (!year || !month) {
         return { data: null, error: { message: "Format periode tidak valid, gunakan YYYY-MM." } };
@@ -147,7 +158,7 @@ export const calculateInsentifProduksiPerKaryawan = async (
 
     if (error) return { data: null, error };
 
-    const map = new Map<string, KaryawanAmount>();
+    const map = new Map<string, OwnerAmount>();
     for (const row of (data ?? []) as any[]) {
         const workers = row.insentif_produksi_workers ?? [];
         if (workers.length === 0) continue;
@@ -157,7 +168,13 @@ export const calculateInsentifProduksiPerKaryawan = async (
             const nama = w.karyawan?.nama ?? "(Karyawan tidak aktif)";
             const existing = map.get(id);
             if (existing) existing.jumlah_dihitung += perOrang;
-            else map.set(id, { karyawan_id: id, nama, jumlah_dihitung: perOrang });
+            else
+                map.set(id, {
+                    owner_type: "karyawan",
+                    owner_id: id,
+                    nama,
+                    jumlah_dihitung: perOrang,
+                });
         }
     }
 
@@ -170,10 +187,10 @@ export const calculateInsentifProduksiPerKaryawan = async (
     return { data: result, error: null };
 };
 
-export const calculateFeePenjualanPerKaryawan = async (
+export const calculateFeePenjualanPerOwner = async (
     periode: string,
     ratePerDus: number,
-): Promise<{ data: (KaryawanAmount & { total_dus_terjual: number })[] | null; error: any }> => {
+): Promise<{ data: OwnerAmount[] | null; error: any }> => {
     const [year, month] = periode.split("-").map(Number);
     if (!year || !month) {
         return { data: null, error: { message: "Format periode tidak valid, gunakan YYYY-MM." } };
@@ -181,44 +198,71 @@ export const calculateFeePenjualanPerKaryawan = async (
     const startDate = new Date(Date.UTC(year, month - 1, 1)).toISOString();
     const endDate = new Date(Date.UTC(year, month, 1)).toISOString();
 
-    const [trxRes, karyawanRes] = await Promise.all([
+    const [trxRes, karyawanRes, salesRes] = await Promise.all([
         supabaseAdmin
             .from("transaction_details")
             .select(`
         quantity,
         products ( isi_per_dus ),
-        transactions!inner ( karyawan_id, created_at )
+        transactions!inner ( karyawan_id, sales_id, created_at )
       `)
             .gte("transactions.created_at", startDate)
             .lt("transactions.created_at", endDate),
         supabaseAdmin.from("karyawan").select("id, nama"),
+        supabaseAdmin.from("sales").select("id, nama_sales"),
     ]);
 
     if (trxRes.error) return { data: null, error: trxRes.error };
     if (karyawanRes.error) return { data: null, error: karyawanRes.error };
+    if (salesRes.error) return { data: null, error: salesRes.error };
 
-    const namaMap = new Map(
+    const karyawanNamaMap = new Map(
         ((karyawanRes.data ?? []) as { id: string; nama: string }[]).map((k) => [k.id, k.nama]),
     );
+    const salesNamaMap = new Map(
+        ((salesRes.data ?? []) as { id: string; nama_sales: string }[]).map((s) => [s.id, s.nama_sales]),
+    );
 
-    const dusMap = new Map<string, number>();
+    const dusMapKaryawan = new Map<string, number>();
+    const dusMapSales = new Map<string, number>();
+
     for (const row of (trxRes.data ?? []) as any[]) {
         const karyawanId: string | null = row.transactions?.karyawan_id ?? null;
-        if (!karyawanId) continue;
+        const salesId: string | null = row.transactions?.sales_id ?? null;
         const isiPerDus: number = row.products?.isi_per_dus ?? 0;
         if (!isiPerDus) continue;
         const dus = Number(row.quantity) / isiPerDus;
-        dusMap.set(karyawanId, (dusMap.get(karyawanId) ?? 0) + dus);
+
+        if (karyawanId) {
+            dusMapKaryawan.set(karyawanId, (dusMapKaryawan.get(karyawanId) ?? 0) + dus);
+        } else if (salesId) {
+            dusMapSales.set(salesId, (dusMapSales.get(salesId) ?? 0) + dus);
+        }
     }
 
-    const result = Array.from(dusMap.entries()).map(([karyawanId, totalDus]) => ({
-        karyawan_id: karyawanId,
-        nama: namaMap.get(karyawanId) ?? "(Karyawan tidak aktif)",
-        total_dus_terjual: Math.round(totalDus * 100) / 100,
-        jumlah_dihitung: Math.round(totalDus * ratePerDus * 100) / 100,
-    }));
+    const result: OwnerAmount[] = [];
 
-    result.sort((a, b) => b.total_dus_terjual - a.total_dus_terjual);
+    for (const [karyawanId, totalDus] of dusMapKaryawan.entries()) {
+        result.push({
+            owner_type: "karyawan",
+            owner_id: karyawanId,
+            nama: karyawanNamaMap.get(karyawanId) ?? "(Karyawan tidak aktif)",
+            total_dus_terjual: Math.round(totalDus * 100) / 100,
+            jumlah_dihitung: Math.round(totalDus * ratePerDus * 100) / 100,
+        });
+    }
+
+    for (const [salesId, totalDus] of dusMapSales.entries()) {
+        result.push({
+            owner_type: "sales",
+            owner_id: salesId,
+            nama: salesNamaMap.get(salesId) ?? "(Sales tidak aktif)",
+            total_dus_terjual: Math.round(totalDus * 100) / 100,
+            jumlah_dihitung: Math.round(totalDus * ratePerDus * 100) / 100,
+        });
+    }
+
+    result.sort((a, b) => (b.total_dus_terjual ?? 0) - (a.total_dus_terjual ?? 0));
 
     return { data: result, error: null };
 };
@@ -226,18 +270,21 @@ export const calculateFeePenjualanPerKaryawan = async (
 export interface IncentivePayment {
     id: string;
     jenis: IncentiveJenis;
-    karyawan_id: string;
+    karyawan_id: string | null;
+    sales_id: string | null;
     periode: string;
     jumlah_dihitung: number;
     jumlah_dibayar: number;
     keterangan: string | null;
     created_at: string;
     karyawan: { nama: string } | null;
+    sales: { nama_sales: string } | null;
 }
 
 const PAYMENT_SELECT = `
-  id, jenis, karyawan_id, periode, jumlah_dihitung, jumlah_dibayar, keterangan, created_at,
-  karyawan ( nama )
+  id, jenis, karyawan_id, sales_id, periode, jumlah_dihitung, jumlah_dibayar, keterangan, created_at,
+  karyawan ( nama ),
+  sales ( nama_sales )
 `;
 
 export const getIncentivePayments = async (jenis: IncentiveJenis, periode?: string) => {
@@ -275,7 +322,8 @@ export const savePayments = async (
     jenis: IncentiveJenis,
     periode: string,
     rows: {
-        karyawan_id: string;
+        owner_type: IncentiveOwnerType;
+        owner_id: string;
         jumlah_dihitung: number;
         jumlah_dibayar: number;
         keterangan?: string | null;
@@ -283,28 +331,56 @@ export const savePayments = async (
 ) => {
     if (rows.length === 0) return { data: [], error: null };
 
-    const payload = rows.map((r) => ({
-        jenis,
-        karyawan_id: r.karyawan_id,
-        periode,
-        jumlah_dihitung: r.jumlah_dihitung,
-        jumlah_dibayar: r.jumlah_dibayar,
-        keterangan: r.keterangan || null,
-    }));
+    const karyawanRows = rows
+        .filter((r) => r.owner_type === "karyawan")
+        .map((r) => ({
+            jenis,
+            karyawan_id: r.owner_id,
+            sales_id: null,
+            periode,
+            jumlah_dihitung: r.jumlah_dihitung,
+            jumlah_dibayar: r.jumlah_dibayar,
+            keterangan: r.keterangan || null,
+        }));
 
-    const { data, error } = await supabaseAdmin
-        .from("incentive_payments")
-        .upsert(payload, { onConflict: "jenis,karyawan_id,periode" })
-        .select(PAYMENT_SELECT);
+    const salesRows = rows
+        .filter((r) => r.owner_type === "sales")
+        .map((r) => ({
+            jenis,
+            karyawan_id: null,
+            sales_id: r.owner_id,
+            periode,
+            jumlah_dihitung: r.jumlah_dihitung,
+            jumlah_dibayar: r.jumlah_dibayar,
+            keterangan: r.keterangan || null,
+        }));
 
-    if (error) return { data: null, error };
+    const results: IncentivePayment[] = [];
+
+    if (karyawanRows.length > 0) {
+        const { data, error } = await supabaseAdmin
+            .from("incentive_payments")
+            .upsert(karyawanRows, { onConflict: "jenis,karyawan_id,periode" })
+            .select(PAYMENT_SELECT);
+        if (error) return { data: null, error };
+        results.push(...((data as unknown) as IncentivePayment[]));
+    }
+
+    if (salesRows.length > 0) {
+        const { data, error } = await supabaseAdmin
+            .from("incentive_payments")
+            .upsert(salesRows, { onConflict: "jenis,sales_id,periode" })
+            .select(PAYMENT_SELECT);
+        if (error) return { data: null, error };
+        results.push(...((data as unknown) as IncentivePayment[]));
+    }
 
     await supabaseAdmin.from("activity_logs").insert([{
         activity_type: "save_incentive_payments",
-        description: `Pembayaran ${JENIS_LABEL[jenis]} periode ${periode} disimpan untuk ${rows.length} karyawan`,
+        description: `Pembayaran ${JENIS_LABEL[jenis]} periode ${periode} disimpan untuk ${karyawanRows.length} karyawan & ${salesRows.length} sales`,
     }]);
 
-    return { data: (data as unknown) as IncentivePayment[], error: null };
+    return { data: results, error: null };
 };
 
 export const deletePayment = async (id: string) => {

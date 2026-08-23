@@ -1,15 +1,17 @@
 import { supabaseAdmin } from "../lib/supabaseAdmin";
 import {
     calculateInsentifProduksiPerKaryawan,
-    calculateFeePenjualanPerKaryawan,
+    calculateFeePenjualanPerOwner,
     DEFAULT_RATE_FEE_PENJUALAN,
+    IncentiveOwnerType,
 } from "./insentifService";
 import { calculateBonusPreview } from "./bonusService";
 
 export interface IncentiveReceipt {
     id: string;
     periode: string;
-    karyawan_id: string;
+    karyawan_id: string | null;
+    sales_id: string | null;
     total_produksi: number;
     total_fee_penjualan: number;
     total_handling: number;
@@ -20,12 +22,14 @@ export interface IncentiveReceipt {
     tanggal_terima: string | null;
     created_at: string;
     karyawan: { nama: string } | null;
+    sales: { nama_sales: string } | null;
 }
 
 const SELECT = `
-  id, periode, karyawan_id, total_produksi, total_fee_penjualan, total_handling,
+  id, periode, karyawan_id, sales_id, total_produksi, total_fee_penjualan, total_handling,
   total_fee_rekapan, total_bonus_target, jumlah_total, status_tanda_terima, tanggal_terima, created_at,
-  karyawan ( nama )
+  karyawan ( nama ),
+  sales ( nama_sales )
 `;
 
 export const getIncentiveReceipts = async (periode: string) => {
@@ -40,7 +44,8 @@ export const getIncentiveReceipts = async (periode: string) => {
 };
 
 export interface ReceiptTotal {
-    karyawan_id: string;
+    owner_type: IncentiveOwnerType;
+    owner_id: string;
     nama: string;
     total_produksi: number;
     total_fee_penjualan: number;
@@ -65,6 +70,7 @@ export const calculateReceiptTotals = async (
 
     const [
         karyawanRes,
+        salesRes,
         paymentsRes,
         handlingRes,
         feeRekapanRes,
@@ -74,9 +80,10 @@ export const calculateReceiptTotals = async (
         liveBonusRes,
     ] = await Promise.all([
         supabaseAdmin.from("karyawan").select("id, nama"),
+        supabaseAdmin.from("sales").select("id, nama_sales"),
         supabaseAdmin
             .from("incentive_payments")
-            .select("karyawan_id, jenis, jumlah_dibayar")
+            .select("karyawan_id, sales_id, jenis, jumlah_dibayar")
             .in("jenis", ["insentif_produksi", "fee_penjualan"])
             .eq("periode", periode),
         supabaseAdmin
@@ -84,17 +91,18 @@ export const calculateReceiptTotals = async (
             .select("karyawan_id, fee_per_orang, handling_fee_records!inner ( tanggal )")
             .gte("handling_fee_records.tanggal", startDate)
             .lt("handling_fee_records.tanggal", endDate),
-        supabaseAdmin.from("fee_rekapan_manual").select("karyawan_id, jumlah").eq("periode", periode),
+        supabaseAdmin.from("fee_rekapan_manual").select("karyawan_id, sales_id, jumlah").eq("periode", periode),
         supabaseAdmin
             .from("bonus_records")
-            .select("karyawan_id, bonus_target_rp")
+            .select("karyawan_id, sales_id, bonus_target_rp")
             .eq("periode", periode),
         calculateInsentifProduksiPerKaryawan(periode),
-        calculateFeePenjualanPerKaryawan(periode, DEFAULT_RATE_FEE_PENJUALAN),
+        calculateFeePenjualanPerOwner(periode, DEFAULT_RATE_FEE_PENJUALAN),
         calculateBonusPreview(periode),
     ]);
 
     if (karyawanRes.error) return { data: null, error: karyawanRes.error };
+    if (salesRes.error) return { data: null, error: salesRes.error };
     if (paymentsRes.error) return { data: null, error: paymentsRes.error };
     if (handlingRes.error) return { data: null, error: handlingRes.error };
     if (feeRekapanRes.error) return { data: null, error: feeRekapanRes.error };
@@ -103,17 +111,27 @@ export const calculateReceiptTotals = async (
     if (liveFeePenjualanRes.error) return { data: null, error: liveFeePenjualanRes.error };
     if (liveBonusRes.error) return { data: null, error: liveBonusRes.error };
 
-    const namaMap = new Map(
+    const karyawanNamaMap = new Map(
         ((karyawanRes.data ?? []) as { id: string; nama: string }[]).map((k) => [k.id, k.nama]),
+    );
+    const salesNamaMap = new Map(
+        ((salesRes.data ?? []) as { id: string; nama_sales: string }[]).map((s) => [s.id, s.nama_sales]),
     );
 
     const map = new Map<string, ReceiptTotal>();
-    const getRow = (karyawanId: string): ReceiptTotal => {
-        const existing = map.get(karyawanId);
+    const key = (ownerType: IncentiveOwnerType, ownerId: string) => `${ownerType}:${ownerId}`;
+    const getRow = (ownerType: IncentiveOwnerType, ownerId: string): ReceiptTotal => {
+        const k = key(ownerType, ownerId);
+        const existing = map.get(k);
         if (existing) return existing;
+        const nama =
+            ownerType === "karyawan"
+                ? (karyawanNamaMap.get(ownerId) ?? "(Karyawan tidak aktif)")
+                : (salesNamaMap.get(ownerId) ?? "(Sales tidak aktif)");
         const fresh: ReceiptTotal = {
-            karyawan_id: karyawanId,
-            nama: namaMap.get(karyawanId) ?? "(Karyawan tidak aktif)",
+            owner_type: ownerType,
+            owner_id: ownerId,
+            nama,
             total_produksi: 0,
             total_fee_penjualan: 0,
             total_handling: 0,
@@ -124,59 +142,65 @@ export const calculateReceiptTotals = async (
             fee_penjualan_is_live: false,
             bonus_target_is_live: false,
         };
-        map.set(karyawanId, fresh);
+        map.set(k, fresh);
         return fresh;
     };
 
     const savedProduksi = new Set<string>();
     const savedFeePenjualan = new Set<string>();
     for (const p of (paymentsRes.data ?? []) as any[]) {
-        const row = getRow(p.karyawan_id);
+        const ownerType: IncentiveOwnerType = p.sales_id ? "sales" : "karyawan";
+        const ownerId: string = p.sales_id ?? p.karyawan_id;
+        const row = getRow(ownerType, ownerId);
         if (p.jenis === "insentif_produksi") {
             row.total_produksi += Number(p.jumlah_dibayar);
-            savedProduksi.add(p.karyawan_id);
+            savedProduksi.add(key(ownerType, ownerId));
         } else if (p.jenis === "fee_penjualan") {
             row.total_fee_penjualan += Number(p.jumlah_dibayar);
-            savedFeePenjualan.add(p.karyawan_id);
+            savedFeePenjualan.add(key(ownerType, ownerId));
         }
     }
 
     const savedBonus = new Set<string>();
     for (const b of (bonusRes.data ?? []) as any[]) {
-        const row = getRow(b.karyawan_id);
+        const ownerType: IncentiveOwnerType = b.sales_id ? "sales" : "karyawan";
+        const ownerId: string = b.sales_id ?? b.karyawan_id;
+        const row = getRow(ownerType, ownerId);
         row.total_bonus_target += Number(b.bonus_target_rp);
-        savedBonus.add(b.karyawan_id);
+        savedBonus.add(key(ownerType, ownerId));
     }
 
     for (const r of (liveProduksiRes.data ?? []) as any[]) {
-        if (savedProduksi.has(r.karyawan_id)) continue;
-        const row = getRow(r.karyawan_id);
+        if (savedProduksi.has(key(r.owner_type, r.owner_id))) continue;
+        const row = getRow(r.owner_type, r.owner_id);
         row.total_produksi += Number(r.jumlah_dihitung);
         row.produksi_is_live = true;
     }
 
     for (const r of (liveFeePenjualanRes.data ?? []) as any[]) {
-        if (savedFeePenjualan.has(r.karyawan_id)) continue;
-        const row = getRow(r.karyawan_id);
+        if (savedFeePenjualan.has(key(r.owner_type, r.owner_id))) continue;
+        const row = getRow(r.owner_type, r.owner_id);
         row.total_fee_penjualan += Number(r.jumlah_dihitung);
         row.fee_penjualan_is_live = true;
     }
 
     for (const r of (liveBonusRes.data ?? []) as any[]) {
-        if (savedBonus.has(r.karyawan_id)) continue;
+        if (savedBonus.has(key(r.owner_type, r.owner_id))) continue;
         if (!r.bonus_target_rp) continue;
-        const row = getRow(r.karyawan_id);
+        const row = getRow(r.owner_type, r.owner_id);
         row.total_bonus_target += Number(r.bonus_target_rp);
         row.bonus_target_is_live = true;
     }
 
     for (const h of (handlingRes.data ?? []) as any[]) {
-        const row = getRow(h.karyawan_id);
+        const row = getRow("karyawan", h.karyawan_id);
         row.total_handling += Number(h.fee_per_orang);
     }
 
     for (const f of (feeRekapanRes.data ?? []) as any[]) {
-        const row = getRow(f.karyawan_id);
+        const ownerType: IncentiveOwnerType = f.sales_id ? "sales" : "karyawan";
+        const ownerId: string = f.sales_id ?? f.karyawan_id;
+        const row = getRow(ownerType, ownerId);
         row.total_fee_rekapan += Number(f.jumlah);
     }
 
@@ -199,11 +223,14 @@ export const generateReceipts = async (periode: string) => {
     const { data: totals, error } = await calculateReceiptTotals(periode);
     if (error) return { data: null, error };
 
-    const rows = (totals ?? [])
-        .filter((r) => r.jumlah_total > 0)
+    const relevant = (totals ?? []).filter((r) => r.jumlah_total > 0);
+
+    const karyawanRows = relevant
+        .filter((r) => r.owner_type === "karyawan")
         .map((r) => ({
             periode,
-            karyawan_id: r.karyawan_id,
+            karyawan_id: r.owner_id,
+            sales_id: null,
             total_produksi: r.total_produksi,
             total_fee_penjualan: r.total_fee_penjualan,
             total_handling: r.total_handling,
@@ -212,21 +239,50 @@ export const generateReceipts = async (periode: string) => {
             jumlah_total: r.jumlah_total,
         }));
 
-    if (rows.length === 0) return { data: [], error: null };
+    const salesRows = relevant
+        .filter((r) => r.owner_type === "sales")
+        .map((r) => ({
+            periode,
+            karyawan_id: null,
+            sales_id: r.owner_id,
+            total_produksi: r.total_produksi,
+            total_fee_penjualan: r.total_fee_penjualan,
+            total_handling: r.total_handling,
+            total_fee_rekapan: r.total_fee_rekapan,
+            total_bonus_target: r.total_bonus_target,
+            jumlah_total: r.jumlah_total,
+        }));
 
-    const { data, error: upsertError } = await supabaseAdmin
-        .from("incentive_receipts")
-        .upsert(rows, { onConflict: "periode,karyawan_id" })
-        .select(SELECT);
+    if (karyawanRows.length === 0 && salesRows.length === 0) {
+        return { data: [], error: null };
+    }
 
-    if (upsertError) return { data: null, error: upsertError };
+    const results: IncentiveReceipt[] = [];
+
+    if (karyawanRows.length > 0) {
+        const { data, error: upsertError } = await supabaseAdmin
+            .from("incentive_receipts")
+            .upsert(karyawanRows, { onConflict: "periode,karyawan_id" })
+            .select(SELECT);
+        if (upsertError) return { data: null, error: upsertError };
+        results.push(...((data as unknown) as IncentiveReceipt[]));
+    }
+
+    if (salesRows.length > 0) {
+        const { data, error: upsertError } = await supabaseAdmin
+            .from("incentive_receipts")
+            .upsert(salesRows, { onConflict: "periode,sales_id" })
+            .select(SELECT);
+        if (upsertError) return { data: null, error: upsertError };
+        results.push(...((data as unknown) as IncentiveReceipt[]));
+    }
 
     await supabaseAdmin.from("activity_logs").insert([{
         activity_type: "generate_incentive_receipts",
-        description: `Rekap tanda terima insentif periode ${periode} dihitung ulang untuk ${rows.length} karyawan`,
+        description: `Rekap tanda terima insentif periode ${periode} dihitung ulang untuk ${karyawanRows.length} karyawan & ${salesRows.length} sales`,
     }]);
 
-    return { data: (data as unknown) as IncentiveReceipt[], error: null };
+    return { data: results, error: null };
 };
 
 export const markReceiptStatus = async (

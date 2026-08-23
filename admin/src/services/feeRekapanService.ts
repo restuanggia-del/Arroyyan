@@ -1,18 +1,28 @@
 import { supabaseAdmin } from "../lib/supabaseAdmin";
 
+export type FeeRekapanOwnerType = "karyawan" | "sales";
+
+export const OWNER_TYPE_LABEL: Record<FeeRekapanOwnerType, string> = {
+    karyawan: "Karyawan",
+    sales: "Sales",
+};
+
 export interface FeeRekapan {
     id: string;
     periode: string;
-    karyawan_id: string;
+    karyawan_id: string | null;
+    sales_id: string | null;
     jumlah: number;
     keterangan: string | null;
     created_at: string;
     karyawan: { nama: string } | null;
+    sales: { nama_sales: string } | null;
 }
 
 const SELECT = `
-  id, periode, karyawan_id, jumlah, keterangan, created_at,
-  karyawan ( nama )
+  id, periode, karyawan_id, sales_id, jumlah, keterangan, created_at,
+  karyawan ( nama ),
+  sales ( nama_sales )
 `;
 
 export const getFeeRekapan = async (periode?: string) => {
@@ -31,7 +41,8 @@ export const getFeeRekapan = async (periode?: string) => {
 
 export const createFeeRekapan = async (input: {
     periode: string;
-    karyawan_id: string;
+    owner_type: FeeRekapanOwnerType;
+    owner_id: string;
     jumlah: number;
     keterangan?: string | null;
 }) => {
@@ -39,7 +50,8 @@ export const createFeeRekapan = async (input: {
         .from("fee_rekapan_manual")
         .insert([{
             periode: input.periode,
-            karyawan_id: input.karyawan_id,
+            karyawan_id: input.owner_type === "karyawan" ? input.owner_id : null,
+            sales_id: input.owner_type === "sales" ? input.owner_id : null,
             jumlah: input.jumlah,
             keterangan: input.keterangan || null,
         }])
@@ -50,7 +62,7 @@ export const createFeeRekapan = async (input: {
 
     await supabaseAdmin.from("activity_logs").insert([{
         activity_type: "create_fee_rekapan",
-        description: `Fee rekapan periode ${input.periode} ditambahkan: Rp ${input.jumlah.toLocaleString("id-ID")}`,
+        description: `Fee rekapan periode ${input.periode} (${OWNER_TYPE_LABEL[input.owner_type]}) ditambahkan: Rp ${input.jumlah.toLocaleString("id-ID")}`,
     }]);
 
     return { data: (data as unknown) as FeeRekapan, error: null };
@@ -60,19 +72,24 @@ export const updateFeeRekapan = async (
     id: string,
     input: Partial<{
         periode: string;
-        karyawan_id: string;
+        owner_type: FeeRekapanOwnerType;
+        owner_id: string;
         jumlah: number;
         keterangan: string | null;
     }>,
 ) => {
+    const patch: Record<string, unknown> = {};
+    if (input.periode !== undefined) patch.periode = input.periode;
+    if (input.jumlah !== undefined) patch.jumlah = input.jumlah;
+    if (input.keterangan !== undefined) patch.keterangan = input.keterangan || null;
+    if (input.owner_type !== undefined && input.owner_id !== undefined) {
+        patch.karyawan_id = input.owner_type === "karyawan" ? input.owner_id : null;
+        patch.sales_id = input.owner_type === "sales" ? input.owner_id : null;
+    }
+
     const { error } = await supabaseAdmin
         .from("fee_rekapan_manual")
-        .update({
-            ...(input.periode !== undefined && { periode: input.periode }),
-            ...(input.karyawan_id !== undefined && { karyawan_id: input.karyawan_id }),
-            ...(input.jumlah !== undefined && { jumlah: input.jumlah }),
-            ...(input.keterangan !== undefined && { keterangan: input.keterangan || null }),
-        })
+        .update(patch)
         .eq("id", id);
 
     if (error) return { error };

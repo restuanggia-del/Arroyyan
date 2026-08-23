@@ -213,13 +213,6 @@ export const deleteBonusRecord = async (id: string) => {
     return { error: null };
 };
 
-/**
- * Hitung preview bonus untuk 1 periode, gabungan Karyawan (dari transaksi
- * karyawan_id) dan Sales (dari transaksi sales_id). Setiap kelompok dicek
- * terhadap aturan bonus yang target_type-nya cocok ('karyawan'/'sales'/'semua').
- * Untuk Sales, filter "khusus" (bonus_khusus) diabaikan karena Sales tidak
- * punya flag tersebut — rule 'khusus' hanya berlaku untuk Karyawan.
- */
 export const calculateBonusPreview = async (
     periode: string,
 ): Promise<{ data: BonusPreviewRow[] | null; error: any }> => {
