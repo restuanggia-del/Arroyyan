@@ -391,7 +391,7 @@ export function UserProfile({
 
   return (
     <>
-      <div className="relative ml-auto">
+      <div className="relative">
         <button
           onClick={() => setIsOpen(!isOpen)}
           className="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-[rgba(215,233,255,0.55)] transition-colors cursor-pointer"

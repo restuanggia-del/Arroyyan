@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { Logo } from "../components/shared/Logo";
 import { SearchBar } from "../components/shared/SearchBar";
+import { NotificationBell } from "../components/shared/NotificationBell";
 import { UserProfile } from "../features/pengaturan/UserProfile";
 import { Sidebar } from "./layouts/Sidebar";
 import { StatCard } from "../components/shared/StatCard";
@@ -477,12 +478,15 @@ export default function App() {
         <header className="clay-raised rounded-[28px] px-6 py-3.5 flex-shrink-0">
           <div className="flex items-center gap-4">
             <SearchBar onNavigate={handleMenuChange} />
-            <UserProfile
-              name={currentUser?.name ?? "User"}
-              role="Admin"
-              onSettings={() => setActiveMenu("pengaturan")}
-              onLogout={handleLogout}
-            />
+            <div className="ml-auto flex items-center gap-2">
+              <NotificationBell />
+              <UserProfile
+                name={currentUser?.name ?? "User"}
+                role="Admin"
+                onSettings={() => setActiveMenu("pengaturan")}
+                onLogout={handleLogout}
+              />
+            </div>
           </div>
         </header>
         <main className="flex-1 overflow-y-auto clay-raised rounded-[28px]">
