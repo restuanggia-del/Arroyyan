@@ -35,7 +35,8 @@ const exportToExcel = async (data: IncentiveReceipt[], periode: string) => {
   try {
     const XLSX = await import("xlsx");
     const headers = [
-      "Karyawan",
+      "Jenis",
+      "Nama",
       "Insentif Produksi",
       "Fee Penjualan",
       "Handling",
@@ -46,7 +47,8 @@ const exportToExcel = async (data: IncentiveReceipt[], periode: string) => {
       "Tanggal Terima",
     ];
     const rows = data.map((r) => ({
-      Karyawan: r.karyawan?.nama ?? "—",
+      Jenis: r.sales_id ? "Sales" : "Karyawan",
+      Nama: r.sales?.nama_sales ?? r.karyawan?.nama ?? "—",
       "Insentif Produksi": r.total_produksi,
       "Fee Penjualan": r.total_fee_penjualan,
       Handling: r.total_handling,
@@ -91,7 +93,8 @@ const exportToPDF = async (data: IncentiveReceipt[], periode: string) => {
     doc.text(`Periode: ${periode}`, 14, 28);
 
     const tableRows = data.map((r) => [
-      r.karyawan?.nama ?? "—",
+      r.sales_id ? "Sales" : "Karyawan",
+      r.sales?.nama_sales ?? r.karyawan?.nama ?? "—",
       formatRp(r.total_produksi),
       formatRp(r.total_fee_penjualan),
       formatRp(r.total_handling),
@@ -100,12 +103,13 @@ const exportToPDF = async (data: IncentiveReceipt[], periode: string) => {
       formatRp(r.jumlah_total),
       "",
     ]);
-    const bodyRows = data.length === 0 ? [Array(8).fill("")] : tableRows;
+    const bodyRows = data.length === 0 ? [Array(9).fill("")] : tableRows;
 
     autoTable(doc, {
       head: [
         [
-          "Karyawan",
+          "Jenis",
+          "Nama",
           "Produksi",
           "Fee Jual",
           "Handling",
@@ -216,8 +220,8 @@ export function LaporanTandaTerimaInsentif() {
         </h1>
         <p className="text-gray-600">
           Rekap total seluruh insentif (produksi, fee penjualan, handling, fee
-          rekapan, bonus target) per karyawan per bulan, dan status konfirmasi
-          penerimaannya
+          rekapan, bonus target) per karyawan/sales per bulan, dan status
+          konfirmasi penerimaannya
         </p>
       </div>
 
@@ -235,7 +239,9 @@ export function LaporanTandaTerimaInsentif() {
           <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
             <Users className="w-6 h-6 text-blue-600" />
           </div>
-          <h3 className="text-sm text-gray-600 mb-1">Jumlah Karyawan</h3>
+          <h3 className="text-sm text-gray-600 mb-1">
+            Jumlah Penerima (Karyawan & Sales)
+          </h3>
           <p className="text-2xl font-bold text-gray-900">
             {loading ? "—" : data.length}
           </p>
@@ -363,7 +369,8 @@ export function LaporanTandaTerimaInsentif() {
                 <thead>
                   <tr className="border-b-2 border-[rgba(140,172,214,0.35)]">
                     {[
-                      "Karyawan",
+                      "Jenis",
+                      "Nama",
                       "Produksi",
                       "Fee Jualan",
                       "Handling",
@@ -388,8 +395,19 @@ export function LaporanTandaTerimaInsentif() {
                       key={r.id}
                       className="border-b border-[rgba(140,172,214,0.2)] hover:bg-[rgba(215,233,255,0.5)]"
                     >
+                      <td className="py-3 px-3">
+                        <span
+                          className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
+                            r.sales_id
+                              ? "bg-cyan-100 text-cyan-700"
+                              : "bg-teal-100 text-teal-700"
+                          }`}
+                        >
+                          {r.sales_id ? "Sales" : "Karyawan"}
+                        </span>
+                      </td>
                       <td className="py-3 px-3 font-medium text-gray-900 whitespace-nowrap">
-                        {r.karyawan?.nama ?? "—"}
+                        {r.sales?.nama_sales ?? r.karyawan?.nama ?? "—"}
                       </td>
                       <td className="py-3 px-3 text-gray-600">
                         {formatRp(r.total_produksi)}
@@ -466,7 +484,9 @@ export function LaporanTandaTerimaInsentif() {
             </h3>
             <p className="text-sm text-gray-600 text-center mb-1">
               <span className="font-medium">
-                {confirmDelete.karyawan?.nama ?? ""}
+                {confirmDelete.sales?.nama_sales ??
+                  confirmDelete.karyawan?.nama ??
+                  ""}
               </span>{" "}
               — periode {confirmDelete.periode}
             </p>
