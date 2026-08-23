@@ -70,8 +70,8 @@ export function FeeRekapanManagement() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900 mb-1">Fee Rekapan</h1>
           <p className="text-gray-600">
-            Input manual fee rekapan penjualan per karyawan per bulan (nilai
-            variatif, tidak tetap)
+            Input manual fee rekapan penjualan per karyawan/sales per bulan
+            (nilai variatif, tidak tetap)
           </p>
         </div>
         <button
@@ -131,21 +131,23 @@ export function FeeRekapanManagement() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-[rgba(140,172,214,0.35)] bg-[rgba(215,233,255,0.4)]">
-                  {["Karyawan", "Jumlah", "Keterangan", "Aksi"].map((h) => (
-                    <th
-                      key={h}
-                      className="text-left py-3 px-4 text-sm font-semibold text-gray-700"
-                    >
-                      {h}
-                    </th>
-                  ))}
+                  {["Jenis", "Nama", "Jumlah", "Keterangan", "Aksi"].map(
+                    (h) => (
+                      <th
+                        key={h}
+                        className="text-left py-3 px-4 text-sm font-semibold text-gray-700"
+                      >
+                        {h}
+                      </th>
+                    ),
+                  )}
                 </tr>
               </thead>
               <tbody>
                 {entries.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={4}
+                      colSpan={5}
                       className="py-12 text-center text-gray-500 text-sm"
                     >
                       Belum ada fee rekapan untuk periode ini.
@@ -157,8 +159,19 @@ export function FeeRekapanManagement() {
                       key={entry.id}
                       className="border-b border-[rgba(140,172,214,0.2)] hover:bg-[rgba(215,233,255,0.5)]"
                     >
+                      <td className="py-3 px-4">
+                        <span
+                          className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
+                            entry.sales_id
+                              ? "bg-cyan-100 text-cyan-700"
+                              : "bg-teal-100 text-teal-700"
+                          }`}
+                        >
+                          {entry.sales_id ? "Sales" : "Karyawan"}
+                        </span>
+                      </td>
                       <td className="py-3 px-4 text-sm font-medium text-gray-900">
-                        {entry.karyawan?.nama ?? "—"}
+                        {entry.sales?.nama_sales ?? entry.karyawan?.nama ?? "—"}
                       </td>
                       <td className="py-3 px-4 text-sm font-semibold text-indigo-600">
                         {formatRp(Number(entry.jumlah))}
@@ -223,7 +236,9 @@ export function FeeRekapanManagement() {
             </h3>
             <p className="text-sm text-gray-600 text-center mb-1">
               <span className="font-medium">
-                {confirmDelete.karyawan?.nama ?? ""}
+                {confirmDelete.sales?.nama_sales ??
+                  confirmDelete.karyawan?.nama ??
+                  ""}
               </span>{" "}
               — {formatRp(Number(confirmDelete.jumlah))}
             </p>
