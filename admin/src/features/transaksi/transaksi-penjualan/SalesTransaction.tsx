@@ -301,7 +301,11 @@ export function SalesTransaction({ role, salesId }: SalesTransactionProps) {
                         )}
                         <div className="flex items-start gap-2 mb-2">
                           <span className="text-xl">
-                            {product.category === "cup" ? "🥤" : "🍶"}
+                            {product.category === "cup"
+                              ? "🥤"
+                              : product.category === "galon"
+                                ? "🚰"
+                                : "🍶"}
                           </span>
                           <h3 className="font-medium text-gray-900 text-sm leading-tight flex-1">
                             {product.product_name}
@@ -633,7 +637,10 @@ export function SalesTransaction({ role, salesId }: SalesTransactionProps) {
                 </thead>
                 <tbody>
                   {lastTransaction.items.map((item: CartItem, i: number) => (
-                    <tr key={i} className="border-b border-[rgba(140,172,214,0.2)]">
+                    <tr
+                      key={i}
+                      className="border-b border-[rgba(140,172,214,0.2)]"
+                    >
                       <td className="py-1 leading-tight">
                         {item.product.product_name}
                         {item.product.size ? ` (${item.product.size})` : ""}

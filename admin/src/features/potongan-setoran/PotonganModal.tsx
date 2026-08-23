@@ -115,10 +115,7 @@ export function PotonganModal({ onClose, onSaveSuccess }: PotonganModalProps) {
           </button>
         </div>
 
-        <form
-          onSubmit={handleSubmit}
-          className="p-6 space-y-4 overflow-y-auto flex-1"
-        >
+        <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto flex-1">
           {formError && (
             <div className="p-3 clay-inset-red border-0 rounded-lg flex items-center gap-2 text-sm text-red-700">
               <AlertCircle className="w-4 h-4 flex-shrink-0" />
