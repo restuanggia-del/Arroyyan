@@ -25,9 +25,9 @@ export function ProductManagement() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterKategori, setFilterKategori] = useState<"all" | "cup" | "botol">(
-    "all",
-  );
+  const [filterKategori, setFilterKategori] = useState<
+    "all" | "cup" | "botol" | "galon"
+  >("all");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<{
     id: string;
@@ -143,13 +143,16 @@ export function ProductManagement() {
               <select
                 value={filterKategori}
                 onChange={(e) =>
-                  setFilterKategori(e.target.value as "all" | "cup" | "botol")
+                  setFilterKategori(
+                    e.target.value as "all" | "cup" | "botol" | "galon",
+                  )
                 }
                 className="px-4 py-2 clay-inset border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40 cursor-pointer"
               >
                 <option value="all">Semua Kategori</option>
                 <option value="cup">Cup</option>
                 <option value="botol">Botol</option>
+                <option value="galon">Galon</option>
               </select>
             </div>
           </div>
@@ -222,7 +225,11 @@ export function ProductManagement() {
                             />
                           ) : (
                             <span className="text-lg">
-                              {product.category === "cup" ? "🥤" : "🍶"}
+                              {product.category === "cup"
+                                ? "🥤"
+                                : product.category === "galon"
+                                  ? "🚰"
+                                  : "🍶"}
                             </span>
                           )}
                         </div>
@@ -237,10 +244,16 @@ export function ProductManagement() {
                           className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
                             product.category === "cup"
                               ? "bg-blue-100 text-blue-700"
-                              : "bg-purple-100 text-purple-700"
+                              : product.category === "galon"
+                                ? "bg-cyan-100 text-cyan-700"
+                                : "bg-purple-100 text-purple-700"
                           }`}
                         >
-                          {product.category === "cup" ? "Cup" : "Botol"}
+                          {product.category === "cup"
+                            ? "Cup"
+                            : product.category === "galon"
+                              ? "Galon"
+                              : "Botol"}
                         </span>
                       </td>
                       <td className="py-3 px-4">

@@ -20,7 +20,7 @@ interface ProductModalProps {
 
 interface FormState {
   product_name: string;
-  category: "cup" | "botol";
+  category: "cup" | "botol" | "galon";
   size: string;
   price: number;
   unit: string;
@@ -196,12 +196,16 @@ export function ProductModal({
                 required
                 value={formData.category}
                 onChange={(e) =>
-                  handleChange("category", e.target.value as "cup" | "botol")
+                  handleChange(
+                    "category",
+                    e.target.value as "cup" | "botol" | "galon",
+                  )
                 }
                 className="w-full px-4 py-2.5 clay-inset border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40 cursor-pointer"
               >
                 <option value="cup">Cup</option>
                 <option value="botol">Botol</option>
+                <option value="galon">Galon</option>
               </select>
             </div>
             <div>
