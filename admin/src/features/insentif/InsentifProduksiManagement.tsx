@@ -15,11 +15,13 @@ import { InsentifProduksiModal } from "./InsentifProduksiModal";
 import {
   InsentifProduksiRecord,
   IncentivePayment,
-  KaryawanAmount,
+  OwnerAmount,
+  IncentiveOwnerType,
+  OWNER_TYPE_LABEL,
   getInsentifProduksiRecords,
   deleteInsentifProduksi,
   calculateInsentifProduksiPerKaryawan,
-  calculateFeePenjualanPerKaryawan,
+  calculateFeePenjualanPerOwner,
   getIncentivePayments,
   savePayments,
   deletePayment,
@@ -35,9 +37,8 @@ const formatDate = (d: string) =>
   });
 const currentPeriode = () => new Date().toISOString().slice(0, 7);
 
-type PreviewRow = KaryawanAmount & {
+type PreviewRow = OwnerAmount & {
   jumlah_dibayar: number;
-  total_dus_terjual?: number;
 };
 
 function RekapPembayaran({
@@ -49,7 +50,7 @@ function RekapPembayaran({
   jenis: "insentif_produksi" | "fee_penjualan";
   accentClass: string;
   onCalculate: (periode: string) => Promise<{
-    data: (KaryawanAmount & { total_dus_terjual?: number })[] | null;
+    data: OwnerAmount[] | null;
     error: any;
   }>;
   extraControls?: React.ReactNode;
@@ -100,11 +101,11 @@ function RekapPembayaran({
     setCalculating(false);
   };
 
-  const updateJumlahDibayar = (karyawanId: string, value: string) => {
+  const updateJumlahDibayar = (ownerId: string, value: string) => {
     const num = value.replace(/\D/g, "");
     setPreview((prev) =>
       prev.map((r) =>
-        r.karyawan_id === karyawanId
+        r.owner_id === ownerId
           ? { ...r, jumlah_dibayar: num === "" ? 0 : parseInt(num, 10) }
           : r,
       ),
@@ -119,7 +120,8 @@ function RekapPembayaran({
       jenis,
       periode,
       preview.map((r) => ({
-        karyawan_id: r.karyawan_id,
+        owner_type: r.owner_type,
+        owner_id: r.owner_id,
         jumlah_dihitung: r.jumlah_dihitung,
         jumlah_dibayar: r.jumlah_dibayar,
       })),
@@ -216,7 +218,7 @@ function RekapPembayaran({
             <table className="w-full">
               <thead>
                 <tr className="border-b border-[rgba(140,172,214,0.35)] bg-[rgba(215,233,255,0.4)]">
-                  {["Karyawan", "Jumlah Dihitung", "Jumlah Dibayar"].map(
+                  {["Jenis", "Nama", "Jumlah Dihitung", "Jumlah Dibayar"].map(
                     (h) => (
                       <th
                         key={h}
@@ -231,9 +233,20 @@ function RekapPembayaran({
               <tbody>
                 {preview.map((row) => (
                   <tr
-                    key={row.karyawan_id}
+                    key={row.owner_id}
                     className="border-b border-[rgba(140,172,214,0.2)] hover:bg-[rgba(215,233,255,0.5)]"
                   >
+                    <td className="py-3 px-4">
+                      <span
+                        className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
+                          row.owner_type === "sales"
+                            ? "bg-cyan-100 text-cyan-700"
+                            : "bg-teal-100 text-teal-700"
+                        }`}
+                      >
+                        {OWNER_TYPE_LABEL[row.owner_type]}
+                      </span>
+                    </td>
                     <td className="py-3 px-4 text-sm font-medium text-gray-900">
                       {row.nama}
                     </td>
@@ -254,7 +267,7 @@ function RekapPembayaran({
                           row.jumlah_dibayar === 0 ? "" : row.jumlah_dibayar
                         }
                         onChange={(e) =>
-                          updateJumlahDibayar(row.karyawan_id, e.target.value)
+                          updateJumlahDibayar(row.owner_id, e.target.value)
                         }
                         placeholder="0"
                         className="w-32 px-2 py-1.5 clay-inset border-0 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
@@ -287,7 +300,8 @@ function RekapPembayaran({
               <thead>
                 <tr className="border-b border-[rgba(140,172,214,0.35)] bg-[rgba(215,233,255,0.4)]">
                   {[
-                    "Karyawan",
+                    "Jenis",
+                    "Nama",
                     "Jumlah Dihitung",
                     "Jumlah Dibayar",
                     "Selisih",
@@ -306,7 +320,7 @@ function RekapPembayaran({
                 {savedList.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={5}
+                      colSpan={6}
                       className="py-12 text-center text-gray-500 text-sm"
                     >
                       Belum ada pembayaran tersimpan untuk periode ini.
@@ -321,8 +335,19 @@ function RekapPembayaran({
                         key={p.id}
                         className="border-b border-[rgba(140,172,214,0.2)] hover:bg-[rgba(215,233,255,0.5)]"
                       >
+                        <td className="py-3 px-4">
+                          <span
+                            className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
+                              p.sales_id
+                                ? "bg-cyan-100 text-cyan-700"
+                                : "bg-teal-100 text-teal-700"
+                            }`}
+                          >
+                            {p.sales_id ? "Sales" : "Karyawan"}
+                          </span>
+                        </td>
                         <td className="py-3 px-4 text-sm font-medium text-gray-900">
-                          {p.karyawan?.nama ?? "—"}
+                          {p.sales?.nama_sales ?? p.karyawan?.nama ?? "—"}
                         </td>
                         <td className="py-3 px-4 text-sm text-gray-700">
                           {formatRp(Number(p.jumlah_dihitung))}
@@ -375,7 +400,9 @@ function RekapPembayaran({
             </h3>
             <p className="text-sm text-gray-600 text-center mb-1">
               <span className="font-medium">
-                {confirmDelete.karyawan?.nama ?? ""}
+                {confirmDelete.sales?.nama_sales ??
+                  confirmDelete.karyawan?.nama ??
+                  ""}
               </span>{" "}
               — periode {confirmDelete.periode}
             </p>
@@ -663,9 +690,7 @@ function FeePenjualanTab() {
       <RekapPembayaran
         jenis="fee_penjualan"
         accentClass="text-blue-600"
-        onCalculate={(periode) =>
-          calculateFeePenjualanPerKaryawan(periode, rate)
-        }
+        onCalculate={(periode) => calculateFeePenjualanPerOwner(periode, rate)}
         extraControls={
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
@@ -699,7 +724,7 @@ export function InsentifProduksiManagement() {
         </h1>
         <p className="text-gray-600">
           Catat insentif produksi per batch dan hitung fee penjualan dari dus
-          terjual per periode
+          terjual per periode, untuk Karyawan maupun Sales
         </p>
       </div>
 

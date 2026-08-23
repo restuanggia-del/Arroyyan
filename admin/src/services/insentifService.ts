@@ -1,6 +1,6 @@
 import { supabaseAdmin } from "../lib/supabaseAdmin";
 
-export type ProduksiKategori = "cup" | "botol";
+export type ProduksiKategori = "cup" | "botol" | "galon";
 export type IncentiveJenis =
     | "insentif_produksi"
     | "fee_penjualan"
@@ -12,6 +12,7 @@ export type IncentiveOwnerType = "karyawan" | "sales";
 export const RATE_DEFAULT_PER_KATEGORI: Record<ProduksiKategori, number> = {
     cup: 1000,
     botol: 2000,
+    galon: 2000,
 };
 
 export const DEFAULT_RATE_FEE_PENJUALAN = 500;

@@ -159,6 +159,7 @@ export function InsentifProduksiModal({
               >
                 <option value="cup">Cup</option>
                 <option value="botol">Botol</option>
+                <option value="galon">Galon</option>
               </select>
             </div>
           </div>
@@ -195,7 +196,8 @@ export function InsentifProduksiModal({
                 className="w-full px-4 py-2.5 clay-inset border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
               />
               <p className="text-xs text-gray-400 mt-1">
-                Default: cup Rp 1.000, botol Rp 2.000 / dus.
+                Default: cup Rp 1.000, botol/galon Rp 2.000 / dus (bisa diubah
+                manual).
               </p>
             </div>
           </div>
