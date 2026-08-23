@@ -519,10 +519,16 @@ export function Reports() {
                       className={`px-2 py-0.5 rounded-full text-xs font-medium ${
                         row.category === "cup"
                           ? "bg-blue-100 text-blue-700"
-                          : "bg-purple-100 text-purple-700"
+                          : row.category === "galon"
+                            ? "bg-cyan-100 text-cyan-700"
+                            : "bg-purple-100 text-purple-700"
                       }`}
                     >
-                      {row.category === "cup" ? "Cup" : "Botol"}
+                      {row.category === "cup"
+                        ? "Cup"
+                        : row.category === "galon"
+                          ? "Galon"
+                          : "Botol"}
                     </span>
                   </td>
                   <td className="py-3 px-3 font-semibold">
@@ -585,10 +591,16 @@ export function Reports() {
                       className={`px-2 py-0.5 rounded-full text-xs font-medium ${
                         row.category === "cup"
                           ? "bg-blue-100 text-blue-700"
-                          : "bg-purple-100 text-purple-700"
+                          : row.category === "galon"
+                            ? "bg-cyan-100 text-cyan-700"
+                            : "bg-purple-100 text-purple-700"
                       }`}
                     >
-                      {row.category === "cup" ? "Cup" : "Botol"}
+                      {row.category === "cup"
+                        ? "Cup"
+                        : row.category === "galon"
+                          ? "Galon"
+                          : "Botol"}
                     </span>
                   </td>
                   <td className="py-3 px-3 text-left">{row.stockPusat}</td>
