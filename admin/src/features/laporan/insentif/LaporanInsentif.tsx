@@ -128,7 +128,9 @@ export function LaporanInsentif() {
 
   const totalDihitung = data.reduce((s, r) => s + Number(r.jumlah_dihitung), 0);
   const totalDibayar = data.reduce((s, r) => s + Number(r.jumlah_dibayar), 0);
-  const jumlahKaryawan = new Set(data.map((r) => r.karyawan_id)).size;
+  const jumlahPenerima = new Set(
+    data.map((r) => r.karyawan_id ?? `sales:${r.sales_id}`),
+  ).size;
 
   const handleExportExcel = async () => {
     setExportingType("excel");
@@ -137,7 +139,8 @@ export function LaporanInsentif() {
         data.map((r) => ({
           Periode: r.periode,
           Jenis: JENIS_LABEL[r.jenis],
-          Karyawan: r.karyawan?.nama ?? "—",
+          "Jenis Pemilik": r.sales_id ? "Sales" : "Karyawan",
+          Nama: r.sales?.nama_sales ?? r.karyawan?.nama ?? "—",
           "Jumlah Dihitung": Number(r.jumlah_dihitung),
           "Jumlah Dibayar": Number(r.jumlah_dibayar),
           Selisih: Number(r.jumlah_dibayar) - Number(r.jumlah_dihitung),
@@ -146,7 +149,8 @@ export function LaporanInsentif() {
         [
           "Periode",
           "Jenis",
-          "Karyawan",
+          "Jenis Pemilik",
+          "Nama",
           "Jumlah Dihitung",
           "Jumlah Dibayar",
           "Selisih",
@@ -164,11 +168,20 @@ export function LaporanInsentif() {
     try {
       await exportToPDF(
         `Laporan Insentif (${startPeriode} s/d ${endPeriode})`,
-        ["Periode", "Jenis", "Karyawan", "Dihitung", "Dibayar", "Selisih"],
+        [
+          "Periode",
+          "Jenis",
+          "Pemilik",
+          "Nama",
+          "Dihitung",
+          "Dibayar",
+          "Selisih",
+        ],
         data.map((r) => [
           r.periode,
           JENIS_LABEL[r.jenis],
-          r.karyawan?.nama ?? "—",
+          r.sales_id ? "Sales" : "Karyawan",
+          r.sales?.nama_sales ?? r.karyawan?.nama ?? "—",
           formatRp(Number(r.jumlah_dihitung)),
           formatRp(Number(r.jumlah_dibayar)),
           formatRp(Number(r.jumlah_dibayar) - Number(r.jumlah_dihitung)),
@@ -215,9 +228,9 @@ export function LaporanInsentif() {
           <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
             <Users className="w-6 h-6 text-blue-600" />
           </div>
-          <h3 className="text-sm text-gray-600 mb-1">Karyawan Menerima</h3>
+          <h3 className="text-sm text-gray-600 mb-1">Penerima</h3>
           <p className="text-2xl font-bold text-gray-900">
-            {loading ? "—" : jumlahKaryawan}
+            {loading ? "—" : jumlahPenerima}
           </p>
         </div>
       </div>
@@ -318,7 +331,8 @@ export function LaporanInsentif() {
                     {[
                       "Periode",
                       "Jenis",
-                      "Karyawan",
+                      "Pemilik",
+                      "Nama",
                       "Dihitung",
                       "Dibayar",
                       "Selisih",
@@ -355,8 +369,19 @@ export function LaporanInsentif() {
                             {JENIS_LABEL[r.jenis]}
                           </span>
                         </td>
+                        <td className="py-3 px-3">
+                          <span
+                            className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
+                              r.sales_id
+                                ? "bg-cyan-100 text-cyan-700"
+                                : "bg-teal-100 text-teal-700"
+                            }`}
+                          >
+                            {r.sales_id ? "Sales" : "Karyawan"}
+                          </span>
+                        </td>
                         <td className="py-3 px-3 font-medium">
-                          {r.karyawan?.nama ?? "—"}
+                          {r.sales?.nama_sales ?? r.karyawan?.nama ?? "—"}
                         </td>
                         <td className="py-3 px-3">
                           {formatRp(Number(r.jumlah_dihitung))}
