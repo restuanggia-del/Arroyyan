@@ -8,8 +8,6 @@ import {
   LogOut,
   Wallet,
   Plus,
-  History,
-  Users,
 } from "lucide-react";
 import { SalesUser } from "../../services";
 import DashboardPage from "../features/dashboard/DashboardPage";
@@ -80,8 +78,6 @@ export default function MainApp({
     onProfileUpdated?.(updated);
   };
 
-  // Dipanggil dari mana pun tombol "Keluar" berada (menu header ATAU tab
-  // Profil) — keduanya cuma minta konfirmasi muncul, bukan langsung logout.
   const requestLogout = () => setShowLogoutConfirm(true);
 
   const initials = localUser.namaSales
@@ -165,25 +161,6 @@ export default function MainApp({
                     {localUser.email}
                   </p>
                 </div>
-                <button
-                  onClick={() => {
-                    setShowMenu(false);
-                    setActiveTab("history");
-                  }}
-                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium text-[#111111] hover:bg-[#0249E1]/5 cursor-pointer"
-                >
-                  <History className="w-4 h-4" /> Riwayat Transaksi
-                </button>
-                <button
-                  onClick={() => {
-                    setShowMenu(false);
-                    setActiveTab("customers");
-                  }}
-                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium text-[#111111] hover:bg-[#0249E1]/5 cursor-pointer"
-                >
-                  <Users className="w-4 h-4" /> Kelola Pelanggan
-                </button>
-                <div className="border-t border-[#8cacd6]/20" />
                 <button
                   onClick={() => {
                     setShowMenu(false);
