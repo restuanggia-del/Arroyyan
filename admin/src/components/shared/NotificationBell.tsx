@@ -17,6 +17,7 @@ import {
   subscribeToNewNotifications,
   countUnread,
   markNotificationsSeenNow,
+  parseDbTimestamp,
 } from "../../services/notificationService";
 
 const KIND_META: Record<
@@ -62,7 +63,7 @@ const KIND_META: Record<
 };
 
 const timeAgo = (dateStr: string): string => {
-  const diffMs = Date.now() - new Date(dateStr).getTime();
+  const diffMs = Date.now() - parseDbTimestamp(dateStr).getTime();
   const diffSec = Math.floor(diffMs / 1000);
   if (diffSec < 60) return "Baru saja";
   const diffMin = Math.floor(diffSec / 60);
@@ -71,7 +72,7 @@ const timeAgo = (dateStr: string): string => {
   if (diffHour < 24) return `${diffHour} jam lalu`;
   const diffDay = Math.floor(diffHour / 24);
   if (diffDay < 7) return `${diffDay} hari lalu`;
-  return new Date(dateStr).toLocaleDateString("id-ID", {
+  return parseDbTimestamp(dateStr).toLocaleDateString("id-ID", {
     day: "numeric",
     month: "short",
     year: "numeric",

@@ -1,5 +1,10 @@
 import { supabaseAdmin } from "../lib/supabaseAdmin";
 
+export const parseDbTimestamp = (value: string): Date => {
+    const hasTimezone = /Z$|[+-]\d{2}:\d{2}$/.test(value);
+    return new Date(hasTimezone ? value : `${value}Z`);
+};
+
 export type NotificationKind =
     | "penjualan"
     | "keuangan"
@@ -110,6 +115,6 @@ export const markNotificationsSeenNow = () => {
 export const countUnread = (items: NotificationItem[]): number => {
     const lastSeen = getLastSeenAt();
     if (!lastSeen) return items.length;
-    const lastSeenTime = new Date(lastSeen).getTime();
-    return items.filter((n) => new Date(n.created_at).getTime() > lastSeenTime).length;
+    const lastSeenTime = parseDbTimestamp(lastSeen).getTime();
+    return items.filter((n) => parseDbTimestamp(n.created_at).getTime() > lastSeenTime).length;
 };
