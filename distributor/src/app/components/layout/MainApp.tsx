@@ -18,6 +18,7 @@ import SetoranPage from "../features/setoran/SetoranPage";
 import ProfilePage from "../features/profile/ProfilePage";
 import TransactionHistory from "../features/history/TransactionHistory";
 import CustomerPage from "../features/customer/CustomerPage";
+import TitipanPage from "../features/titipan/TitipanPage";
 
 interface MainAppProps {
   user: SalesUser;
@@ -33,7 +34,8 @@ type TabKey =
   | "setoran"
   | "profile"
   | "history"
-  | "customers";
+  | "customers"
+  | "titipan";
 
 const SIDE_TABS_LEFT: {
   key: TabKey;
@@ -61,6 +63,7 @@ const titleMap: Record<TabKey, string> = {
   profile: "Profil",
   history: "Riwayat Transaksi",
   customers: "Pelanggan",
+  titipan: "Transaksi Titipan (Kasbon)",
 };
 
 export default function MainApp({
@@ -113,6 +116,8 @@ export default function MainApp({
         return <TransactionHistory salesId={localUser.salesId} />;
       case "customers":
         return <CustomerPage salesId={localUser.salesId} mode="manage" />;
+      case "titipan":
+        return <TitipanPage salesId={localUser.salesId} />;
       case "profile":
         return (
           <ProfilePage

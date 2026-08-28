@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
 import {
-  Plus,
   RefreshCw,
   AlertCircle,
   Wallet,
@@ -9,7 +8,6 @@ import {
   History,
   DollarSign,
 } from "lucide-react";
-import { KasbonTransactionModal } from "./KasbonTransactionModal";
 import { KasbonPaymentModal } from "./KasbonPaymentModal";
 import { KasbonHistoryModal } from "./KasbonHistoryModal";
 import {
@@ -33,7 +31,6 @@ export function TransaksiTitipan() {
     "belum_lunas",
   );
 
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [payingTrx, setPayingTrx] = useState<KasbonTransaction | null>(null);
   const [historyTrx, setHistoryTrx] = useState<KasbonTransaction | null>(null);
 
@@ -52,11 +49,6 @@ export function TransaksiTitipan() {
   useEffect(() => {
     fetchAll();
   }, [fetchAll]);
-
-  const handleCreateSuccess = () => {
-    setIsCreateOpen(false);
-    fetchAll();
-  };
 
   const handlePaymentSuccess = () => {
     setPayingTrx(null);
@@ -85,7 +77,8 @@ export function TransaksiTitipan() {
             Transaksi Titipan (Kasbon)
           </h1>
           <p className="text-gray-600">
-            Kelola barang yang dititipkan ke toko dan pelunasannya
+            Kelola barang yang dititipkan sales ke toko dan pelunasannya.
+            Titipan baru dibuat oleh sales langsung dari aplikasi mereka.
           </p>
         </div>
         <div className="flex gap-2">
@@ -96,13 +89,6 @@ export function TransaksiTitipan() {
           >
             <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
             Refresh
-          </button>
-          <button
-            onClick={() => setIsCreateOpen(true)}
-            className="clay-blue clay-pressable text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer"
-          >
-            <Plus className="w-4 h-4" />
-            Buat Titipan Baru
           </button>
         </div>
       </div>
@@ -268,13 +254,6 @@ export function TransaksiTitipan() {
           )}
         </div>
       </div>
-
-      {isCreateOpen && (
-        <KasbonTransactionModal
-          onClose={() => setIsCreateOpen(false)}
-          onSaveSuccess={handleCreateSuccess}
-        />
-      )}
 
       {payingTrx && (
         <KasbonPaymentModal

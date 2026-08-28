@@ -14,6 +14,7 @@ import {
   Search,
   UserPlus,
   History,
+  Receipt,
 } from "lucide-react";
 import {
   getProductsWithSalesStock,
@@ -207,6 +208,15 @@ export default function TransactionPage({
             className="w-full pl-9 pr-4 py-2.5 clay-inset-sm border-0 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
           />
         </div>
+        {onNavigate && (
+          <button
+            onClick={() => onNavigate("titipan")}
+            title="Titipan (Kasbon)"
+            className="w-10 h-10 flex-shrink-0 clay-raised rounded-xl flex items-center justify-center cursor-pointer"
+          >
+            <Receipt className="w-4 h-4 text-[#111111]/60" />
+          </button>
+        )}
         {onNavigate && (
           <button
             onClick={() => onNavigate("history")}

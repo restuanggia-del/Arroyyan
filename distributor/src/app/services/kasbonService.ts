@@ -1,5 +1,4 @@
-import { supabaseAdmin } from "../lib/supabaseAdmin";
-import { Transaction } from "./transactionService";
+import { supabase } from '../../utils/supabase/client';
 
 export interface KasbonPayment {
     id: string;
@@ -15,7 +14,20 @@ export interface KasbonPayment {
     created_at: string;
 }
 
-export interface KasbonTransaction extends Transaction {
+export interface KasbonTransaction {
+    id: string;
+    customer_id: string | null;
+    total_price: number;
+    created_at: string;
+    customers: { customer_name: string; phone: string | null } | null;
+    transaction_details: {
+        id: string;
+        product_id: string;
+        quantity: number;
+        price: number;
+        subtotal: number;
+        products: { product_name: string; category: string } | null;
+    }[];
     total_dus: number;
     sisa_dus: number;
     sisa_rp: number;
@@ -23,20 +35,16 @@ export interface KasbonTransaction extends Transaction {
     last_payment_at: string | null;
 }
 
-export const getKasbonTransactions = async () => {
-    const { data, error } = await supabaseAdmin
-        .from("transactions")
+/** All titipan (kasbon) transactions created by this sales rep, with running sisa. */
+export const getKasbonTransactions = async (salesId: string): Promise<KasbonTransaction[]> => {
+    const { data, error } = await supabase
+        .from('transactions')
         .select(`
       id,
-      karyawan_id,
-      sales_id,
       customer_id,
       total_price,
-      payment_method,
       created_at,
       customers ( customer_name, phone ),
-      karyawan ( nama ),
-      sales ( nama_sales ),
       transaction_details (
         id,
         product_id,
@@ -46,23 +54,27 @@ export const getKasbonTransactions = async () => {
         products ( product_name, category )
       )
     `)
-        .eq("payment_method", "kasbon")
-        .order("created_at", { ascending: false });
+        .eq('sales_id', salesId)
+        .eq('payment_method', 'kasbon')
+        .order('created_at', { ascending: false });
 
-    if (error) return { data: null, error };
+    if (error) throw new Error(error.message);
 
-    const transactions = (data ?? []) as unknown as Transaction[];
+    const transactions = (data ?? []) as unknown as Omit<
+        KasbonTransaction,
+        'total_dus' | 'sisa_dus' | 'sisa_rp' | 'is_lunas' | 'last_payment_at'
+    >[];
     const ids = transactions.map((t) => t.id);
 
     let paymentsByTrx: Record<string, KasbonPayment[]> = {};
     if (ids.length > 0) {
-        const { data: payments, error: payErr } = await supabaseAdmin
-            .from("kasbon_payments")
-            .select("*")
-            .in("transaction_id", ids)
-            .order("created_at", { ascending: true });
+        const { data: payments, error: payErr } = await supabase
+            .from('kasbon_payments')
+            .select('*')
+            .in('transaction_id', ids)
+            .order('created_at', { ascending: true });
 
-        if (payErr) return { data: null, error: payErr };
+        if (payErr) throw new Error(payErr.message);
 
         paymentsByTrx = (payments as KasbonPayment[]).reduce(
             (acc, p) => {
@@ -73,11 +85,8 @@ export const getKasbonTransactions = async () => {
         );
     }
 
-    const result: KasbonTransaction[] = transactions.map((t) => {
-        const totalDus = (t.transaction_details ?? []).reduce(
-            (s, d) => s + d.quantity,
-            0,
-        );
+    return transactions.map((t) => {
+        const totalDus = (t.transaction_details ?? []).reduce((s, d) => s + d.quantity, 0);
         const payments = paymentsByTrx[t.id] ?? [];
         const lastPayment = payments[payments.length - 1];
 
@@ -93,19 +102,17 @@ export const getKasbonTransactions = async () => {
             last_payment_at: lastPayment ? lastPayment.created_at : null,
         };
     });
-
-    return { data: result, error: null };
 };
 
-export const getKasbonPaymentHistory = async (transactionId: string) => {
-    const { data, error } = await supabaseAdmin
-        .from("kasbon_payments")
-        .select("*")
-        .eq("transaction_id", transactionId)
-        .order("created_at", { ascending: false });
+export const getKasbonPaymentHistory = async (transactionId: string): Promise<KasbonPayment[]> => {
+    const { data, error } = await supabase
+        .from('kasbon_payments')
+        .select('*')
+        .eq('transaction_id', transactionId)
+        .order('created_at', { ascending: false });
 
-    if (error) return { data: null, error };
-    return { data: data as KasbonPayment[], error: null };
+    if (error) throw new Error(error.message);
+    return data as KasbonPayment[];
 };
 
 export const addKasbonPayment = async (
@@ -118,42 +125,41 @@ export const addKasbonPayment = async (
         jumlah_ke_owner: number;
         keterangan?: string | null;
     },
-) => {
-    const { data: trx, error: trxErr } = await supabaseAdmin
-        .from("transactions")
+): Promise<KasbonPayment> => {
+    const { data: trx, error: trxErr } = await supabase
+        .from('transactions')
         .select(`
       id,
       total_price,
       transaction_details ( quantity )
     `)
-        .eq("id", transactionId)
+        .eq('id', transactionId)
         .single();
 
-    if (trxErr) return { data: null, error: trxErr };
+    if (trxErr) throw new Error(trxErr.message);
 
     const totalDus = (trx.transaction_details as { quantity: number }[]).reduce(
         (s, d) => s + d.quantity,
         0,
     );
 
-    const { data: lastPaymentRows, error: lastErr } = await supabaseAdmin
-        .from("kasbon_payments")
-        .select("sisa_dus, sisa_rp")
-        .eq("transaction_id", transactionId)
-        .order("created_at", { ascending: false })
+    const { data: lastPaymentRows, error: lastErr } = await supabase
+        .from('kasbon_payments')
+        .select('sisa_dus, sisa_rp')
+        .eq('transaction_id', transactionId)
+        .order('created_at', { ascending: false })
         .limit(1);
 
-    if (lastErr) return { data: null, error: lastErr };
+    if (lastErr) throw new Error(lastErr.message);
 
     const prevSisaDus = lastPaymentRows?.[0]?.sisa_dus ?? totalDus;
     const prevSisaRp = lastPaymentRows?.[0]?.sisa_rp ?? trx.total_price;
 
     const newSisaDus = prevSisaDus - payment.dus_dibayar;
-    const newSisaRp =
-        prevSisaRp - (payment.jumlah_transfer + payment.jumlah_cash);
+    const newSisaRp = prevSisaRp - (payment.jumlah_transfer + payment.jumlah_cash);
 
-    const { data, error } = await supabaseAdmin
-        .from("kasbon_payments")
+    const { data, error } = await supabase
+        .from('kasbon_payments')
         .insert([{
             transaction_id: transactionId,
             tanggal_bayar: payment.tanggal_bayar,
@@ -168,14 +174,14 @@ export const addKasbonPayment = async (
         .select()
         .single();
 
-    if (error) return { data: null, error };
+    if (error) throw new Error(error.message);
 
-    await supabaseAdmin.from("activity_logs").insert([{
-        activity_type: "kasbon_payment",
+    await supabase.from('activity_logs').insert([{
+        activity_type: 'kasbon_payment',
         description: `Pembayaran titipan #${transactionId.slice(0, 8)} — ${payment.dus_dibayar} dus, Rp ${(
             payment.jumlah_transfer + payment.jumlah_cash
-        ).toLocaleString("id-ID")}`,
+        ).toLocaleString('id-ID')}`,
     }]);
 
-    return { data: data as KasbonPayment, error: null };
+    return data as KasbonPayment;
 };
