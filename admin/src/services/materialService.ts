@@ -19,7 +19,8 @@ export interface MaterialMovement {
     | "keluar"
     | "ke_sementara"
     | "kembali_gudang"
-    | "produksi";
+    | "produksi"
+    | "stok_awal_sementara";
     quantity: number;
     note: string | null;
     created_at: string;
@@ -33,6 +34,7 @@ export const MOVEMENT_TYPE_LABEL: Record<MaterialMovement["movement_type"], stri
     ke_sementara: "Pindah ke Sementara",
     kembali_gudang: "Kembali ke Gudang",
     produksi: "Pemakaian Produksi",
+    stok_awal_sementara: "Stok Awal Sementara (Pabrik)",
 };
 
 export const MATERIAL_MINIMUM_STOCK = 10;
@@ -261,6 +263,39 @@ export const moveToSementara = async (
         .insert([{
             material_id: materialId,
             movement_type: "ke_sementara",
+            quantity,
+            note: note || null,
+        }]);
+
+    if (movErr) return { error: movErr };
+    return { error: null };
+};
+
+export const addSementaraStokAwal = async (
+    materialId: string,
+    quantity: number,
+    note: string
+) => {
+    const { data: existing, error: fetchErr } = await supabaseAdmin
+        .from("materials")
+        .select("id, stock_sementara")
+        .eq("id", materialId)
+        .single();
+
+    if (fetchErr) return { error: fetchErr };
+
+    const { error } = await supabaseAdmin
+        .from("materials")
+        .update({ stock_sementara: existing.stock_sementara + quantity })
+        .eq("id", materialId);
+
+    if (error) return { error };
+
+    const { error: movErr } = await supabaseAdmin
+        .from("material_movements")
+        .insert([{
+            material_id: materialId,
+            movement_type: "stok_awal_sementara",
             quantity,
             note: note || null,
         }]);

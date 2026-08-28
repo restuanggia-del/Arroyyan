@@ -16,6 +16,7 @@ import {
   reduceMaterialStock,
   moveToSementara,
   consumeSementara,
+  addSementaraStokAwal,
   MOVEMENT_TYPE_LABEL,
 } from "../../../services/materialService";
 
@@ -24,6 +25,7 @@ export type MaterialTxType =
   | "stok_awal"
   | "keluar"
   | "ke_sementara"
+  | "stok_awal_sementara"
   | "produksi";
 
 interface MaterialTransactionModalProps {
@@ -71,6 +73,14 @@ const TX_CONFIG: Record<
     notePlaceholder: "Contoh: Disiapkan untuk produksi batch pagi",
     effectText:
       "→ Stok Gudang berkurang, Stok Sementara bertambah. Catatan: bahan yang sudah masuk Stok Sementara tidak bisa dikembalikan ke Gudang (menjaga kebersihan & sterilitas bahan) — anggap langsung habis terpakai untuk produksi.",
+  },
+  stok_awal_sementara: {
+    icon: <ClipboardList className="w-5 h-5" />,
+    color: "amber",
+    sourceField: null,
+    notePlaceholder: "Contoh: Saldo awal bahan yang sudah ada di area produksi",
+    effectText:
+      "✓ Stok Sementara akan bertambah (tercatat terpisah dari Pindah ke Sementara biasa)",
   },
   produksi: {
     icon: <Factory className="w-5 h-5" />,
@@ -164,6 +174,8 @@ export function MaterialTransactionModal({
     let error;
     if (type === "masuk" || type === "stok_awal") {
       ({ error } = await addMaterialStock(materialId, quantity, note, type));
+    } else if (type === "stok_awal_sementara") {
+      ({ error } = await addSementaraStokAwal(materialId, quantity, note));
     } else {
       const fn = {
         keluar: reduceMaterialStock,
