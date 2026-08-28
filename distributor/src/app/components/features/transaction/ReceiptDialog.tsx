@@ -15,8 +15,6 @@ interface ReceiptDialogProps {
     paymentMethod: "cash" | "transfer" | "kasbon";
   };
   onClose: () => void;
-  /** Optional: when provided, shows a secondary "Lihat Riwayat Transaksi" button
-   *  that lets the sales rep jump straight to the transaction history page. */
   onViewHistory?: () => void;
 }
 

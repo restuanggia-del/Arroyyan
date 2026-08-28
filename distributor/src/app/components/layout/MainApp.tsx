@@ -8,6 +8,7 @@ import {
   LogOut,
   Wallet,
   Plus,
+  Receipt,
 } from "lucide-react";
 import { SalesUser } from "../../services";
 import DashboardPage from "../features/dashboard/DashboardPage";
@@ -73,6 +74,7 @@ export default function MainApp({
 }: MainAppProps) {
   const [activeTab, setActiveTab] = useState<TabKey>("dashboard");
   const [showMenu, setShowMenu] = useState(false);
+  const [showTransactionMenu, setShowTransactionMenu] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [localUser, setLocalUser] = useState<SalesUser>(user);
 
@@ -245,16 +247,56 @@ export default function MainApp({
           })}
 
           <div className="absolute left-1/2 -translate-x-1/2 -top-5 flex flex-col items-center gap-1">
-            <button
-              onClick={() => setActiveTab("transaction")}
-              className="clay-pressable w-16 h-16 rounded-full bg-gradient-to-br from-[#4a86f4] to-[#0249e1] shadow-[8px_8px_18px_rgba(2,55,150,0.45),-4px_-4px_12px_rgba(150,195,255,0.35)] flex items-center justify-center cursor-pointer"
-            >
-              {activeTab === "transaction" ? (
-                <ShoppingCart className="w-6 h-6 text-[#DAFB71]" />
-              ) : (
-                <Plus className="w-6 h-6 text-[#DAFB71]" />
+            <div className="relative">
+              <button
+                onClick={() => setShowTransactionMenu((s) => !s)}
+                className="clay-pressable w-16 h-16 rounded-full bg-gradient-to-br from-[#4a86f4] to-[#0249e1] shadow-[8px_8px_18px_rgba(2,55,150,0.45),-4px_-4px_12px_rgba(150,195,255,0.35)] flex items-center justify-center cursor-pointer"
+              >
+                {activeTab === "transaction" || activeTab === "titipan" ? (
+                  <ShoppingCart className="w-6 h-6 text-[#DAFB71]" />
+                ) : (
+                  <Plus className="w-6 h-6 text-[#DAFB71]" />
+                )}
+              </button>
+
+              {showTransactionMenu && (
+                <>
+                  <div
+                    className="fixed inset-0 z-30"
+                    onClick={() => setShowTransactionMenu(false)}
+                  />
+                  <div className="absolute bottom-[78px] left-1/2 -translate-x-1/2 w-60 bg-gradient-to-br from-white to-[#eef5ff] rounded-2xl shadow-[10px_10px_24px_rgba(2,30,90,0.25),-8px_-8px_18px_rgba(255,255,255,0.9)] z-40 overflow-hidden">
+                    <button
+                      onClick={() => {
+                        setActiveTab("transaction");
+                        setShowTransactionMenu(false);
+                      }}
+                      className={`w-full flex items-center gap-2.5 px-4 py-3 text-sm font-medium cursor-pointer ${
+                        activeTab === "transaction"
+                          ? "text-[#0249E1] bg-[#0249E1]/5"
+                          : "text-[#111111] hover:bg-[#0249E1]/5"
+                      }`}
+                    >
+                      <ShoppingCart className="w-4 h-4" /> Transaksi Penjualan
+                    </button>
+                    <div className="border-t border-[#8cacd6]/20" />
+                    <button
+                      onClick={() => {
+                        setActiveTab("titipan");
+                        setShowTransactionMenu(false);
+                      }}
+                      className={`w-full flex items-center gap-2.5 px-4 py-3 text-sm font-medium cursor-pointer ${
+                        activeTab === "titipan"
+                          ? "text-[#0249E1] bg-[#0249E1]/5"
+                          : "text-[#111111] hover:bg-[#0249E1]/5"
+                      }`}
+                    >
+                      <Receipt className="w-4 h-4" /> Transaksi Titipan (Kasbon)
+                    </button>
+                  </div>
+                </>
               )}
-            </button>
+            </div>
           </div>
         </div>
       </nav>
