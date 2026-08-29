@@ -20,6 +20,7 @@ import ProfilePage from "../features/profile/ProfilePage";
 import TransactionHistory from "../features/history/TransactionHistory";
 import CustomerPage from "../features/customer/CustomerPage";
 import TitipanPage from "../features/titipan/TitipanPage";
+import ChecklistKebersihanPage from "../features/checklist/ChecklistKebersihanPage";
 
 interface MainAppProps {
   user: SalesUser;
@@ -36,7 +37,8 @@ type TabKey =
   | "profile"
   | "history"
   | "customers"
-  | "titipan";
+  | "titipan"
+  | "checklist";
 
 const SIDE_TABS_LEFT: {
   key: TabKey;
@@ -65,6 +67,7 @@ const titleMap: Record<TabKey, string> = {
   history: "Riwayat Transaksi",
   customers: "Pelanggan",
   titipan: "Transaksi Titipan (Kasbon)",
+  checklist: "Checklist Kebersihan",
 };
 
 export default function MainApp({
@@ -120,6 +123,8 @@ export default function MainApp({
         return <CustomerPage salesId={localUser.salesId} mode="manage" />;
       case "titipan":
         return <TitipanPage salesId={localUser.salesId} />;
+      case "checklist":
+        return <ChecklistKebersihanPage user={localUser} />;
       case "profile":
         return (
           <ProfilePage
