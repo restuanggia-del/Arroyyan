@@ -150,6 +150,11 @@ const menuItems: MenuItem[] = [
         icon: <HandCoins className="w-5 h-5" />,
       },
       {
+        id: "laporan-bahan",
+        label: "Laporan Bahan",
+        icon: <Boxes className="w-5 h-5" />,
+      },
+      {
         id: "laporan-bonus",
         label: "Laporan Bonus",
         icon: <Award className="w-5 h-5" />,
