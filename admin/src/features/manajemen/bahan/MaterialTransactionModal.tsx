@@ -8,6 +8,7 @@ import {
   RefreshCw,
   AlertCircle,
   ClipboardList,
+  Ban,
 } from "lucide-react";
 import {
   getActiveMaterials,
@@ -17,6 +18,7 @@ import {
   moveToSementara,
   consumeSementara,
   addSementaraStokAwal,
+  rejectSementara,
   MOVEMENT_TYPE_LABEL,
 } from "../../../services/materialService";
 
@@ -26,7 +28,8 @@ export type MaterialTxType =
   | "keluar"
   | "ke_sementara"
   | "stok_awal_sementara"
-  | "produksi";
+  | "produksi"
+  | "reject";
 
 interface MaterialTransactionModalProps {
   type: MaterialTxType;
@@ -88,6 +91,13 @@ const TX_CONFIG: Record<
     sourceField: "stock_sementara",
     notePlaceholder: "Contoh: Terpakai produksi batch #1",
     effectText: "⚠ Stok Sementara akan berkurang (terpakai produksi)",
+  },
+  reject: {
+    icon: <Ban className="w-5 h-5" />,
+    color: "red",
+    sourceField: "stock_sementara",
+    notePlaceholder: "Contoh: Bahan sobek/pecah/cacat saat proses produksi",
+    effectText: "⚠ Stok Sementara akan berkurang (rusak/reject)",
   },
 };
 
@@ -181,6 +191,7 @@ export function MaterialTransactionModal({
         keluar: reduceMaterialStock,
         ke_sementara: moveToSementara,
         produksi: consumeSementara,
+        reject: rejectSementara,
       }[type];
       ({ error } = await fn(materialId, quantity, note));
     }

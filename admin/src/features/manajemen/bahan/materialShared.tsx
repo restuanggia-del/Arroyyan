@@ -6,6 +6,7 @@ import {
   Factory,
   ArrowRight,
   ClipboardList,
+  Ban,
 } from "lucide-react";
 import {
   Material,
@@ -69,6 +70,12 @@ export const MOVEMENT_VISUAL: Record<
     text: "text-amber-600",
     sign: "+",
   },
+  reject: {
+    icon: <Ban className="w-5 h-5" />,
+    bg: "bg-red-100",
+    text: "text-red-600",
+    sign: "-",
+  },
 };
 
 // Pergerakan yang mempengaruhi Stok Gudang
@@ -86,6 +93,7 @@ export const SEMENTARA_MOVEMENT_TYPES: MaterialMovement["movement_type"][] = [
   "kembali_gudang",
   "produksi",
   "stok_awal_sementara",
+  "reject",
 ];
 
 export interface TabProps {
