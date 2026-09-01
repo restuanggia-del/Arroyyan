@@ -15,7 +15,11 @@ import {
   MovementList,
   SEMENTARA_MOVEMENT_TYPES,
   TabProps,
+  getMaterialStockStatus,
+  MaterialStockStatusBadge,
+  MaterialCriticalStockBanner,
 } from "../bahan/materialShared";
+import { MATERIAL_MINIMUM_STOCK } from "../../../services/materialService";
 
 export function StokSementaraTab({
   materials,
@@ -38,12 +42,24 @@ export function StokSementaraTab({
     (s, m) => s + Number(m.stock_sementara),
     0,
   );
+  const kritisSementaraItems = materials.filter(
+    (m) => m.is_active && Number(m.stock_sementara) < MATERIAL_MINIMUM_STOCK,
+  );
   const sementaraMovements = movements.filter((m) =>
     SEMENTARA_MOVEMENT_TYPES.includes(m.movement_type),
   );
 
   return (
     <div>
+      {!loading && (
+        <MaterialCriticalStockBanner
+          title="Peringatan Stok Sementara Kritis"
+          materials={materials}
+          getQty={(m) => Number(m.stock_sementara)}
+          satuanLabel={(m) => m.satuan}
+        />
+      )}
+
       <div className="clay-inset-amber border-0 rounded-xl p-4 mb-6 flex items-start gap-3">
         <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
         <div>
@@ -62,7 +78,7 @@ export function StokSementaraTab({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="clay-raised rounded-lg p-6">
           <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
             <Factory className="w-6 h-6 text-purple-600" />
@@ -81,6 +97,15 @@ export function StokSementaraTab({
           </h3>
           <p className="text-2xl font-bold text-gray-900">
             {loading ? "—" : `${materialsWithSementara.length} Bahan`}
+          </p>
+        </div>
+        <div className="clay-raised rounded-lg p-6">
+          <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-4">
+            <AlertTriangle className="w-6 h-6 text-orange-600" />
+          </div>
+          <h3 className="text-sm text-gray-600 mb-1">Bahan Stok Kritis</h3>
+          <p className="text-2xl font-bold text-gray-900">
+            {loading ? "—" : `${kritisSementaraItems.length} Bahan`}
           </p>
         </div>
       </div>
@@ -164,6 +189,7 @@ export function StokSementaraTab({
                       "Satuan",
                       "Stok Sementara",
                       "Status",
+                      "Kondisi",
                       "Aksi",
                     ].map((h) => (
                       <th
@@ -179,63 +205,71 @@ export function StokSementaraTab({
                   {materials.length === 0 ? (
                     <tr>
                       <td
-                        colSpan={5}
+                        colSpan={6}
                         className="py-12 text-center text-gray-500 text-sm"
                       >
                         Belum ada data bahan
                       </td>
                     </tr>
                   ) : (
-                    materials.map((m) => (
-                      <tr
-                        key={m.id}
-                        className="border-b border-[rgba(140,172,214,0.2)] hover:bg-[rgba(215,233,255,0.5)]"
-                      >
-                        <td className="py-3 px-4 text-sm font-medium text-gray-900">
-                          {m.nama_bahan}
-                        </td>
-                        <td className="py-3 px-4 text-sm text-gray-600">
-                          {m.satuan}
-                        </td>
-                        <td className="py-3 px-4 text-sm font-semibold text-purple-700">
-                          {m.stock_sementara}
-                        </td>
-                        <td className="py-3 px-4">
-                          {actionLoading === m.id ? (
-                            <RefreshCw className="w-4 h-4 animate-spin text-gray-400" />
-                          ) : (
-                            <button
-                              onClick={() => onToggleStatus(m)}
-                              className={`inline-flex px-3 py-1 rounded-full text-xs font-medium transition-colors cursor-pointer ${
-                                m.is_active
-                                  ? "bg-green-100 text-green-700 hover:bg-green-200"
-                                  : "bg-[rgba(215,233,255,0.55)] text-gray-700 hover:bg-gray-200"
-                              }`}
-                            >
-                              {m.is_active ? "Aktif" : "Nonaktif"}
-                            </button>
-                          )}
-                        </td>
-                        <td className="py-3 px-4">
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => onEditMaterial(m)}
-                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
-                              title="Edit"
-                            >
-                              <Edit2 className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => onDeleteMaterial(m)}
-                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
-                              title="Hapus"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
+                    materials.map((m) => {
+                      const stockStatus = getMaterialStockStatus(
+                        Number(m.stock_sementara),
+                      );
+                      return (
+                        <tr
+                          key={m.id}
+                          className="border-b border-[rgba(140,172,214,0.2)] hover:bg-[rgba(215,233,255,0.5)]"
+                        >
+                          <td className="py-3 px-4 text-sm font-medium text-gray-900">
+                            {m.nama_bahan}
+                          </td>
+                          <td className="py-3 px-4 text-sm text-gray-600">
+                            {m.satuan}
+                          </td>
+                          <td className="py-3 px-4 text-sm font-semibold text-purple-700">
+                            {m.stock_sementara}
+                          </td>
+                          <td className="py-3 px-4">
+                            {actionLoading === m.id ? (
+                              <RefreshCw className="w-4 h-4 animate-spin text-gray-400" />
+                            ) : (
+                              <button
+                                onClick={() => onToggleStatus(m)}
+                                className={`inline-flex px-3 py-1 rounded-full text-xs font-medium transition-colors cursor-pointer ${
+                                  m.is_active
+                                    ? "bg-green-100 text-green-700 hover:bg-green-200"
+                                    : "bg-[rgba(215,233,255,0.55)] text-gray-700 hover:bg-gray-200"
+                                }`}
+                              >
+                                {m.is_active ? "Aktif" : "Nonaktif"}
+                              </button>
+                            )}
+                          </td>
+                          <td className="py-3 px-4">
+                            <MaterialStockStatusBadge status={stockStatus} />
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => onEditMaterial(m)}
+                                className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
+                                title="Edit"
+                              >
+                                <Edit2 className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => onDeleteMaterial(m)}
+                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                                title="Hapus"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
                   )}
                 </tbody>
               </table>

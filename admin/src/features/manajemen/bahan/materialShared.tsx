@@ -7,11 +7,14 @@ import {
   ArrowRight,
   ClipboardList,
   Ban,
+  AlertTriangle,
+  PackageX,
 } from "lucide-react";
 import {
   Material,
   MaterialMovement,
   MOVEMENT_TYPE_LABEL,
+  MATERIAL_MINIMUM_STOCK,
 } from "../../../services/materialService";
 import { MaterialTxType } from "./MaterialTransactionModal";
 
@@ -78,7 +81,6 @@ export const MOVEMENT_VISUAL: Record<
   },
 };
 
-// Pergerakan yang mempengaruhi Stok Gudang
 export const GUDANG_MOVEMENT_TYPES: MaterialMovement["movement_type"][] = [
   "masuk",
   "stok_awal",
@@ -87,7 +89,6 @@ export const GUDANG_MOVEMENT_TYPES: MaterialMovement["movement_type"][] = [
   "kembali_gudang",
 ];
 
-// Pergerakan yang mempengaruhi Stok Sementara
 export const SEMENTARA_MOVEMENT_TYPES: MaterialMovement["movement_type"][] = [
   "ke_sementara",
   "kembali_gudang",
@@ -107,6 +108,96 @@ export interface TabProps {
   onDeleteMaterial: (m: Material) => void;
   onToggleStatus: (m: Material) => void;
   onAddTransaction: (type: MaterialTxType) => void;
+}
+
+export type MaterialStockStatus = "aman" | "menipis" | "habis";
+
+export const getMaterialStockStatus = (qty: number): MaterialStockStatus => {
+  if (qty <= 0) return "habis";
+  if (qty < MATERIAL_MINIMUM_STOCK) return "menipis";
+  return "aman";
+};
+
+export function MaterialStockStatusBadge({
+  status,
+}: {
+  status: MaterialStockStatus;
+}) {
+  if (status === "habis") {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700">
+        <PackageX className="w-3 h-3" />
+        Habis
+      </span>
+    );
+  }
+  if (status === "menipis") {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-700">
+        <AlertTriangle className="w-3 h-3" />
+        Menipis
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+      Aman
+    </span>
+  );
+}
+
+export function MaterialCriticalStockBanner({
+  title,
+  materials,
+  getQty,
+  satuanLabel,
+}: {
+  title: string;
+  materials: Material[];
+  getQty: (m: Material) => number;
+  satuanLabel: (m: Material) => string;
+}) {
+  const habisItems = materials.filter((m) => m.is_active && getQty(m) <= 0);
+  const menipisItems = materials.filter(
+    (m) => m.is_active && getQty(m) > 0 && getQty(m) < MATERIAL_MINIMUM_STOCK,
+  );
+
+  if (habisItems.length === 0 && menipisItems.length === 0) return null;
+
+  return (
+    <div className="clay-inset-red border-0 rounded-xl p-4 mb-6 flex items-start gap-3">
+      <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+      <div>
+        <h3 className="font-semibold text-red-900 mb-1">{title}</h3>
+        <p className="text-sm text-red-700">
+          {habisItems.length > 0 && (
+            <>
+              {habisItems.length} bahan sudah <strong>habis</strong>
+              {menipisItems.length > 0 ? ", dan " : "."}
+            </>
+          )}
+          {menipisItems.length > 0 && (
+            <>
+              {menipisItems.length} bahan <strong>menipis</strong> (di bawah{" "}
+              {MATERIAL_MINIMUM_STOCK} unit).
+            </>
+          )}
+        </p>
+        <ul className="mt-1 text-xs list-disc list-inside">
+          {habisItems.map((m) => (
+            <li key={m.id} className="text-red-700 font-medium">
+              {m.nama_bahan} — HABIS (0 {satuanLabel(m)})
+            </li>
+          ))}
+          {menipisItems.map((m) => (
+            <li key={m.id} className="text-orange-600">
+              {m.nama_bahan} — stok: {getQty(m)} {satuanLabel(m)}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
 }
 
 export function MovementList({

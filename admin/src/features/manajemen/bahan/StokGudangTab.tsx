@@ -18,6 +18,9 @@ import {
   MovementList,
   GUDANG_MOVEMENT_TYPES,
   TabProps,
+  getMaterialStockStatus,
+  MaterialStockStatusBadge,
+  MaterialCriticalStockBanner,
 } from "../bahan/materialShared";
 
 export function StokGudangTab({
@@ -47,26 +50,13 @@ export function StokGudangTab({
 
   return (
     <div>
-      {!loading && lowStockItems.length > 0 && (
-        <div className="clay-inset-amber border-0 rounded-xl p-4 mb-6 flex items-start gap-3">
-          <AlertTriangle className="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" />
-          <div>
-            <h3 className="font-semibold text-orange-900 mb-1">
-              Peringatan Stok Gudang Menipis
-            </h3>
-            <p className="text-sm text-orange-700">
-              {lowStockItems.length} bahan memiliki stok gudang di bawah{" "}
-              {MATERIAL_MINIMUM_STOCK} unit.
-            </p>
-            <ul className="mt-1 text-xs text-orange-600 list-disc list-inside">
-              {lowStockItems.map((m) => (
-                <li key={m.id}>
-                  {m.nama_bahan} — stok: {m.stock_quantity} {m.satuan}
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
+      {!loading && (
+        <MaterialCriticalStockBanner
+          title="Peringatan Stok Gudang Kritis"
+          materials={materials}
+          getQty={(m) => Number(m.stock_quantity)}
+          satuanLabel={(m) => m.satuan}
+        />
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -209,7 +199,9 @@ export function StokGudangTab({
                     </tr>
                   ) : (
                     materials.map((m) => {
-                      const isLow = m.stock_quantity < MATERIAL_MINIMUM_STOCK;
+                      const stockStatus = getMaterialStockStatus(
+                        Number(m.stock_quantity),
+                      );
                       return (
                         <tr
                           key={m.id}
@@ -241,16 +233,7 @@ export function StokGudangTab({
                             )}
                           </td>
                           <td className="py-3 px-4">
-                            {isLow ? (
-                              <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-700">
-                                <AlertTriangle className="w-3 h-3" />
-                                Menipis
-                              </span>
-                            ) : (
-                              <span className="inline-flex px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
-                                Aman
-                              </span>
-                            )}
+                            <MaterialStockStatusBadge status={stockStatus} />
                           </td>
                           <td className="py-3 px-4">
                             <div className="flex items-center gap-2">
