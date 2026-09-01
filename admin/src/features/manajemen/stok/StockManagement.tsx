@@ -9,12 +9,12 @@ import {
   AlertCircle,
   ClipboardList,
   Briefcase,
+  PackageX,
 } from "lucide-react";
 import { StockTransactionModal } from "./StockTransactionModal";
 import {
-  getAllStockSummary,
+  getStockSummaryWithProducts,
   getStockMovements,
-  StockItem,
   StockMovement,
   MINIMUM_STOCK,
 } from "../../../services/stockService";
@@ -29,38 +29,39 @@ interface ProductStockSummary {
   minimumStok: number;
 }
 
-function buildSummary(items: StockItem[]): ProductStockSummary[] {
-  const map: Record<string, ProductStockSummary> = {};
+type StockStatus = "aman" | "menipis" | "habis";
 
-  for (const item of items) {
-    const pid = item.product_id;
-    if (!map[pid]) {
-      map[pid] = {
-        product_id: pid,
-        product_name: item.products?.product_name ?? "—",
-        category: (item.products?.category ?? "cup") as
-          | "cup"
-          | "botol"
-          | "galon",
-        stokPusat: 0,
-        stokKaryawan: 0,
-        stokSales: 0,
-        minimumStok: MINIMUM_STOCK,
-      };
-    }
-    // Stok pusat: belum dimiliki karyawan maupun sales.
-    // Stok karyawan: sudah didistribusikan ke karyawan.
-    // Stok sales: sudah didistribusikan ke sales (terhubung otomatis dari app Sales).
-    if (item.karyawan_id === null && item.sales_id === null) {
-      map[pid].stokPusat += item.stock_quantity;
-    } else if (item.karyawan_id !== null) {
-      map[pid].stokKaryawan += item.stock_quantity;
-    } else if (item.sales_id !== null) {
-      map[pid].stokSales += item.stock_quantity;
-    }
+const getStockStatus = (
+  stokPusat: number,
+  minimumStok: number,
+): StockStatus => {
+  if (stokPusat <= 0) return "habis";
+  if (stokPusat < minimumStok) return "menipis";
+  return "aman";
+};
+
+function StockStatusBadge({ status }: { status: StockStatus }) {
+  if (status === "habis") {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700">
+        <PackageX className="w-3 h-3" />
+        Habis
+      </span>
+    );
   }
-
-  return Object.values(map);
+  if (status === "menipis") {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-700">
+        <AlertTriangle className="w-3 h-3" />
+        Menipis
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+      Aman
+    </span>
+  );
 }
 
 const movementLabel: Record<string, string> = {
@@ -105,14 +106,14 @@ export function StockManagement() {
     setError(null);
 
     const [stockRes, movRes] = await Promise.all([
-      getAllStockSummary(),
+      getStockSummaryWithProducts(),
       getStockMovements(50),
     ]);
 
     if (stockRes.error) {
       setError("Gagal memuat data stok.");
     } else {
-      setStockSummary(buildSummary(stockRes.data || []));
+      setStockSummary(stockRes.data || []);
     }
 
     if (!movRes.error) {
@@ -136,9 +137,11 @@ export function StockManagement() {
     fetchAll();
   };
 
-  const lowStockItems = stockSummary.filter(
-    (item) => item.stokPusat < item.minimumStok,
+  const habisItems = stockSummary.filter((item) => item.stokPusat <= 0);
+  const menipisItems = stockSummary.filter(
+    (item) => item.stokPusat > 0 && item.stokPusat < item.minimumStok,
   );
+  const lowStockItems = [...habisItems, ...menipisItems];
 
   const totalPusat = stockSummary.reduce((s, i) => s + i.stokPusat, 0);
   const totalDist = stockSummary.reduce((s, i) => s + i.stokKaryawan, 0);
@@ -175,19 +178,34 @@ export function StockManagement() {
       </div>
 
       {!loading && lowStockItems.length > 0 && (
-        <div className="clay-inset-amber border-0 rounded-xl p-4 mb-6 flex items-start gap-3">
-          <AlertTriangle className="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" />
+        <div className="clay-inset-red border-0 rounded-xl p-4 mb-6 flex items-start gap-3">
+          <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
           <div>
-            <h3 className="font-semibold text-orange-900 mb-1">
-              Peringatan Stok Minimum
+            <h3 className="font-semibold text-red-900 mb-1">
+              Peringatan Stok Pusat Kritis
             </h3>
-            <p className="text-sm text-orange-700">
-              {lowStockItems.length} produk memiliki stok pusat di bawah{" "}
-              {MINIMUM_STOCK} unit. Segera lakukan restok!
+            <p className="text-sm text-red-700">
+              {habisItems.length > 0 && (
+                <>
+                  {habisItems.length} produk sudah <strong>habis</strong>
+                  {menipisItems.length > 0 ? ", dan " : "."}
+                </>
+              )}
+              {menipisItems.length > 0 && (
+                <>
+                  {menipisItems.length} produk <strong>menipis</strong> (di
+                  bawah {MINIMUM_STOCK} unit). Segera lakukan restok!
+                </>
+              )}
             </p>
-            <ul className="mt-1 text-xs text-orange-600 list-disc list-inside">
-              {lowStockItems.map((i) => (
-                <li key={i.product_id}>
+            <ul className="mt-1 text-xs list-disc list-inside">
+              {habisItems.map((i) => (
+                <li key={i.product_id} className="text-red-700 font-medium">
+                  {i.product_name} — HABIS (0 unit)
+                </li>
+              ))}
+              {menipisItems.map((i) => (
+                <li key={i.product_id} className="text-orange-600">
                   {i.product_name} — stok pusat: {i.stokPusat} unit
                 </li>
               ))}
@@ -333,7 +351,10 @@ export function StockManagement() {
                     </tr>
                   ) : (
                     stockSummary.map((item) => {
-                      const isLow = item.stokPusat < item.minimumStok;
+                      const status = getStockStatus(
+                        item.stokPusat,
+                        item.minimumStok,
+                      );
                       const total =
                         item.stokPusat + item.stokKaryawan + item.stokSales;
                       return (
@@ -377,16 +398,7 @@ export function StockManagement() {
                             {item.minimumStok}
                           </td>
                           <td className="py-3 px-4">
-                            {isLow ? (
-                              <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-700">
-                                <AlertTriangle className="w-3 h-3" />
-                                Stok Rendah
-                              </span>
-                            ) : (
-                              <span className="inline-flex px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
-                                Aman
-                              </span>
-                            )}
+                            <StockStatusBadge status={status} />
                           </td>
                         </tr>
                       );

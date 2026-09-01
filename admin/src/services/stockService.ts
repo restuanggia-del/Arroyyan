@@ -239,4 +239,69 @@ export const reduceCentralStock = async (
     return { error: null };
 };
 
+export interface ProductStockSummaryRow {
+    product_id: string;
+    product_name: string;
+    category: "cup" | "botol" | "galon";
+    stokPusat: number;
+    stokKaryawan: number;
+    stokSales: number;
+    minimumStok: number;
+}
+
+export const getStockSummaryWithProducts = async () => {
+    const { data: products, error: productsError } = await supabaseAdmin
+        .from("products")
+        .select("id, product_name, category")
+        .eq("is_active", true)
+        .order("product_name", { ascending: true });
+
+    if (productsError) {
+        console.error(
+            "[stockService] getStockSummaryWithProducts products error:",
+            productsError,
+        );
+        return { data: null, error: productsError };
+    }
+
+    const { data: stockRows, error: stockError } = await supabaseAdmin
+        .from("stocks")
+        .select("product_id, karyawan_id, sales_id, stock_quantity");
+
+    if (stockError) {
+        console.error(
+            "[stockService] getStockSummaryWithProducts stocks error:",
+            stockError,
+        );
+        return { data: null, error: stockError };
+    }
+
+    const summary = new Map<string, ProductStockSummaryRow>();
+    for (const p of (products as any[]) ?? []) {
+        summary.set(p.id, {
+            product_id: p.id,
+            product_name: p.product_name ?? "—",
+            category: p.category,
+            stokPusat: 0,
+            stokKaryawan: 0,
+            stokSales: 0,
+            minimumStok: MINIMUM_STOCK,
+        });
+    }
+
+    for (const row of (stockRows as any[]) ?? []) {
+        const entry = summary.get(row.product_id);
+        if (!entry) continue;
+        if (row.karyawan_id === null && row.sales_id === null) {
+            entry.stokPusat += row.stock_quantity ?? 0;
+        } else if (row.karyawan_id !== null) {
+            entry.stokKaryawan += row.stock_quantity ?? 0;
+        } else if (row.sales_id !== null) {
+            entry.stokSales += row.stock_quantity ?? 0;
+        }
+    }
+
+    return { data: Array.from(summary.values()), error: null };
+};
+
 export const MINIMUM_STOCK = 100;
