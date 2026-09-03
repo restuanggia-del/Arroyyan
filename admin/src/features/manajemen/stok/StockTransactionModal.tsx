@@ -38,7 +38,7 @@ export function StockTransactionModal({
 
   const [formData, setFormData] = useState<FormState>({
     productId: "",
-    quantity: 1,
+    quantity: 0,
     movementType:
       type === "awal"
         ? "stok_awal"
@@ -77,6 +77,9 @@ export function StockTransactionModal({
       : type === "masuk"
         ? categoriesMasuk
         : categoriesKeluar;
+
+  const selectedProduct = products.find((p) => p.id === formData.productId);
+  const unitLabel = selectedProduct?.unit || "unit";
 
   const handleChange = <K extends keyof FormState>(
     field: K,
@@ -258,20 +261,23 @@ export function StockTransactionModal({
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
-              Jumlah <span className="text-red-500">*</span>
+              Jumlah{" "}
+              <span className="text-gray-400 font-normal">({unitLabel})</span>{" "}
+              <span className="text-red-500">*</span>
             </label>
 
             <input
               type="text"
+              inputMode="numeric"
               required
-              min="1"
-              value={formData.quantity === 1 ? "" : formData.quantity}
-              onChange={(e) =>
+              value={formData.quantity === 0 ? "" : formData.quantity}
+              onChange={(e) => {
+                const digits = e.target.value.replace(/[^0-9]/g, "");
                 handleChange(
                   "quantity",
-                  e.target.value === "" ? 1 : parseInt(e.target.value, 10),
-                )
-              }
+                  digits === "" ? 0 : parseInt(digits, 10),
+                );
+              }}
               placeholder="0"
               className="w-full px-4 py-2.5 clay-inset border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
             />

@@ -43,7 +43,7 @@ export function DistributionModal({
 
   const [salesId, setSalesId] = useState("");
   const [items, setItems] = useState<ItemRow[]>([
-    { product_id: "", quantity: 1 },
+    { product_id: "", quantity: 0 },
   ]);
 
   useEffect(() => {
@@ -69,7 +69,7 @@ export function DistributionModal({
   }, []);
 
   const addItem = () =>
-    setItems((prev) => [...prev, { product_id: "", quantity: 1 }]);
+    setItems((prev) => [...prev, { product_id: "", quantity: 0 }]);
 
   const removeItem = (idx: number) =>
     setItems((prev) => prev.filter((_, i) => i !== idx));
@@ -111,7 +111,7 @@ export function DistributionModal({
       if (item.quantity > available) {
         const prod = products.find((p) => p.id === item.product_id);
         setFormError(
-          `Stok pusat tidak mencukupi untuk ${prod?.product_name ?? "produk"}. Tersedia: ${available} unit.`,
+          `Stok pusat tidak mencukupi untuk ${prod?.product_name ?? "produk"}. Tersedia: ${available} ${prod?.unit || "unit"}.`,
         );
         return;
       }
@@ -144,6 +144,13 @@ export function DistributionModal({
 
   const totalItems = items.filter((i) => i.product_id && i.quantity > 0);
   const totalQty = totalItems.reduce((s, i) => s + i.quantity, 0);
+  const totalUnits = new Set(
+    totalItems.map(
+      (i) => products.find((p) => p.id === i.product_id)?.unit || "unit",
+    ),
+  );
+  const totalUnitLabel =
+    totalUnits.size === 1 ? Array.from(totalUnits)[0] : "unit";
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -268,7 +275,8 @@ export function DistributionModal({
                             <p
                               className={`text-xs mt-1 ${isOverStock ? "text-red-600" : "text-gray-500"}`}
                             >
-                              Stok pusat tersedia: {available} unit
+                              Stok pusat tersedia: {available}{" "}
+                              {selected?.unit || "unit"}
                             </p>
                           )}
                         </div>
@@ -276,19 +284,20 @@ export function DistributionModal({
                         <div className="w-28">
                           <input
                             type="text"
+                            inputMode="numeric"
                             required
-                            min="1"
-                            max={available ?? undefined}
-                            value={item.quantity === 1 ? "" : item.quantity}
-                            onChange={(e) =>
+                            value={item.quantity === 0 ? "" : item.quantity}
+                            onChange={(e) => {
+                              const digits = e.target.value.replace(
+                                /[^0-9]/g,
+                                "",
+                              );
                               updateItem(
                                 idx,
                                 "quantity",
-                                e.target.value === ""
-                                  ? 1
-                                  : parseInt(e.target.value, 10),
-                              )
-                            }
+                                digits === "" ? 0 : parseInt(digits, 10),
+                              );
+                            }}
                             className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40 ${
                               isOverStock
                                 ? "border-red-400 bg-red-50"
@@ -296,6 +305,11 @@ export function DistributionModal({
                             }`}
                             placeholder="0"
                           />
+                          {selected && (
+                            <p className="text-xs text-gray-400 mt-1 text-right">
+                              {selected.unit || "unit"}
+                            </p>
+                          )}
                         </div>
 
                         {items.length > 1 && (
@@ -329,14 +343,16 @@ export function DistributionModal({
                       >
                         <span>{prod?.product_name ?? "—"}</span>
                         <span className="font-medium">
-                          {item.quantity} unit
+                          {item.quantity} {prod?.unit || "unit"}
                         </span>
                       </div>
                     );
                   })}
                   <div className="border-t border-[rgba(140,172,214,0.35)] pt-2 mt-2 flex justify-between text-sm font-semibold text-gray-900">
                     <span>Total</span>
-                    <span>{totalQty} unit</span>
+                    <span>
+                      {totalQty} {totalUnitLabel}
+                    </span>
                   </div>
                 </div>
               </div>
