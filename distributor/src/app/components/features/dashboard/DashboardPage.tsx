@@ -10,7 +10,7 @@ import {
   ArrowRight,
   History,
   Users,
-  Sparkles,
+  Calendar,
 } from "lucide-react";
 import { getDashboardStats, SalesUser } from "../../../services";
 
@@ -28,6 +28,14 @@ const getGreetingInfo = () => {
   if (hour >= 15 && hour < 18) return { text: "Selamat Sore", emoji: "🌇" };
   return { text: "Selamat Malam", emoji: "🌙" };
 };
+
+const formatFullDate = (date: Date) =>
+  date.toLocaleDateString("id-ID", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
 
 export default function DashboardPage({
   user,
@@ -77,7 +85,7 @@ export default function DashboardPage({
     <div className="p-4 space-y-4">
       <div className="bg-gradient-to-br from-[#4a86f4] to-[#0249E1] rounded-[28px] p-5 text-white relative overflow-hidden shadow-[10px_10px_24px_rgba(2,55,150,0.35),-6px_-6px_16px_rgba(150,195,255,0.25)]">
         <div className="absolute w-32 h-32 rounded-full bg-[#DAFB71]/20 blur-2xl -top-8 -right-8" />
-        <div className="flex items-start justify-between relative">
+        <div className="flex items-stretch justify-between relative">
           <div className="flex-1">
             <p className="text-sm text-white/80 font-medium">
               Selamat Datang 👋
@@ -87,7 +95,15 @@ export default function DashboardPage({
               {greetingText}
             </p>
           </div>
-          <div className="text-5xl ml-4">{greetingEmoji}</div>
+          <div className="flex flex-col items-center justify-between ml-4">
+            <div className="text-5xl">{greetingEmoji}</div>
+            <div className="flex items-center gap-1 bg-white/15 rounded-full px-2.5 py-1 mt-2 whitespace-nowrap">
+              <Calendar className="w-3 h-3 text-white/85 flex-shrink-0" />
+              <p className="text-[11px] text-white/85 font-medium">
+                {formatFullDate(new Date())}
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -293,26 +309,6 @@ export default function DashboardPage({
                 </p>
                 <p className="text-xs text-[#111111]/40 font-medium">
                   Tambah & lihat data pelanggan Anda
-                </p>
-              </div>
-            </div>
-            <ArrowRight className="w-4 h-4 text-[#111111]/30" />
-          </button>
-
-          <button
-            onClick={() => onNavigate("checklist")}
-            className="clay-raised clay-pressable w-full flex items-center justify-between rounded-3xl p-4 cursor-pointer"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 clay-inset-sm rounded-2xl flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-[#0249E1]" />
-              </div>
-              <div className="text-left">
-                <p className="text-sm font-bold text-[#111111]">
-                  Checklist Kebersihan Kendaraan
-                </p>
-                <p className="text-xs text-[#111111]/40 font-medium">
-                  Isi checklist kebersihan kendaraan hari ini
                 </p>
               </div>
             </div>
