@@ -123,7 +123,7 @@ export function EditCentralStockModal({
               value={note}
               onChange={(e) => setNote(e.target.value)}
               rows={2}
-              placeholder="Contoh: Salah input saat Stok Awal, seharusnya 89 bukan 890"
+              placeholder="Contoh: Salah input stok"
               className="w-full px-4 py-2.5 clay-inset border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40 resize-none"
             />
           </div>

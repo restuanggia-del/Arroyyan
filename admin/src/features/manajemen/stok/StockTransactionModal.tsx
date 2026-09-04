@@ -67,7 +67,7 @@ export function StockTransactionModal({
   const categoriesKeluar = [
     { value: "sale_out", label: "Penjualan Langsung" },
     { value: "sodaqoh_out", label: "Sodaqoh" },
-    { value: "pribadi_out", label: "Pemakaian Pribadi" },
+    { value: "pribadi_out", label: "Internal" },
     { value: "bonus_out", label: "Bonus / Hadiah Barang" },
   ];
 

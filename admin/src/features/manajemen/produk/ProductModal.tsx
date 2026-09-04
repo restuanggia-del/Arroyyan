@@ -49,7 +49,6 @@ export function ProductModal({
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
-  // Harga variatif (product_prices)
   const [prices, setPrices] = useState<ProductPrice[]>([]);
   const [loadingPrices, setLoadingPrices] = useState(false);
   const [newPriceLabel, setNewPriceLabel] = useState("");
@@ -157,7 +156,6 @@ export function ProductModal({
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
-        {/* Header */}
         <div className="sticky top-0 z-10 bg-white border-b border-[rgba(140,172,214,0.35)] px-6 py-4 flex items-center justify-between rounded-t-2xl">
           <h2 className="text-xl font-semibold text-gray-900">
             {product ? "Edit Produk" : "Tambah Produk Baru"}
