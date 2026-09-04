@@ -28,7 +28,9 @@ export interface StockMovement {
     | "sodaqoh_out"
     | "pribadi_out"
     | "bonus_out"
-    | "return_out";
+    | "return_out"
+    | "koreksi_tambah"
+    | "koreksi_kurang";
     quantity: number;
     note: string | null;
     created_at: string;
@@ -242,8 +244,8 @@ export interface ProductStockSummaryRow {
     product_id: string;
     product_name: string;
     category: "cup" | "botol" | "galon";
+    unit: string;
     stokPusat: number;
-    stokKaryawan: number;
     stokSales: number;
     minimumStok: number;
 }
@@ -251,7 +253,7 @@ export interface ProductStockSummaryRow {
 export const getStockSummaryWithProducts = async () => {
     const { data: products, error: productsError } = await supabaseAdmin
         .from("products")
-        .select("id, product_name, category")
+        .select("id, product_name, category, unit, minimum_stock")
         .eq("is_active", true)
         .order("product_name", { ascending: true });
 
@@ -281,10 +283,10 @@ export const getStockSummaryWithProducts = async () => {
             product_id: p.id,
             product_name: p.product_name ?? "—",
             category: p.category,
+            unit: p.unit ?? "unit",
             stokPusat: 0,
-            stokKaryawan: 0,
             stokSales: 0,
-            minimumStok: MINIMUM_STOCK,
+            minimumStok: p.minimum_stock ?? MINIMUM_STOCK,
         });
     }
 
@@ -293,8 +295,6 @@ export const getStockSummaryWithProducts = async () => {
         if (!entry) continue;
         if (row.karyawan_id === null && row.sales_id === null) {
             entry.stokPusat += row.stock_quantity ?? 0;
-        } else if (row.karyawan_id !== null) {
-            entry.stokKaryawan += row.stock_quantity ?? 0;
         } else if (row.sales_id !== null) {
             entry.stokSales += row.stock_quantity ?? 0;
         }
@@ -304,3 +304,68 @@ export const getStockSummaryWithProducts = async () => {
 };
 
 export const MINIMUM_STOCK = 100;
+
+export const setCentralStock = async (
+    productId: string,
+    newQuantity: number,
+    note: string
+) => {
+    if (newQuantity < 0) {
+        return { error: { message: "Jumlah stok tidak boleh negatif." } };
+    }
+
+    const { data: existing, error: fetchErr } = await supabaseAdmin
+        .from("stocks")
+        .select("id, stock_quantity")
+        .eq("product_id", productId)
+        .is("karyawan_id", null)
+        .is("sales_id", null)
+        .maybeSingle();
+
+    if (fetchErr) {
+        console.error("[stockService] setCentralStock fetch error:", fetchErr);
+        return { error: fetchErr };
+    }
+
+    const currentQty = existing?.stock_quantity ?? 0;
+    const delta = newQuantity - currentQty;
+
+    if (delta === 0) {
+        return { error: { message: "Jumlah stok tidak berubah dari sebelumnya." } };
+    }
+
+    if (existing) {
+        const { error } = await supabaseAdmin
+            .from("stocks")
+            .update({ stock_quantity: newQuantity })
+            .eq("id", existing.id);
+        if (error) return { error };
+    } else {
+        const { error } = await supabaseAdmin
+            .from("stocks")
+            .insert([{
+                product_id: productId,
+                karyawan_id: null,
+                sales_id: null,
+                stock_quantity: newQuantity,
+            }]);
+        if (error) return { error };
+    }
+
+    const movementType = delta > 0 ? "koreksi_tambah" : "koreksi_kurang";
+    const autoNote = `Koreksi stok dari ${currentQty} menjadi ${newQuantity}`;
+
+    const { error: movErr } = await supabaseAdmin
+        .from("stock_movements")
+        .insert([{
+            product_id: productId,
+            karyawan_id: null,
+            sales_id: null,
+            movement_type: movementType,
+            quantity: Math.abs(delta),
+            note: note ? `${note} (${autoNote})` : autoNote,
+        }]);
+
+    if (movErr) return { error: movErr };
+    return { error: null };
+};

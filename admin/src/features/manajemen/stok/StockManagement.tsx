@@ -10,21 +10,22 @@ import {
   ClipboardList,
   Briefcase,
   PackageX,
+  Pencil,
 } from "lucide-react";
 import { StockTransactionModal } from "./StockTransactionModal";
+import { EditCentralStockModal } from "./EditCentralStockModal";
 import {
   getStockSummaryWithProducts,
   getStockMovements,
   StockMovement,
-  MINIMUM_STOCK,
 } from "../../../services/stockService";
 
 interface ProductStockSummary {
   product_id: string;
   product_name: string;
   category: "cup" | "botol" | "galon";
+  unit: string;
   stokPusat: number;
-  stokKaryawan: number;
   stokSales: number;
   minimumStok: number;
 }
@@ -74,6 +75,8 @@ const movementLabel: Record<string, string> = {
   pribadi_out: "Pemakaian Pribadi",
   bonus_out: "Bonus / Hadiah Barang",
   return_out: "Retur ke Pabrik",
+  koreksi_tambah: "Koreksi Stok (Tambah)",
+  koreksi_kurang: "Koreksi Stok (Kurang)",
 };
 
 const movementColor: Record<string, string> = {
@@ -86,6 +89,8 @@ const movementColor: Record<string, string> = {
   pribadi_out: "bg-gray-100 text-gray-700",
   bonus_out: "bg-pink-100 text-pink-700",
   return_out: "bg-red-100 text-red-700",
+  koreksi_tambah: "bg-indigo-100 text-indigo-700",
+  koreksi_kurang: "bg-amber-100 text-amber-700",
 };
 
 export function StockManagement() {
@@ -100,6 +105,9 @@ export function StockManagement() {
   const [transactionType, setTransactionType] = useState<
     "awal" | "masuk" | "keluar"
   >("masuk");
+  const [editingStock, setEditingStock] = useState<ProductStockSummary | null>(
+    null,
+  );
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
@@ -144,7 +152,6 @@ export function StockManagement() {
   const lowStockItems = [...habisItems, ...menipisItems];
 
   const totalPusat = stockSummary.reduce((s, i) => s + i.stokPusat, 0);
-  const totalDist = stockSummary.reduce((s, i) => s + i.stokKaryawan, 0);
   const totalSales = stockSummary.reduce((s, i) => s + i.stokSales, 0);
 
   const formatDate = (d: string) =>
@@ -194,19 +201,21 @@ export function StockManagement() {
               {menipisItems.length > 0 && (
                 <>
                   {menipisItems.length} produk <strong>menipis</strong> (di
-                  bawah {MINIMUM_STOCK} unit). Segera lakukan restok!
+                  bawah batas minimal stoknya masing-masing). Segera lakukan
+                  restok!
                 </>
               )}
             </p>
             <ul className="mt-1 text-xs list-disc list-inside">
               {habisItems.map((i) => (
                 <li key={i.product_id} className="text-red-700 font-medium">
-                  {i.product_name} — HABIS (0 unit)
+                  {i.product_name} — HABIS (0 {i.unit})
                 </li>
               ))}
               {menipisItems.map((i) => (
                 <li key={i.product_id} className="text-orange-600">
-                  {i.product_name} — stok pusat: {i.stokPusat} unit
+                  {i.product_name} — stok pusat: {i.stokPusat} {i.unit} (min.{" "}
+                  {i.minimumStok} {i.unit})
                 </li>
               ))}
             </ul>
@@ -214,7 +223,7 @@ export function StockManagement() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="clay-raised rounded-lg p-6">
           <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
             <Warehouse className="w-6 h-6 text-blue-600" />
@@ -222,15 +231,6 @@ export function StockManagement() {
           <h3 className="text-sm text-gray-600 mb-1">Total Stok Pusat</h3>
           <p className="text-2xl font-bold text-gray-900">
             {loading ? "—" : `${totalPusat} Unit`}
-          </p>
-        </div>
-        <div className="clay-raised rounded-lg p-6">
-          <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
-            <TrendingUp className="w-6 h-6 text-green-600" />
-          </div>
-          <h3 className="text-sm text-gray-600 mb-1">Total Stok Karyawan</h3>
-          <p className="text-2xl font-bold text-gray-900">
-            {loading ? "—" : `${totalDist} Unit`}
           </p>
         </div>
         <div className="clay-raised rounded-lg p-6">
@@ -324,11 +324,11 @@ export function StockManagement() {
                       "Produk",
                       "Kategori",
                       "Stok Pusat",
-                      "Stok Karyawan",
                       "Stok Sales",
                       "Total",
                       "Min. Stok",
                       "Status",
+                      "Aksi",
                     ].map((h) => (
                       <th
                         key={h}
@@ -355,8 +355,7 @@ export function StockManagement() {
                         item.stokPusat,
                         item.minimumStok,
                       );
-                      const total =
-                        item.stokPusat + item.stokKaryawan + item.stokSales;
+                      const total = item.stokPusat + item.stokSales;
                       return (
                         <tr
                           key={item.product_id}
@@ -386,9 +385,6 @@ export function StockManagement() {
                             {item.stokPusat}
                           </td>
                           <td className="py-3 px-4 text-sm text-gray-900">
-                            {item.stokKaryawan}
-                          </td>
-                          <td className="py-3 px-4 text-sm text-gray-900">
                             {item.stokSales}
                           </td>
                           <td className="py-3 px-4 text-sm font-semibold text-gray-900">
@@ -399,6 +395,15 @@ export function StockManagement() {
                           </td>
                           <td className="py-3 px-4">
                             <StockStatusBadge status={status} />
+                          </td>
+                          <td className="py-3 px-4">
+                            <button
+                              onClick={() => setEditingStock(item)}
+                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
+                              title="Koreksi Stok Pusat"
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </button>
                           </td>
                         </tr>
                       );
@@ -418,7 +423,8 @@ export function StockManagement() {
                   const isIn =
                     mov.movement_type === "stock_in" ||
                     mov.movement_type === "stok_awal" ||
-                    mov.movement_type === "distribution_in";
+                    mov.movement_type === "distribution_in" ||
+                    mov.movement_type === "koreksi_tambah";
                   return (
                     <div
                       key={mov.id}
@@ -494,6 +500,20 @@ export function StockManagement() {
           type={transactionType}
           onClose={() => setIsModalOpen(false)}
           onSaveSuccess={handleSaveSuccess}
+        />
+      )}
+
+      {editingStock && (
+        <EditCentralStockModal
+          productId={editingStock.product_id}
+          productName={editingStock.product_name}
+          unit={editingStock.unit}
+          currentStock={editingStock.stokPusat}
+          onClose={() => setEditingStock(null)}
+          onSaveSuccess={() => {
+            setEditingStock(null);
+            fetchAll();
+          }}
         />
       )}
     </div>

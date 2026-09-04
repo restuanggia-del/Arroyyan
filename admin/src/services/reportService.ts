@@ -133,10 +133,10 @@ export interface LowStockItem {
     minimum: number;
 }
 
-export const getLowStockItems = async (minimum = 100): Promise<LowStockItem[]> => {
+export const getLowStockItems = async (fallbackMinimum = 100): Promise<LowStockItem[]> => {
     const { data: products, error: productsError } = await supabaseAdmin
         .from("products")
-        .select("id, product_name")
+        .select("id, product_name, minimum_stock")
         .eq("is_active", true);
 
     if (productsError || !products) return [];
@@ -144,7 +144,8 @@ export const getLowStockItems = async (minimum = 100): Promise<LowStockItem[]> =
     const { data: stockRows, error: stockError } = await supabaseAdmin
         .from("stocks")
         .select("product_id, stock_quantity")
-        .is("karyawan_id", null);
+        .is("karyawan_id", null)
+        .is("sales_id", null);
 
     if (stockError) return [];
 
@@ -159,9 +160,9 @@ export const getLowStockItems = async (minimum = 100): Promise<LowStockItem[]> =
             product_id: p.id,
             product_name: p.product_name ?? "—",
             current: stockByProduct.get(p.id) ?? 0,
-            minimum,
+            minimum: p.minimum_stock ?? fallbackMinimum,
         }))
-        .filter((item) => item.current < minimum)
+        .filter((item) => item.current < item.minimum)
         .sort((a, b) => a.current - b.current);
 };
 
