@@ -11,6 +11,7 @@ import {
   History,
   Users,
   Calendar,
+  Sparkles,
 } from "lucide-react";
 import { getDashboardStats, SalesUser } from "../../../services";
 
@@ -309,6 +310,26 @@ export default function DashboardPage({
                 </p>
                 <p className="text-xs text-[#111111]/40 font-medium">
                   Tambah & lihat data pelanggan Anda
+                </p>
+              </div>
+            </div>
+            <ArrowRight className="w-4 h-4 text-[#111111]/30" />
+          </button>
+
+          <button
+            onClick={() => onNavigate("checklist")}
+            className="clay-raised clay-pressable w-full flex items-center justify-between rounded-3xl p-4 cursor-pointer"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 clay-inset-sm rounded-2xl flex items-center justify-center">
+                <Sparkles className="w-5 h-5 text-[#0249E1]" />
+              </div>
+              <div className="text-left">
+                <p className="text-sm font-bold text-[#111111]">
+                  Checklist Kebersihan Kendaraan
+                </p>
+                <p className="text-xs text-[#111111]/40 font-medium">
+                  Isi checklist kebersihan kendaraan hari ini
                 </p>
               </div>
             </div>
