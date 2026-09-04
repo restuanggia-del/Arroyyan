@@ -26,6 +26,7 @@ interface FormState {
   unit: string;
   photo_url: string;
   is_active: boolean;
+  minimum_stock: number;
 }
 
 const defaultForm: FormState = {
@@ -36,6 +37,7 @@ const defaultForm: FormState = {
   unit: "pcs",
   photo_url: "",
   is_active: true,
+  minimum_stock: 100,
 };
 
 export function ProductModal({
@@ -72,6 +74,7 @@ export function ProductModal({
         unit: product.unit,
         photo_url: product.photo_url ?? "",
         is_active: product.is_active,
+        minimum_stock: product.minimum_stock ?? 100,
       });
       loadPrices(product.id);
     } else {
@@ -131,6 +134,7 @@ export function ProductModal({
       unit: formData.unit.trim(),
       photo_url: formData.photo_url.trim() || null,
       is_active: formData.is_active,
+      minimum_stock: formData.minimum_stock,
     };
 
     let error;
@@ -254,6 +258,32 @@ export function ProductModal({
                 className="w-full px-4 py-2.5 clay-inset border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
               />
             </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Minimal Stok (untuk peringatan stok menipis){" "}
+              <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              inputMode="numeric"
+              required
+              value={formData.minimum_stock === 0 ? "" : formData.minimum_stock}
+              onChange={(e) => {
+                const digits = e.target.value.replace(/[^0-9]/g, "");
+                handleChange(
+                  "minimum_stock",
+                  digits === "" ? 0 : parseInt(digits, 10),
+                );
+              }}
+              placeholder="100"
+              className="w-full px-4 py-2.5 clay-inset border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
+            />
+            <p className="text-xs text-gray-400 mt-1.5">
+              Kalau Stok Pusat produk ini turun di bawah angka ini, akan muncul
+              peringatan "Menipis" di Dashboard dan Manajemen Stok.
+            </p>
           </div>
 
           <div>

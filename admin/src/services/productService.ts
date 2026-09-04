@@ -11,6 +11,7 @@ export interface Product {
     photo_url: string | null;
     is_active: boolean;
     created_at: string;
+    minimum_stock: number;
 }
 
 export const getProducts = async () => {
