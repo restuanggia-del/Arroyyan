@@ -14,6 +14,9 @@ export const getStockMovements = async (salesId: string) => {
         distribution_in: 'Kiriman dari Pabrik',
         sale_out: 'Penjualan',
         return_out: 'Retur ke Pabrik',
+        sodaqoh_out: 'Sodaqoh',
+        pribadi_out: 'Internal',
+        bonus_out: 'Bonus / Hadiah Barang',
     };
 
     return (data ?? []).map((m: any) => ({

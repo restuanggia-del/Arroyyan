@@ -12,7 +12,13 @@ interface ReceiptDialogProps {
       subtotal: number;
     }[];
     subtotal: number;
-    paymentMethod: "cash" | "transfer" | "kasbon";
+    paymentMethod:
+      | "cash"
+      | "transfer"
+      | "kasbon"
+      | "sodaqoh_out"
+      | "pribadi_out"
+      | "bonus_out";
   };
   onClose: () => void;
   onViewHistory?: () => void;
@@ -24,7 +30,13 @@ const paymentLabel: Record<string, string> = {
   cash: "TUNAI",
   transfer: "TRANSFER",
   kasbon: "KASBON / TITIPAN",
+  sodaqoh_out: "SODAQOH",
+  pribadi_out: "INTERNAL",
+  bonus_out: "BONUS / HADIAH BARANG",
 };
+
+const isRealSale = (m: string) =>
+  m === "cash" || m === "transfer" || m === "kasbon";
 
 export default function ReceiptDialog({
   transaction,
@@ -73,7 +85,10 @@ export default function ReceiptDialog({
             </thead>
             <tbody>
               {transaction.items.map((item, i) => (
-                <tr key={i} className="border-b border-[rgba(140,172,214,0.35)]">
+                <tr
+                  key={i}
+                  className="border-b border-[rgba(140,172,214,0.35)]"
+                >
                   <td className="py-1">{item.name}</td>
                   <td className="text-center py-1">{item.quantity}</td>
                   <td className="text-right py-1">
@@ -85,11 +100,19 @@ export default function ReceiptDialog({
           </table>
 
           <div className="border-t border-black/10 pt-2 flex justify-between font-bold text-sm">
-            <span>TOTAL</span>
+            <span>
+              {isRealSale(transaction.paymentMethod)
+                ? "TOTAL"
+                : "TOTAL NILAI BARANG"}
+            </span>
             <span>{formatRp(transaction.subtotal)}</span>
           </div>
           <div className="flex justify-between mt-2 text-xs">
-            <span>Pembayaran</span>
+            <span>
+              {isRealSale(transaction.paymentMethod)
+                ? "Pembayaran"
+                : "Jenis Transaksi"}
+            </span>
             <span className="font-bold">
               {paymentLabel[transaction.paymentMethod]}
             </span>

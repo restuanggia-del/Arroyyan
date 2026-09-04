@@ -85,6 +85,89 @@ export const createSalesTransaction = async (
     return trx;
 };
 
+export interface StockOutItemInput {
+    productId: string;
+    productName: string;
+    quantity: number;
+}
+
+export type StockOutMovementType = 'sodaqoh_out' | 'pribadi_out' | 'bonus_out';
+
+export const stockOutTypeLabel: Record<StockOutMovementType, string> = {
+    sodaqoh_out: 'Sodaqoh',
+    pribadi_out: 'Internal',
+    bonus_out: 'Bonus / Hadiah Barang',
+};
+
+export const createSalesStockOut = async (
+    salesId: string,
+    items: StockOutItemInput[],
+    movementType: StockOutMovementType,
+    note: string,
+    recipientName: string | null = null,
+) => {
+    if (items.length === 0) {
+        throw new Error('Keranjang masih kosong.');
+    }
+
+    for (const item of items) {
+        if (item.quantity < 1) {
+            throw new Error(`Jumlah untuk ${item.productName} harus minimal 1.`);
+        }
+        const { data: stock } = await supabase
+            .from('stocks')
+            .select('id, stock_quantity')
+            .eq('product_id', item.productId)
+            .eq('sales_id', salesId)
+            .maybeSingle();
+
+        if (!stock || stock.stock_quantity < item.quantity) {
+            throw new Error(`Stok tidak mencukupi untuk: ${item.productName}. Tersedia: ${stock?.stock_quantity ?? 0}`);
+        }
+    }
+
+    const label = stockOutTypeLabel[movementType];
+    const trimmedNote = note?.trim();
+    const finalNote = [
+        label,
+        recipientName ? `Untuk: ${recipientName}` : null,
+        trimmedNote || null,
+    ]
+        .filter(Boolean)
+        .join(' | ');
+
+    for (const item of items) {
+        const { data: stock } = await supabase
+            .from('stocks')
+            .select('id, stock_quantity')
+            .eq('product_id', item.productId)
+            .eq('sales_id', salesId)
+            .single();
+
+        if (stock) {
+            await supabase
+                .from('stocks')
+                .update({ stock_quantity: stock.stock_quantity - item.quantity })
+                .eq('id', stock.id);
+        }
+
+        await supabase.from('stock_movements').insert([{
+            product_id: item.productId,
+            sales_id: salesId,
+            movement_type: movementType,
+            quantity: item.quantity,
+            note: finalNote,
+        }]);
+    }
+
+    await supabase.from('activity_logs').insert([{
+        activity_type: 'stock_out_sales',
+        description: `Stok Keluar (${label}) oleh sales | ${items.length} produk`,
+    }]);
+
+    return { success: true };
+};
+
 export const getTransactionHistory = async (salesId: string, dateFilter?: string) => {
     let query = supabase
         .from('transactions')

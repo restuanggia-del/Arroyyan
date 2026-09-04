@@ -14,12 +14,19 @@ import {
   Search,
   UserPlus,
   History,
+  HeartHandshake,
+  Building2,
+  Gift,
+  PackageOpen,
+  PackageSearch,
 } from "lucide-react";
 import {
   getProductsWithSalesStock,
   createSalesTransaction,
+  createSalesStockOut,
   SalesProduct,
   TxItemInput,
+  StockOutMovementType,
 } from "../../../services";
 import ReceiptDialog from "./ReceiptDialog";
 import CustomerPage from "../customer/CustomerPage";
@@ -41,6 +48,37 @@ interface SelectedCustomer {
   phone: string;
 }
 
+type JenisTransaksi = "penjualan" | "sodaqoh" | "internal" | "bonus";
+
+const JENIS_OPTIONS: {
+  key: JenisTransaksi;
+  label: string;
+  icon: typeof ShoppingCart;
+}[] = [
+  { key: "penjualan", label: "Penjualan", icon: ShoppingCart },
+  { key: "sodaqoh", label: "Sodaqoh", icon: HeartHandshake },
+  { key: "internal", label: "Internal", icon: Building2 },
+  { key: "bonus", label: "Bonus / Hadiah", icon: Gift },
+];
+
+const JENIS_MOVEMENT_TYPE: Record<
+  Exclude<JenisTransaksi, "penjualan">,
+  StockOutMovementType
+> = {
+  sodaqoh: "sodaqoh_out",
+  internal: "pribadi_out",
+  bonus: "bonus_out",
+};
+
+const JENIS_SUBMIT_LABEL: Record<
+  Exclude<JenisTransaksi, "penjualan">,
+  string
+> = {
+  sodaqoh: "Simpan Sodaqoh",
+  internal: "Simpan Internal",
+  bonus: "Simpan Bonus / Hadiah",
+};
+
 const formatRp = (n: number) => "Rp " + Math.round(n).toLocaleString("id-ID");
 
 export default function TransactionPage({
@@ -53,9 +91,12 @@ export default function TransactionPage({
 
   const [cart, setCart] = useState<CartItem[]>([]);
   const [showCart, setShowCart] = useState(false);
+  const [jenisTransaksi, setJenisTransaksi] =
+    useState<JenisTransaksi>("penjualan");
   const [paymentMethod, setPaymentMethod] = useState<
     "cash" | "transfer" | "kasbon"
   >("cash");
+  const [note, setNote] = useState("");
   const [selectedCustomer, setSelectedCustomer] =
     useState<SelectedCustomer | null>(null);
   const [showCustomerPicker, setShowCustomerPicker] = useState(false);
@@ -123,6 +164,16 @@ export default function TransactionPage({
   const removeFromCart = (productId: string) =>
     setCart((prev) => prev.filter((i) => i.product.id !== productId));
 
+  const handleJenisChange = (jenis: JenisTransaksi) => {
+    setJenisTransaksi(jenis);
+    setError("");
+    if (jenis !== "penjualan") {
+      setCart((prev) =>
+        prev.map((i) => ({ ...i, hargaJual: i.product.hargaPabrik })),
+      );
+    }
+  };
+
   const totalQty = cart.reduce((s, i) => s + i.quantity, 0);
   const subtotal = cart.reduce((s, i) => s + i.hargaJual * i.quantity, 0);
   const estimasiKomisi = cart.reduce(
@@ -134,47 +185,88 @@ export default function TransactionPage({
     p.name.toLowerCase().includes(search.toLowerCase()),
   );
 
+  const resetCheckoutState = () => {
+    setCart([]);
+    setSelectedCustomer(null);
+    setPaymentMethod("cash");
+    setNote("");
+    setJenisTransaksi("penjualan");
+    setShowCart(false);
+  };
+
   const handleCheckout = async () => {
     if (cart.length === 0) return;
-    if (paymentMethod === "kasbon" && !selectedCustomer) {
-      setError("Transaksi kasbon wajib memilih toko/pelanggan tujuan.");
-      return;
+
+    if (jenisTransaksi === "penjualan") {
+      if (paymentMethod === "kasbon" && !selectedCustomer) {
+        setError("Transaksi kasbon wajib memilih toko/pelanggan tujuan.");
+        return;
+      }
     }
+
     setError("");
     setSaving(true);
 
-    const items: TxItemInput[] = cart.map((i) => ({
-      productId: i.product.id,
-      productName: i.product.name,
-      hargaPabrik: i.product.hargaPabrik,
-      hargaJual: i.hargaJual,
-      quantity: i.quantity,
-    }));
-
     try {
-      const trx = await createSalesTransaction(
-        salesId,
-        items,
-        paymentMethod,
-        selectedCustomer?.id ?? null,
-      );
-      setReceipt({
-        id: trx.id.slice(0, 8).toUpperCase(),
-        date: new Date().toLocaleString("id-ID"),
-        customer: selectedCustomer?.name ?? "Umum",
-        items: cart.map((i) => ({
-          name: i.product.name,
+      if (jenisTransaksi === "penjualan") {
+        const items: TxItemInput[] = cart.map((i) => ({
+          productId: i.product.id,
+          productName: i.product.name,
+          hargaPabrik: i.product.hargaPabrik,
+          hargaJual: i.hargaJual,
           quantity: i.quantity,
-          price: i.hargaJual,
-          subtotal: i.hargaJual * i.quantity,
-        })),
-        subtotal,
-        paymentMethod,
-      });
-      setCart([]);
-      setSelectedCustomer(null);
-      setPaymentMethod("cash");
-      setShowCart(false);
+        }));
+
+        const trx = await createSalesTransaction(
+          salesId,
+          items,
+          paymentMethod,
+          selectedCustomer?.id ?? null,
+        );
+        setReceipt({
+          id: trx.id.slice(0, 8).toUpperCase(),
+          date: new Date().toLocaleString("id-ID"),
+          customer: selectedCustomer?.name ?? "Umum",
+          items: cart.map((i) => ({
+            name: i.product.name,
+            quantity: i.quantity,
+            price: i.hargaJual,
+            subtotal: i.hargaJual * i.quantity,
+          })),
+          subtotal,
+          paymentMethod,
+        });
+      } else {
+        const movementType = JENIS_MOVEMENT_TYPE[jenisTransaksi];
+        const items = cart.map((i) => ({
+          productId: i.product.id,
+          productName: i.product.name,
+          quantity: i.quantity,
+        }));
+
+        await createSalesStockOut(
+          salesId,
+          items,
+          movementType,
+          note,
+          selectedCustomer?.name ?? null,
+        );
+        setReceipt({
+          id: Date.now().toString(36).toUpperCase(),
+          date: new Date().toLocaleString("id-ID"),
+          customer: selectedCustomer?.name ?? "Umum",
+          items: cart.map((i) => ({
+            name: i.product.name,
+            quantity: i.quantity,
+            price: i.product.hargaPabrik,
+            subtotal: i.product.hargaPabrik * i.quantity,
+          })),
+          subtotal,
+          paymentMethod: movementType,
+        });
+      }
+
+      resetCheckoutState();
       load();
     } catch (err: any) {
       setError(err.message ?? "Gagal memproses transaksi.");
@@ -267,6 +359,36 @@ export default function TransactionPage({
         })}
       </div>
 
+      {products.length === 0 ? (
+        <div className="px-6 py-20 text-center">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-[#0249E1]/5 flex items-center justify-center">
+            <PackageOpen className="w-7 h-7 text-[#111111]/25" />
+          </div>
+          <p className="text-sm font-semibold text-[#111111]/60 mb-1">
+            Produk masih kosong
+          </p>
+          <p className="text-xs text-[#111111]/40 max-w-[240px] mx-auto">
+            Belum ada produk/stok yang ditambahkan atau didistribusikan oleh
+            admin untuk kamu. Silakan hubungi admin untuk mengirimkan stok
+            produk terlebih dahulu.
+          </p>
+        </div>
+      ) : (
+        filteredProducts.length === 0 && (
+          <div className="px-6 py-16 text-center">
+            <div className="w-14 h-14 mx-auto mb-3 rounded-2xl bg-[#0249E1]/5 flex items-center justify-center">
+              <PackageSearch className="w-6 h-6 text-[#111111]/25" />
+            </div>
+            <p className="text-sm font-semibold text-[#111111]/60 mb-1">
+              Produk tidak ditemukan
+            </p>
+            <p className="text-xs text-[#111111]/40">
+              Coba kata kunci lain untuk "{search}".
+            </p>
+          </div>
+        )
+      )}
+
       {cart.length > 0 && !showCart && (
         <button
           onClick={() => setShowCart(true)}
@@ -301,6 +423,34 @@ export default function TransactionPage({
                 </div>
               )}
 
+              <div>
+                <label className="block text-xs font-medium text-[#111111]/45 mb-1.5">
+                  Jenis Transaksi
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  {JENIS_OPTIONS.map((j) => (
+                    <button
+                      key={j.key}
+                      onClick={() => handleJenisChange(j.key)}
+                      className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 text-xs font-medium cursor-pointer ${
+                        jenisTransaksi === j.key
+                          ? "border-2 border-[#0249E1] clay-blue-soft text-[#0249E1]"
+                          : "clay-inset-sm border-2 border-transparent text-[#111111]/60"
+                      }`}
+                    >
+                      <j.icon className="w-4 h-4" />
+                      {j.label}
+                    </button>
+                  ))}
+                </div>
+                {jenisTransaksi !== "penjualan" && (
+                  <p className="text-[11px] text-[#111111]/40 mt-1.5">
+                    Barang keluar tanpa transaksi jual-beli (tidak masuk riwayat
+                    penjualan/komisi), stok tetap dikurangi dari stok kamu.
+                  </p>
+                )}
+              </div>
+
               {cart.map((item) => {
                 const komisiItem =
                   (item.hargaJual - item.product.hargaPabrik) * item.quantity;
@@ -321,23 +471,29 @@ export default function TransactionPage({
                       </button>
                     </div>
 
-                    <div className="relative mb-2">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-[#111111]/35">
-                        Rp
-                      </span>
-                      <input
-                        type="number"
-                        min={0}
-                        value={item.hargaJual}
-                        onChange={(e) =>
-                          updatePrice(
-                            item.product.id,
-                            Number(e.target.value) || 0,
-                          )
-                        }
-                        className="w-full pl-8 pr-3 py-2 clay-raised rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]"
-                      />
-                    </div>
+                    {jenisTransaksi === "penjualan" ? (
+                      <div className="relative mb-2">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-[#111111]/35">
+                          Rp
+                        </span>
+                        <input
+                          type="number"
+                          min={0}
+                          value={item.hargaJual}
+                          onChange={(e) =>
+                            updatePrice(
+                              item.product.id,
+                              Number(e.target.value) || 0,
+                            )
+                          }
+                          className="w-full pl-8 pr-3 py-2 clay-raised rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]"
+                        />
+                      </div>
+                    ) : (
+                      <p className="text-xs text-[#111111]/40 mb-2">
+                        Harga pabrik (referensi): {formatRp(item.hargaJual)}
+                      </p>
+                    )}
 
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1.5">
@@ -361,7 +517,7 @@ export default function TransactionPage({
                         {formatRp(item.hargaJual * item.quantity)}
                       </p>
                     </div>
-                    {komisiItem !== 0 && (
+                    {jenisTransaksi === "penjualan" && komisiItem !== 0 && (
                       <p
                         className={`text-xs mt-1 text-right ${komisiItem > 0 ? "text-[#0249E1]" : "text-[#EE3D5A]"}`}
                       >
@@ -375,7 +531,9 @@ export default function TransactionPage({
 
               <div>
                 <label className="block text-xs font-medium text-[#111111]/45 mb-1.5">
-                  Pelanggan (opsional)
+                  {jenisTransaksi === "penjualan"
+                    ? "Pelanggan (opsional)"
+                    : "Penerima (opsional)"}
                 </label>
                 {selectedCustomer ? (
                   <div className="flex items-center justify-between px-3 py-2.5 clay-raised rounded-xl">
@@ -402,51 +560,85 @@ export default function TransactionPage({
                     className="w-full flex items-center justify-center gap-2 border border-dashed border-black/15 text-[#111111]/60 py-2.5 rounded-xl text-sm font-medium cursor-pointer"
                   >
                     <UserPlus className="w-4 h-4" />
-                    Pilih Pelanggan (Umum jika kosong)
+                    {jenisTransaksi === "penjualan"
+                      ? "Pilih Pelanggan (Umum jika kosong)"
+                      : "Pilih Penerima (opsional)"}
                   </button>
                 )}
               </div>
 
-              <div>
-                <label className="block text-xs font-medium text-[#111111]/45 mb-1.5">
-                  Metode Pembayaran
-                </label>
-                <div className="grid grid-cols-3 gap-2">
-                  {(
-                    [
-                      { key: "cash", label: "Cash", icon: Banknote },
-                      { key: "transfer", label: "Transfer", icon: CreditCard },
-                      { key: "kasbon", label: "Kasbon", icon: Wallet },
-                    ] as const
-                  ).map((m) => (
-                    <button
-                      key={m.key}
-                      onClick={() => setPaymentMethod(m.key)}
-                      className={`flex flex-col items-center gap-1 py-2.5 rounded-xl border-2 text-xs font-medium cursor-pointer ${
-                        paymentMethod === m.key
-                          ? "border-2 border-[#0249E1] clay-blue-soft text-[#0249E1]"
-                          : "clay-inset-sm border-2 border-transparent text-[#111111]/60"
-                      }`}
-                    >
-                      <m.icon className="w-4 h-4" />
-                      {m.label}
-                    </button>
-                  ))}
+              {jenisTransaksi === "penjualan" ? (
+                <div>
+                  <label className="block text-xs font-medium text-[#111111]/45 mb-1.5">
+                    Metode Pembayaran
+                  </label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {(
+                      [
+                        { key: "cash", label: "Cash", icon: Banknote },
+                        {
+                          key: "transfer",
+                          label: "Transfer",
+                          icon: CreditCard,
+                        },
+                        { key: "kasbon", label: "Kasbon", icon: Wallet },
+                      ] as const
+                    ).map((m) => (
+                      <button
+                        key={m.key}
+                        onClick={() => setPaymentMethod(m.key)}
+                        className={`flex flex-col items-center gap-1 py-2.5 rounded-xl border-2 text-xs font-medium cursor-pointer ${
+                          paymentMethod === m.key
+                            ? "border-2 border-[#0249E1] clay-blue-soft text-[#0249E1]"
+                            : "clay-inset-sm border-2 border-transparent text-[#111111]/60"
+                        }`}
+                      >
+                        <m.icon className="w-4 h-4" />
+                        {m.label}
+                      </button>
+                    ))}
+                  </div>
+                  {paymentMethod === "kasbon" && (
+                    <p className="text-[11px] text-[#EE3D5A] mt-1.5">
+                      Kasbon = titipan/piutang, wajib pilih toko tujuan di atas.
+                    </p>
+                  )}
                 </div>
-                {paymentMethod === "kasbon" && (
-                  <p className="text-[11px] text-[#EE3D5A] mt-1.5">
-                    Kasbon = titipan/piutang, wajib pilih toko tujuan di atas.
-                  </p>
-                )}
-              </div>
+              ) : (
+                <div>
+                  <label className="block text-xs font-medium text-[#111111]/45 mb-1.5">
+                    Catatan
+                    <span className="text-[#111111]/30 font-normal ml-1">
+                      (opsional)
+                    </span>
+                  </label>
+                  <textarea
+                    value={note}
+                    onChange={(e) => setNote(e.target.value)}
+                    placeholder={
+                      jenisTransaksi === "sodaqoh"
+                        ? "Contoh: Sodaqoh ke Masjid Al-Ikhlas"
+                        : jenisTransaksi === "internal"
+                          ? "Contoh: Konsumsi pribadi sales"
+                          : "Contoh: Hadiah untuk toko langganan"
+                    }
+                    rows={2}
+                    className="w-full px-3 py-2.5 clay-inset-sm border-0 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40 resize-none"
+                  />
+                </div>
+              )}
             </div>
 
             <div className="border-t border-[rgba(140,172,214,0.35)] px-5 py-4 space-y-2">
               <div className="flex justify-between text-sm text-[#111111]/60">
-                <span>Subtotal</span>
+                <span>
+                  {jenisTransaksi === "penjualan"
+                    ? "Subtotal"
+                    : "Total Nilai Barang"}
+                </span>
                 <span>{formatRp(subtotal)}</span>
               </div>
-              {estimasiKomisi !== 0 && (
+              {jenisTransaksi === "penjualan" && estimasiKomisi !== 0 && (
                 <div
                   className={`flex items-center justify-between text-sm font-medium px-3 py-2 rounded-lg ${
                     estimasiKomisi >= 0
@@ -466,7 +658,11 @@ export default function TransactionPage({
                 className="w-full clay-blue clay-pressable text-white py-3.5 rounded-xl font-semibold disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
               >
                 {saving && <RefreshCw className="w-4 h-4 animate-spin" />}
-                {saving ? "Memproses..." : `Bayar ${formatRp(subtotal)}`}
+                {saving
+                  ? "Memproses..."
+                  : jenisTransaksi === "penjualan"
+                    ? `Bayar ${formatRp(subtotal)}`
+                    : JENIS_SUBMIT_LABEL[jenisTransaksi]}
               </button>
             </div>
           </div>
