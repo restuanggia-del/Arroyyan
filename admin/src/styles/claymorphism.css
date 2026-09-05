@@ -190,3 +190,10 @@
     -4px -4px 10px rgba(220, 200, 255, 0.3);
   color: #fff;
 }
+.clay-lime {
+  background: linear-gradient(150deg, #c8f45a 0%, #8fcf24 65%, #6eaa12 100%);
+  box-shadow:
+    6px 6px 14px rgba(90, 130, 10, 0.3),
+    -4px -4px 10px rgba(235, 255, 180, 0.45);
+  color: #fff;
+}

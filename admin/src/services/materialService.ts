@@ -377,3 +377,60 @@ export const rejectSementara = async (
     if (movErr) return { error: movErr };
     return { error: null };
 };
+
+export const recordSisaBahan = async (
+    materialId: string,
+    sisaCount: number,
+    note: string
+) => {
+    if (sisaCount < 0) {
+        return { error: { message: "Jumlah sisa tidak boleh negatif." } };
+    }
+
+    const { data: existing, error: fetchErr } = await supabaseAdmin
+        .from("materials")
+        .select("id, stock_sementara")
+        .eq("id", materialId)
+        .single();
+
+    if (fetchErr) return { error: fetchErr };
+
+    const stokSaatIni = Number(existing.stock_sementara) || 0;
+    const pemakaian = stokSaatIni - sisaCount;
+
+    if (pemakaian < 0) {
+        return {
+            error: {
+                message: `Sisa yang diinput (${sisaCount}) lebih besar dari Stok Sementara saat ini (${stokSaatIni}). Periksa kembali jumlahnya.`,
+            },
+        };
+    }
+
+    const { error } = await supabaseAdmin
+        .from("materials")
+        .update({ stock_sementara: sisaCount })
+        .eq("id", materialId);
+
+    if (error) return { error };
+
+    if (pemakaian > 0) {
+        const autoNote = `Otomatis dari Sisa Bahan (stok sementara ${stokSaatIni} → sisa ${sisaCount})`;
+        const { error: movErr } = await supabaseAdmin
+            .from("material_movements")
+            .insert([{
+                material_id: materialId,
+                movement_type: "produksi",
+                quantity: pemakaian,
+                note: note ? `${autoNote} — ${note}` : autoNote,
+            }]);
+
+        if (movErr) return { error: movErr };
+    }
+
+    await supabaseAdmin.from("activity_logs").insert([{
+        activity_type: "sisa_bahan_material",
+        description: `Sisa Bahan dicatat: stok sementara ${stokSaatIni} → ${sisaCount} (Pemakaian Produksi otomatis ${pemakaian})`,
+    }]);
+
+    return { error: null };
+};

@@ -9,6 +9,7 @@ import {
   AlertCircle,
   ClipboardList,
   Ban,
+  ClipboardCheck,
 } from "lucide-react";
 import {
   getActiveMaterials,
@@ -19,6 +20,7 @@ import {
   consumeSementara,
   addSementaraStokAwal,
   rejectSementara,
+  recordSisaBahan,
   MOVEMENT_TYPE_LABEL,
 } from "../../../services/materialService";
 
@@ -29,7 +31,8 @@ export type MaterialTxType =
   | "ke_sementara"
   | "stok_awal_sementara"
   | "produksi"
-  | "reject";
+  | "reject"
+  | "sisa_produksi";
 
 interface MaterialTransactionModalProps {
   type: MaterialTxType;
@@ -37,11 +40,16 @@ interface MaterialTransactionModalProps {
   onSaveSuccess: () => void;
 }
 
+const TX_TITLE: Record<MaterialTxType, string> = {
+  ...MOVEMENT_TYPE_LABEL,
+  sisa_produksi: "Sisa Bahan (Setelah Produksi)",
+};
+
 const TX_CONFIG: Record<
   MaterialTxType,
   {
     icon: React.ReactNode;
-    color: "green" | "cyan" | "red" | "blue" | "amber" | "purple";
+    color: "green" | "cyan" | "red" | "blue" | "amber" | "purple" | "lime";
     sourceField: "stock_quantity" | "stock_sementara" | null;
     notePlaceholder: string;
     effectText: string;
@@ -99,6 +107,14 @@ const TX_CONFIG: Record<
     notePlaceholder: "Contoh: Bahan sobek/pecah/cacat saat proses produksi",
     effectText: "⚠ Stok Sementara akan berkurang (rusak/reject)",
   },
+  sisa_produksi: {
+    icon: <ClipboardCheck className="w-5 h-5" />,
+    color: "lime",
+    sourceField: "stock_sementara",
+    notePlaceholder: "Contoh: Sisa kardus setelah produksi batch pagi",
+    effectText:
+      "Input JUMLAH YANG TERSISA (bukan yang dipakai). Sistem otomatis menghitung selisihnya sebagai Pemakaian Produksi, lalu Stok Sementara di-update jadi angka sisa ini.",
+  },
 };
 
 const COLOR_CLASSES: Record<string, { bg: string; text: string; btn: string }> =
@@ -132,6 +148,11 @@ const COLOR_CLASSES: Record<string, { bg: string; text: string; btn: string }> =
       bg: "bg-purple-100",
       text: "text-purple-600",
       btn: "clay-purple clay-pressable",
+    },
+    lime: {
+      bg: "bg-lime-100",
+      text: "text-lime-700",
+      btn: "clay-lime clay-pressable",
     },
   };
 
@@ -173,7 +194,18 @@ export function MaterialTransactionModal({
       setFormError("Pilih bahan terlebih dahulu.");
       return;
     }
-    if (quantity < 1) {
+    if (type === "sisa_produksi") {
+      if (quantity < 0) {
+        setFormError("Jumlah sisa tidak boleh negatif.");
+        return;
+      }
+      if (selectedMaterial && quantity > selectedMaterial.stock_sementara) {
+        setFormError(
+          `Sisa yang diinput (${quantity}) tidak boleh lebih besar dari Stok Sementara saat ini (${selectedMaterial.stock_sementara}).`,
+        );
+        return;
+      }
+    } else if (quantity < 1) {
       setFormError("Jumlah harus minimal 1.");
       return;
     }
@@ -192,6 +224,7 @@ export function MaterialTransactionModal({
         ke_sementara: moveToSementara,
         produksi: consumeSementara,
         reject: rejectSementara,
+        sisa_produksi: recordSisaBahan,
       }[type];
       ({ error } = await fn(materialId, quantity, note));
     }
@@ -217,7 +250,7 @@ export function MaterialTransactionModal({
               {config.icon}
             </div>
             <h2 className="text-xl font-semibold text-gray-900">
-              {MOVEMENT_TYPE_LABEL[type]}
+              {TX_TITLE[type]}
             </h2>
           </div>
           <button
@@ -278,7 +311,8 @@ export function MaterialTransactionModal({
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
-              Jumlah {selectedMaterial ? `(${selectedMaterial.satuan})` : ""}{" "}
+              {type === "sisa_produksi" ? "Jumlah yang Tersisa" : "Jumlah"}{" "}
+              {selectedMaterial ? `(${selectedMaterial.satuan})` : ""}{" "}
               <span className="text-red-500">*</span>
             </label>
             <input
@@ -293,6 +327,26 @@ export function MaterialTransactionModal({
               placeholder="0"
               className="w-full px-4 py-2.5 clay-inset border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
             />
+            {type === "sisa_produksi" && selectedMaterial && (
+              <p
+                className={`text-xs mt-1.5 ${
+                  quantity > selectedMaterial.stock_sementara
+                    ? "text-red-600"
+                    : "text-gray-500"
+                }`}
+              >
+                Pemakaian Produksi yang akan otomatis tercatat:{" "}
+                <span className="font-semibold">
+                  {Math.max(
+                    selectedMaterial.stock_sementara - quantity,
+                    0,
+                  ).toLocaleString("id-ID")}{" "}
+                  {selectedMaterial.satuan}
+                </span>{" "}
+                ({selectedMaterial.stock_sementara.toLocaleString("id-ID")} −{" "}
+                {quantity.toLocaleString("id-ID")})
+              </p>
+            )}
           </div>
 
           <div>
@@ -328,7 +382,14 @@ export function MaterialTransactionModal({
             </button>
             <button
               type="submit"
-              disabled={saving || loadingMaterials || materials.length === 0}
+              disabled={
+                saving ||
+                loadingMaterials ||
+                materials.length === 0 ||
+                (type === "sisa_produksi" &&
+                  !!selectedMaterial &&
+                  quantity > selectedMaterial.stock_sementara)
+              }
               className={`px-5 py-2.5 text-white rounded-xl transition-colors cursor-pointer disabled:opacity-70 flex items-center gap-2 ${colors.btn}`}
             >
               {saving && <RefreshCw className="w-4 h-4 animate-spin" />}
