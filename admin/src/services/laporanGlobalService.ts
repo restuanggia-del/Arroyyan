@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "../lib/supabaseAdmin";
+import { toDusQuantity, estimasiRpFromDus } from "../services/unitConversion";
 
 export interface LaporanGlobalRow {
     product_id: string;
@@ -77,7 +78,7 @@ export const getLaporanGlobal = async (
     const [productsRes, movementsRes, stocksRes, trxRes] = await Promise.all([
         supabaseAdmin
             .from("products")
-            .select("id, product_name, size, category, isi_per_dus, price")
+            .select("id, product_name, size, category, unit, isi_per_dus, price")
             .order("category", { ascending: true })
             .order("size", { ascending: true }),
         supabaseAdmin
@@ -106,11 +107,13 @@ export const getLaporanGlobal = async (
         product_name: string;
         size: string | null;
         category: "cup" | "botol" | "galon";
+        unit: string | null;
         isi_per_dus: number | null;
         price: number;
     }[];
 
     const isiPerDusMap = new Map(products.map((p) => [p.id, p.isi_per_dus || 0]));
+    const unitMap = new Map(products.map((p) => [p.id, p.unit]));
     const priceMap = new Map(products.map((p) => [p.id, Number(p.price) || 0]));
 
     const rowMap = new Map<string, LaporanGlobalRow>();
@@ -118,15 +121,15 @@ export const getLaporanGlobal = async (
         rowMap.set(p.id, emptyRow(p));
     }
     const getRow = (productId: string) => rowMap.get(productId);
-    const toDus = (productId: string, qty: number) => {
-        const isiPerDus = isiPerDusMap.get(productId) || 0;
-        return isiPerDus ? qty / isiPerDus : 0;
-    };
-    const estimasiRp = (productId: string, dus: number) => {
-        const isiPerDus = isiPerDusMap.get(productId) || 0;
-        const price = priceMap.get(productId) || 0;
-        return dus * isiPerDus * price;
-    };
+    const toDus = (productId: string, qty: number) =>
+        toDusQuantity(qty, unitMap.get(productId), isiPerDusMap.get(productId));
+    const estimasiRp = (productId: string, dus: number) =>
+        estimasiRpFromDus(
+            dus,
+            unitMap.get(productId),
+            isiPerDusMap.get(productId),
+            priceMap.get(productId),
+        );
 
     for (const m of (movementsRes.data ?? []) as any[]) {
         const row = getRow(m.product_id);

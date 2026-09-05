@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "../lib/supabaseAdmin";
+import { toDusQuantity } from "./unitConversion";
 
 export type ProduksiKategori = "cup" | "botol" | "galon";
 export type IncentiveJenis =
@@ -204,7 +205,7 @@ export const calculateFeePenjualanPerOwner = async (
             .from("transaction_details")
             .select(`
         quantity,
-        products ( isi_per_dus ),
+        products ( unit, isi_per_dus ),
         transactions!inner ( karyawan_id, sales_id, created_at )
       `)
             .gte("transactions.created_at", startDate)
@@ -231,8 +232,9 @@ export const calculateFeePenjualanPerOwner = async (
         const karyawanId: string | null = row.transactions?.karyawan_id ?? null;
         const salesId: string | null = row.transactions?.sales_id ?? null;
         const isiPerDus: number = row.products?.isi_per_dus ?? 0;
-        if (!isiPerDus) continue;
-        const dus = Number(row.quantity) / isiPerDus;
+        const unit: string | null = row.products?.unit ?? null;
+        const dus = toDusQuantity(Number(row.quantity), unit, isiPerDus);
+        if (dus <= 0) continue;
 
         if (karyawanId) {
             dusMapKaryawan.set(karyawanId, (dusMapKaryawan.get(karyawanId) ?? 0) + dus);

@@ -12,6 +12,7 @@ export interface Product {
     is_active: boolean;
     created_at: string;
     minimum_stock: number;
+    isi_per_dus: number | null;
 }
 
 export const getProducts = async () => {

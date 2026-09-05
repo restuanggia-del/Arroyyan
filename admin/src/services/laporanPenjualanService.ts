@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "../lib/supabaseAdmin";
 import { PotonganKategori, KATEGORI_POTONGAN_LABEL } from "./potonganSetoranService";
+import { toDusQuantity } from "./unitConversion";
 
 export interface SalesColumn {
     actor_id: string;
@@ -184,7 +185,7 @@ export const getLaporanPenjualan = async (
     ] = await Promise.all([
         supabaseAdmin
             .from("products")
-            .select("id, product_name, size, category, isi_per_dus, price")
+            .select("id, product_name, size, category, unit, isi_per_dus, price")
             .order("category", { ascending: true })
             .order("size", { ascending: true }),
         supabaseAdmin
@@ -242,7 +243,7 @@ export const getLaporanPenjualan = async (
         id, karyawan_id, sales_id, total_price, created_at,
         karyawan ( nama ),
         sales ( nama_sales ),
-        transaction_details ( quantity, products ( size, isi_per_dus ) )
+        transaction_details ( quantity, products ( size, unit, isi_per_dus ) )
       `)
             .eq("payment_method", "kasbon")
             .gte("created_at", startDate)
@@ -258,7 +259,7 @@ export const getLaporanPenjualan = async (
             .from("transactions")
             .select(`
         sales_id, sales ( nama_sales ),
-        transaction_details ( quantity, price, harga_pokok, products ( isi_per_dus ) )
+        transaction_details ( quantity, price, harga_pokok, products ( unit, isi_per_dus ) )
       `)
             .not("sales_id", "is", null)
             .gte("created_at", startDate)
@@ -288,6 +289,7 @@ export const getLaporanPenjualan = async (
         product_name: string;
         size: string | null;
         category: "cup" | "botol" | "galon";
+        unit: string | null;
         isi_per_dus: number | null;
         price: number;
     }[];
@@ -303,10 +305,9 @@ export const getLaporanPenjualan = async (
         .sort((a, b) => a.nama.localeCompare(b.nama));
 
     const isiPerDusMap = new Map(products.map((p) => [p.id, p.isi_per_dus || 0]));
-    const toDus = (productId: string, qty: number) => {
-        const isi = isiPerDusMap.get(productId) || 0;
-        return isi ? qty / isi : 0;
-    };
+    const unitMap = new Map(products.map((p) => [p.id, p.unit]));
+    const toDus = (productId: string, qty: number) =>
+        toDusQuantity(qty, unitMap.get(productId), isiPerDusMap.get(productId));
 
     const dayMaps = new Map<string, Map<string, ProdukHarianRow>>();
     const getDay = (productId: string, tanggal: string) => {
@@ -504,8 +505,7 @@ export const getLaporanPenjualan = async (
 
         const details = (t.transaction_details ?? []) as any[];
         const totalDus = details.reduce((s, d) => {
-            const isi = d.products?.isi_per_dus || 0;
-            return s + (isi ? Number(d.quantity) / isi : 0);
+            return s + toDusQuantity(Number(d.quantity), d.products?.unit, d.products?.isi_per_dus);
         }, 0);
         const sizes = Array.from(
             new Set(details.map((d) => sizeLabelMap.get(d.products?.id) ?? d.products?.size ?? "")),
@@ -555,8 +555,7 @@ export const getLaporanPenjualan = async (
         }
         const row = komisiBySales.get(salesId)!;
         for (const d of (t.transaction_details ?? []) as any[]) {
-            const isi = d.products?.isi_per_dus || 0;
-            const dus = isi ? Number(d.quantity) / isi : 0;
+            const dus = toDusQuantity(Number(d.quantity), d.products?.unit, d.products?.isi_per_dus);
             row.total_dus_terjual += dus;
             row.total_omzet_pabrik += Number(d.harga_pokok) * Number(d.quantity);
             row.total_omzet_jual += Number(d.price) * Number(d.quantity);

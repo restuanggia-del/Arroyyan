@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "../lib/supabaseAdmin";
+import { toDusQuantity } from "./unitConversion";
 
 export const DEFAULT_RATE_INSENTIF_SALES = 500;
 export const DEFAULT_RATE_HANDLING_SALES = 300;
@@ -49,7 +50,7 @@ export const getLaporanSales = async (
             .from("transactions")
             .select(`
         id, created_at, payment_method,
-        transaction_details ( quantity, subtotal, products ( size, isi_per_dus ) )
+        transaction_details ( quantity, subtotal, products ( size, unit, isi_per_dus ) )
       `)
             .eq("karyawan_id", karyawanId)
             .gte("created_at", startDate)
@@ -67,8 +68,11 @@ export const getLaporanSales = async (
 
         for (const detail of trx.transaction_details ?? []) {
             const size: string = detail.products?.size ?? "Lainnya";
-            const isiPerDus: number = detail.products?.isi_per_dus ?? 0;
-            const dos = isiPerDus ? Number(detail.quantity) / isiPerDus : 0;
+            const dos = toDusQuantity(
+                Number(detail.quantity),
+                detail.products?.unit,
+                detail.products?.isi_per_dus,
+            );
             const rp = Number(detail.subtotal);
 
             const key = `${tanggal}|${size}`;
