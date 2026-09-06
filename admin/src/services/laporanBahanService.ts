@@ -12,6 +12,8 @@ export interface MaterialStockReportRow {
     total_masuk: number;
     total_keluar: number;
     status: StokStatus;
+    isi_per_satuan: number | null;
+    saldo_pcs: number | null;
 }
 
 const statusFor = (saldo: number): StokStatus => {
@@ -46,7 +48,7 @@ export const getStokGudangReport = async (
 ) => {
     const { data: materials, error: matErr } = await supabaseAdmin
         .from("materials")
-        .select("id, nama_bahan, satuan, stock_quantity, is_active")
+        .select("id, nama_bahan, satuan, stock_quantity, is_active, isi_per_satuan")
         .order("nama_bahan", { ascending: true });
 
     if (matErr) return { data: null, error: matErr };
@@ -71,6 +73,8 @@ export const getStokGudangReport = async (
             .filter((mv) => OUT_TYPES.has(mv.movement_type))
             .reduce((s, mv) => s + Number(mv.quantity), 0);
 
+        const isiPerSatuan: number | null = m.isi_per_satuan ?? null;
+
         return {
             id: m.id,
             nama_bahan: m.nama_bahan,
@@ -80,6 +84,10 @@ export const getStokGudangReport = async (
             total_masuk,
             total_keluar,
             status: statusFor(Number(m.stock_quantity)),
+            isi_per_satuan: isiPerSatuan,
+            saldo_pcs: isiPerSatuan
+                ? Number(m.stock_quantity) * isiPerSatuan
+                : null,
         };
     });
 
@@ -92,7 +100,7 @@ export const getStokSementaraReport = async (
 ) => {
     const { data: materials, error: matErr } = await supabaseAdmin
         .from("materials")
-        .select("id, nama_bahan, satuan, stock_sementara, is_active")
+        .select("id, nama_bahan, satuan, stock_sementara, is_active, isi_per_satuan")
         .order("nama_bahan", { ascending: true });
 
     if (matErr) return { data: null, error: matErr };
@@ -120,6 +128,8 @@ export const getStokSementaraReport = async (
             .filter((mv) => mv.movement_type === "reject")
             .reduce((s, mv) => s + Number(mv.quantity), 0);
 
+        const isiPerSatuan: number | null = m.isi_per_satuan ?? null;
+
         return {
             id: m.id,
             nama_bahan: m.nama_bahan,
@@ -130,6 +140,10 @@ export const getStokSementaraReport = async (
             total_keluar,
             total_reject,
             status: statusFor(Number(m.stock_sementara)),
+            isi_per_satuan: isiPerSatuan,
+            saldo_pcs: isiPerSatuan
+                ? Number(m.stock_sementara) * isiPerSatuan
+                : null,
         } as MaterialStockReportRow & { total_reject: number };
     });
 

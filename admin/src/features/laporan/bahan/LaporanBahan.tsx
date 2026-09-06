@@ -164,6 +164,7 @@ export function LaporanBahan() {
             "Nama Bahan",
             "Satuan",
             "Saldo Saat Ini",
+            "Pcs",
             "Total Masuk (Periode)",
             "Total Keluar (Periode)",
             "Total Reject (Periode)",
@@ -173,6 +174,7 @@ export function LaporanBahan() {
             "Nama Bahan",
             "Satuan",
             "Saldo Saat Ini",
+            "Pcs",
             "Total Masuk (Periode)",
             "Total Keluar (Periode)",
             "Status",
@@ -184,6 +186,7 @@ export function LaporanBahan() {
             "Nama Bahan": r.nama_bahan,
             Satuan: r.satuan,
             "Saldo Saat Ini": r.saldo_saat_ini,
+            Pcs: r.saldo_pcs ?? "-",
             "Total Masuk (Periode)": r.total_masuk,
             "Total Keluar (Periode)": r.total_keluar,
           };
@@ -207,6 +210,7 @@ export function LaporanBahan() {
             "Nama Bahan",
             "Satuan",
             "Saldo Saat Ini",
+            "Pcs",
             "Masuk",
             "Keluar",
             "Reject",
@@ -216,6 +220,7 @@ export function LaporanBahan() {
             "Nama Bahan",
             "Satuan",
             "Saldo Saat Ini",
+            "Pcs",
             "Masuk",
             "Keluar",
             "Status",
@@ -229,6 +234,7 @@ export function LaporanBahan() {
             r.nama_bahan,
             r.satuan,
             r.saldo_saat_ini,
+            r.saldo_pcs ?? "-",
             r.total_masuk,
             r.total_keluar,
           ];
@@ -407,6 +413,7 @@ export function LaporanBahan() {
                       "Nama Bahan",
                       "Satuan",
                       "Saldo Saat Ini",
+                      "Pcs",
                       "Masuk (Periode)",
                       "Keluar (Periode)",
                       ...(isSementara ? ["Reject (Periode)"] : []),
@@ -438,6 +445,11 @@ export function LaporanBahan() {
                       <td className="py-3 px-3 text-gray-600">{r.satuan}</td>
                       <td className="py-3 px-3 font-semibold text-blue-700">
                         {r.saldo_saat_ini.toLocaleString("id-ID")}
+                      </td>
+                      <td className="py-3 px-3 text-gray-500">
+                        {r.saldo_pcs != null
+                          ? `${r.saldo_pcs.toLocaleString("id-ID")} pcs`
+                          : "-"}
                       </td>
                       <td className="py-3 px-3 text-green-600">
                         {r.total_masuk > 0
