@@ -8,6 +8,7 @@ export interface Material {
     stock_sementara: number;
     is_active: boolean;
     created_at: string;
+    isi_per_satuan: number | null;
 }
 
 export interface MaterialMovement {
@@ -63,7 +64,7 @@ export const getActiveMaterials = async () => {
 };
 
 export const createMaterial = async (
-    material: Pick<Material, "nama_bahan" | "satuan" | "is_active">
+    material: Pick<Material, "nama_bahan" | "satuan" | "is_active" | "isi_per_satuan">
 ) => {
     const { data, error } = await supabaseAdmin
         .from("materials")
@@ -85,7 +86,7 @@ export const createMaterial = async (
 
 export const updateMaterial = async (
     id: string,
-    material: Partial<Pick<Material, "nama_bahan" | "satuan" | "is_active">>
+    material: Partial<Pick<Material, "nama_bahan" | "satuan" | "is_active" | "isi_per_satuan">>
 ) => {
     const { data, error } = await supabaseAdmin
         .from("materials")
@@ -370,7 +371,7 @@ export const rejectSementara = async (
         .insert([{
             material_id: materialId,
             movement_type: "reject",
-            quantity,
+            quantity: Math.max(Math.round(quantity), 1),
             note: note || null,
         }]);
 
@@ -413,14 +414,15 @@ export const recordSisaBahan = async (
 
     if (error) return { error };
 
-    if (pemakaian > 0) {
+    const pemakaianBulat = Math.round(pemakaian);
+    if (pemakaianBulat > 0) {
         const autoNote = `Otomatis dari Sisa Bahan (stok sementara ${stokSaatIni} → sisa ${sisaCount})`;
         const { error: movErr } = await supabaseAdmin
             .from("material_movements")
             .insert([{
                 material_id: materialId,
                 movement_type: "produksi",
-                quantity: pemakaian,
+                quantity: pemakaianBulat,
                 note: note ? `${autoNote} — ${note}` : autoNote,
             }]);
 
@@ -429,7 +431,7 @@ export const recordSisaBahan = async (
 
     await supabaseAdmin.from("activity_logs").insert([{
         activity_type: "sisa_bahan_material",
-        description: `Sisa Bahan dicatat: stok sementara ${stokSaatIni} → ${sisaCount} (Pemakaian Produksi otomatis ${pemakaian})`,
+        description: `Sisa Bahan dicatat: stok sementara ${stokSaatIni} → ${sisaCount} (Pemakaian Produksi otomatis ${pemakaianBulat})`,
     }]);
 
     return { error: null };

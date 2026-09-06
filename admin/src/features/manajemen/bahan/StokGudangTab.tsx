@@ -21,6 +21,7 @@ import {
   getMaterialStockStatus,
   MaterialStockStatusBadge,
   MaterialCriticalStockBanner,
+  formatPcs,
 } from "../bahan/materialShared";
 
 export function StokGudangTab({
@@ -173,7 +174,8 @@ export function StokGudangTab({
                     {[
                       "Nama Bahan",
                       "Satuan",
-                      "Stok Gudang",
+                      "Jumlah",
+                      "Pcs",
                       "Status",
                       "Kondisi",
                       "Aksi",
@@ -191,7 +193,7 @@ export function StokGudangTab({
                   {materials.length === 0 ? (
                     <tr>
                       <td
-                        colSpan={6}
+                        colSpan={7}
                         className="py-12 text-center text-gray-500 text-sm"
                       >
                         Belum ada data bahan
@@ -214,7 +216,13 @@ export function StokGudangTab({
                             {m.satuan}
                           </td>
                           <td className="py-3 px-4 text-sm font-semibold text-gray-900">
-                            {m.stock_quantity}
+                            {m.stock_quantity} {m.satuan}
+                          </td>
+                          <td className="py-3 px-4 text-sm text-gray-500">
+                            {formatPcs(
+                              Number(m.stock_quantity),
+                              m.isi_per_satuan,
+                            )}
                           </td>
                           <td className="py-3 px-4">
                             {actionLoading === m.id ? (

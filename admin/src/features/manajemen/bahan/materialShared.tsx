@@ -118,6 +118,15 @@ export const getMaterialStockStatus = (qty: number): MaterialStockStatus => {
   return "aman";
 };
 
+export const formatPcs = (
+  qty: number,
+  isiPerSatuan: number | null | undefined,
+): string => {
+  if (!isiPerSatuan || isiPerSatuan <= 0) return "-";
+  const pcs = qty * isiPerSatuan;
+  return `${pcs.toLocaleString("id-ID", { maximumFractionDigits: 0 })} pcs`;
+};
+
 export function MaterialStockStatusBadge({
   status,
 }: {

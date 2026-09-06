@@ -187,6 +187,13 @@ export function MaterialTransactionModal({
     ? selectedMaterial?.[config.sourceField]
     : undefined;
 
+  const isiPerSatuan = selectedMaterial?.isi_per_satuan || 0;
+  const usesPcsConversion =
+    (type === "sisa_produksi" || type === "reject") && isiPerSatuan > 0;
+  const quantityDalamSatuan = usesPcsConversion
+    ? quantity / isiPerSatuan
+    : quantity;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -199,14 +206,30 @@ export function MaterialTransactionModal({
         setFormError("Jumlah sisa tidak boleh negatif.");
         return;
       }
-      if (selectedMaterial && quantity > selectedMaterial.stock_sementara) {
+      if (
+        selectedMaterial &&
+        quantityDalamSatuan > selectedMaterial.stock_sementara
+      ) {
         setFormError(
-          `Sisa yang diinput (${quantity}) tidak boleh lebih besar dari Stok Sementara saat ini (${selectedMaterial.stock_sementara}).`,
+          usesPcsConversion
+            ? `Sisa yang diinput (${quantity} pcs ≈ ${quantityDalamSatuan.toLocaleString("id-ID", { maximumFractionDigits: 2 })} ${selectedMaterial.satuan}) tidak boleh lebih besar dari Stok Sementara saat ini (${selectedMaterial.stock_sementara} ${selectedMaterial.satuan}).`
+            : `Sisa yang diinput (${quantity}) tidak boleh lebih besar dari Stok Sementara saat ini (${selectedMaterial.stock_sementara}).`,
         );
         return;
       }
     } else if (quantity < 1) {
       setFormError("Jumlah harus minimal 1.");
+      return;
+    } else if (
+      type === "reject" &&
+      selectedMaterial &&
+      quantityDalamSatuan > selectedMaterial.stock_sementara
+    ) {
+      setFormError(
+        usesPcsConversion
+          ? `Jumlah reject (${quantity} pcs ≈ ${quantityDalamSatuan.toLocaleString("id-ID", { maximumFractionDigits: 2 })} ${selectedMaterial.satuan}) tidak boleh lebih besar dari Stok Sementara saat ini (${selectedMaterial.stock_sementara} ${selectedMaterial.satuan}).`
+          : `Jumlah reject (${quantity}) tidak boleh lebih besar dari Stok Sementara saat ini (${selectedMaterial.stock_sementara}).`,
+      );
       return;
     }
 
@@ -218,13 +241,23 @@ export function MaterialTransactionModal({
       ({ error } = await addMaterialStock(materialId, quantity, note, type));
     } else if (type === "stok_awal_sementara") {
       ({ error } = await addSementaraStokAwal(materialId, quantity, note));
+    } else if (type === "sisa_produksi") {
+      ({ error } = await recordSisaBahan(
+        materialId,
+        quantityDalamSatuan,
+        note,
+      ));
+    } else if (type === "reject") {
+      ({ error } = await rejectSementara(
+        materialId,
+        quantityDalamSatuan,
+        note,
+      ));
     } else {
       const fn = {
         keluar: reduceMaterialStock,
         ke_sementara: moveToSementara,
         produksi: consumeSementara,
-        reject: rejectSementara,
-        sisa_produksi: recordSisaBahan,
       }[type];
       ({ error } = await fn(materialId, quantity, note));
     }
@@ -311,8 +344,11 @@ export function MaterialTransactionModal({
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
-              {type === "sisa_produksi" ? "Jumlah yang Tersisa" : "Jumlah"}{" "}
-              {selectedMaterial ? `(${selectedMaterial.satuan})` : ""}{" "}
+              {type === "sisa_produksi"
+                ? `Jumlah yang Tersisa ${usesPcsConversion ? "(pcs)" : selectedMaterial ? `(${selectedMaterial.satuan})` : ""}`
+                : type === "reject"
+                  ? `Jumlah yang Rusak/Reject ${usesPcsConversion ? "(pcs)" : selectedMaterial ? `(${selectedMaterial.satuan})` : ""}`
+                  : `Jumlah ${selectedMaterial ? `(${selectedMaterial.satuan})` : ""}`}{" "}
               <span className="text-red-500">*</span>
             </label>
             <input
@@ -327,10 +363,40 @@ export function MaterialTransactionModal({
               placeholder="0"
               className="w-full px-4 py-2.5 clay-inset border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
             />
-            {type === "sisa_produksi" && selectedMaterial && (
+            {usesPcsConversion && selectedMaterial && (
               <p
                 className={`text-xs mt-1.5 ${
-                  quantity > selectedMaterial.stock_sementara
+                  quantityDalamSatuan > selectedMaterial.stock_sementara
+                    ? "text-red-600"
+                    : "text-gray-500"
+                }`}
+              >
+                {quantity.toLocaleString("id-ID")} pcs ÷ {isiPerSatuan} ={" "}
+                <span className="font-semibold">
+                  {quantityDalamSatuan.toLocaleString("id-ID", {
+                    maximumFractionDigits: 2,
+                  })}{" "}
+                  {selectedMaterial.satuan}
+                </span>
+              </p>
+            )}
+            {type !== "sisa_produksi" &&
+              type !== "reject" &&
+              selectedMaterial &&
+              isiPerSatuan > 0 &&
+              quantity > 0 && (
+                <p className="text-xs text-gray-400 mt-1.5">
+                  {quantity.toLocaleString("id-ID")} {selectedMaterial.satuan} ×{" "}
+                  {isiPerSatuan.toLocaleString("id-ID")} pcs ={" "}
+                  <span className="font-semibold text-gray-500">
+                    {(quantity * isiPerSatuan).toLocaleString("id-ID")} pcs
+                  </span>
+                </p>
+              )}
+            {type === "sisa_produksi" && selectedMaterial && (
+              <p
+                className={`text-xs mt-1 ${
+                  quantityDalamSatuan > selectedMaterial.stock_sementara
                     ? "text-red-600"
                     : "text-gray-500"
                 }`}
@@ -338,13 +404,18 @@ export function MaterialTransactionModal({
                 Pemakaian Produksi yang akan otomatis tercatat:{" "}
                 <span className="font-semibold">
                   {Math.max(
-                    selectedMaterial.stock_sementara - quantity,
+                    Math.round(
+                      selectedMaterial.stock_sementara - quantityDalamSatuan,
+                    ),
                     0,
                   ).toLocaleString("id-ID")}{" "}
                   {selectedMaterial.satuan}
                 </span>{" "}
                 ({selectedMaterial.stock_sementara.toLocaleString("id-ID")} −{" "}
-                {quantity.toLocaleString("id-ID")})
+                {quantityDalamSatuan.toLocaleString("id-ID", {
+                  maximumFractionDigits: 2,
+                })}
+                )
               </p>
             )}
           </div>
@@ -386,9 +457,9 @@ export function MaterialTransactionModal({
                 saving ||
                 loadingMaterials ||
                 materials.length === 0 ||
-                (type === "sisa_produksi" &&
+                ((type === "sisa_produksi" || type === "reject") &&
                   !!selectedMaterial &&
-                  quantity > selectedMaterial.stock_sementara)
+                  quantityDalamSatuan > selectedMaterial.stock_sementara)
               }
               className={`px-5 py-2.5 text-white rounded-xl transition-colors cursor-pointer disabled:opacity-70 flex items-center gap-2 ${colors.btn}`}
             >

@@ -19,6 +19,7 @@ import {
   getMaterialStockStatus,
   MaterialStockStatusBadge,
   MaterialCriticalStockBanner,
+  formatPcs,
 } from "../bahan/materialShared";
 import { MATERIAL_MINIMUM_STOCK } from "../../../services/materialService";
 
@@ -198,7 +199,8 @@ export function StokSementaraTab({
                     {[
                       "Nama Bahan",
                       "Satuan",
-                      "Stok Sementara",
+                      "Jumlah",
+                      "Pcs",
                       "Status",
                       "Kondisi",
                       "Aksi",
@@ -216,7 +218,7 @@ export function StokSementaraTab({
                   {materials.length === 0 ? (
                     <tr>
                       <td
-                        colSpan={6}
+                        colSpan={7}
                         className="py-12 text-center text-gray-500 text-sm"
                       >
                         Belum ada data bahan
@@ -239,7 +241,13 @@ export function StokSementaraTab({
                             {m.satuan}
                           </td>
                           <td className="py-3 px-4 text-sm font-semibold text-purple-700">
-                            {m.stock_sementara}
+                            {m.stock_sementara} {m.satuan}
+                          </td>
+                          <td className="py-3 px-4 text-sm text-gray-500">
+                            {formatPcs(
+                              Number(m.stock_sementara),
+                              m.isi_per_satuan,
+                            )}
                           </td>
                           <td className="py-3 px-4">
                             {actionLoading === m.id ? (
