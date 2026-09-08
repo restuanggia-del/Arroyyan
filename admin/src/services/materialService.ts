@@ -9,6 +9,7 @@ export interface Material {
     is_active: boolean;
     created_at: string;
     isi_per_satuan: number | null;
+    minimum_stock: number;
 }
 
 export interface MaterialMovement {
@@ -42,6 +43,9 @@ export const MOVEMENT_TYPE_LABEL: Record<MaterialMovement["movement_type"], stri
 
 export const MATERIAL_MINIMUM_STOCK = 10;
 
+export const getMaterialMinimumStock = (m: Pick<Material, "minimum_stock">): number =>
+    m.minimum_stock ?? MATERIAL_MINIMUM_STOCK;
+
 export const getMaterials = async () => {
     const { data, error } = await supabaseAdmin
         .from("materials")
@@ -64,7 +68,7 @@ export const getActiveMaterials = async () => {
 };
 
 export const createMaterial = async (
-    material: Pick<Material, "nama_bahan" | "satuan" | "is_active" | "isi_per_satuan">
+    material: Pick<Material, "nama_bahan" | "satuan" | "is_active" | "isi_per_satuan" | "minimum_stock">
 ) => {
     const { data, error } = await supabaseAdmin
         .from("materials")
@@ -86,7 +90,7 @@ export const createMaterial = async (
 
 export const updateMaterial = async (
     id: string,
-    material: Partial<Pick<Material, "nama_bahan" | "satuan" | "is_active" | "isi_per_satuan">>
+    material: Partial<Pick<Material, "nama_bahan" | "satuan" | "is_active" | "isi_per_satuan" | "minimum_stock">>
 ) => {
     const { data, error } = await supabaseAdmin
         .from("materials")

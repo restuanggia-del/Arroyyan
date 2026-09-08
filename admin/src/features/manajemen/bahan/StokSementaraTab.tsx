@@ -21,7 +21,7 @@ import {
   MaterialCriticalStockBanner,
   formatPcs,
 } from "../bahan/materialShared";
-import { MATERIAL_MINIMUM_STOCK } from "../../../services/materialService";
+import { getMaterialMinimumStock } from "../../../services/materialService";
 
 export function StokSementaraTab({
   materials,
@@ -45,7 +45,8 @@ export function StokSementaraTab({
     0,
   );
   const kritisSementaraItems = materials.filter(
-    (m) => m.is_active && Number(m.stock_sementara) < MATERIAL_MINIMUM_STOCK,
+    (m) =>
+      m.is_active && Number(m.stock_sementara) < getMaterialMinimumStock(m),
   );
   const sementaraMovements = movements.filter((m) =>
     SEMENTARA_MOVEMENT_TYPES.includes(m.movement_type),
@@ -201,6 +202,7 @@ export function StokSementaraTab({
                       "Satuan",
                       "Jumlah",
                       "Pcs",
+                      "Min. Stok",
                       "Status",
                       "Kondisi",
                       "Aksi",
@@ -218,7 +220,7 @@ export function StokSementaraTab({
                   {materials.length === 0 ? (
                     <tr>
                       <td
-                        colSpan={7}
+                        colSpan={8}
                         className="py-12 text-center text-gray-500 text-sm"
                       >
                         Belum ada data bahan
@@ -228,6 +230,7 @@ export function StokSementaraTab({
                     materials.map((m) => {
                       const stockStatus = getMaterialStockStatus(
                         Number(m.stock_sementara),
+                        getMaterialMinimumStock(m),
                       );
                       return (
                         <tr
@@ -248,6 +251,9 @@ export function StokSementaraTab({
                               Number(m.stock_sementara),
                               m.isi_per_satuan,
                             )}
+                          </td>
+                          <td className="py-3 px-4 text-sm text-gray-600">
+                            {getMaterialMinimumStock(m)} {m.satuan}
                           </td>
                           <td className="py-3 px-4">
                             {actionLoading === m.id ? (

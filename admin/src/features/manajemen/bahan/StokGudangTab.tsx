@@ -13,7 +13,7 @@ import {
   ClipboardList,
   Warehouse,
 } from "lucide-react";
-import { MATERIAL_MINIMUM_STOCK } from "../../../services/materialService";
+import { getMaterialMinimumStock } from "../../../services/materialService";
 import {
   MovementList,
   GUDANG_MOVEMENT_TYPES,
@@ -39,7 +39,7 @@ export function StokGudangTab({
   const [subTab, setSubTab] = useState<"daftar" | "riwayat">("daftar");
 
   const lowStockItems = materials.filter(
-    (m) => m.is_active && m.stock_quantity < MATERIAL_MINIMUM_STOCK,
+    (m) => m.is_active && m.stock_quantity < getMaterialMinimumStock(m),
   );
   const totalStokGudang = materials.reduce(
     (s, m) => s + Number(m.stock_quantity),
@@ -176,6 +176,7 @@ export function StokGudangTab({
                       "Satuan",
                       "Jumlah",
                       "Pcs",
+                      "Min. Stok",
                       "Status",
                       "Kondisi",
                       "Aksi",
@@ -193,7 +194,7 @@ export function StokGudangTab({
                   {materials.length === 0 ? (
                     <tr>
                       <td
-                        colSpan={7}
+                        colSpan={8}
                         className="py-12 text-center text-gray-500 text-sm"
                       >
                         Belum ada data bahan
@@ -203,6 +204,7 @@ export function StokGudangTab({
                     materials.map((m) => {
                       const stockStatus = getMaterialStockStatus(
                         Number(m.stock_quantity),
+                        getMaterialMinimumStock(m),
                       );
                       return (
                         <tr
@@ -223,6 +225,9 @@ export function StokGudangTab({
                               Number(m.stock_quantity),
                               m.isi_per_satuan,
                             )}
+                          </td>
+                          <td className="py-3 px-4 text-sm text-gray-600">
+                            {getMaterialMinimumStock(m)} {m.satuan}
                           </td>
                           <td className="py-3 px-4">
                             {actionLoading === m.id ? (

@@ -1,5 +1,5 @@
 import { supabaseAdmin } from "../lib/supabaseAdmin";
-import { MATERIAL_MINIMUM_STOCK } from "./materialService";
+import { getMaterialMinimumStock } from "./materialService";
 
 export type StokStatus = "aman" | "menipis" | "habis";
 
@@ -14,11 +14,12 @@ export interface MaterialStockReportRow {
     status: StokStatus;
     isi_per_satuan: number | null;
     saldo_pcs: number | null;
+    minimum_stock: number;
 }
 
-const statusFor = (saldo: number): StokStatus => {
+const statusFor = (saldo: number, minimumStock: number): StokStatus => {
     if (saldo <= 0) return "habis";
-    if (saldo <= MATERIAL_MINIMUM_STOCK) return "menipis";
+    if (saldo <= minimumStock) return "menipis";
     return "aman";
 };
 
@@ -48,7 +49,7 @@ export const getStokGudangReport = async (
 ) => {
     const { data: materials, error: matErr } = await supabaseAdmin
         .from("materials")
-        .select("id, nama_bahan, satuan, stock_quantity, is_active, isi_per_satuan")
+        .select("id, nama_bahan, satuan, stock_quantity, is_active, isi_per_satuan, minimum_stock")
         .order("nama_bahan", { ascending: true });
 
     if (matErr) return { data: null, error: matErr };
@@ -74,6 +75,7 @@ export const getStokGudangReport = async (
             .reduce((s, mv) => s + Number(mv.quantity), 0);
 
         const isiPerSatuan: number | null = m.isi_per_satuan ?? null;
+        const minimumStock = getMaterialMinimumStock(m);
 
         return {
             id: m.id,
@@ -83,11 +85,12 @@ export const getStokGudangReport = async (
             saldo_saat_ini: Number(m.stock_quantity),
             total_masuk,
             total_keluar,
-            status: statusFor(Number(m.stock_quantity)),
+            status: statusFor(Number(m.stock_quantity), minimumStock),
             isi_per_satuan: isiPerSatuan,
             saldo_pcs: isiPerSatuan
                 ? Number(m.stock_quantity) * isiPerSatuan
                 : null,
+            minimum_stock: minimumStock,
         };
     });
 
@@ -100,7 +103,7 @@ export const getStokSementaraReport = async (
 ) => {
     const { data: materials, error: matErr } = await supabaseAdmin
         .from("materials")
-        .select("id, nama_bahan, satuan, stock_sementara, is_active, isi_per_satuan")
+        .select("id, nama_bahan, satuan, stock_sementara, is_active, isi_per_satuan, minimum_stock")
         .order("nama_bahan", { ascending: true });
 
     if (matErr) return { data: null, error: matErr };
@@ -129,6 +132,7 @@ export const getStokSementaraReport = async (
             .reduce((s, mv) => s + Number(mv.quantity), 0);
 
         const isiPerSatuan: number | null = m.isi_per_satuan ?? null;
+        const minimumStock = getMaterialMinimumStock(m);
 
         return {
             id: m.id,
@@ -139,11 +143,12 @@ export const getStokSementaraReport = async (
             total_masuk,
             total_keluar,
             total_reject,
-            status: statusFor(Number(m.stock_sementara)),
+            status: statusFor(Number(m.stock_sementara), minimumStock),
             isi_per_satuan: isiPerSatuan,
             saldo_pcs: isiPerSatuan
                 ? Number(m.stock_sementara) * isiPerSatuan
                 : null,
+            minimum_stock: minimumStock,
         } as MaterialStockReportRow & { total_reject: number };
     });
 

@@ -14,7 +14,7 @@ import {
   Material,
   MaterialMovement,
   MOVEMENT_TYPE_LABEL,
-  MATERIAL_MINIMUM_STOCK,
+  getMaterialMinimumStock,
 } from "../../../services/materialService";
 import { MaterialTxType } from "./MaterialTransactionModal";
 
@@ -112,9 +112,12 @@ export interface TabProps {
 
 export type MaterialStockStatus = "aman" | "menipis" | "habis";
 
-export const getMaterialStockStatus = (qty: number): MaterialStockStatus => {
+export const getMaterialStockStatus = (
+  qty: number,
+  minimumStock: number,
+): MaterialStockStatus => {
   if (qty <= 0) return "habis";
-  if (qty < MATERIAL_MINIMUM_STOCK) return "menipis";
+  if (qty < minimumStock) return "menipis";
   return "aman";
 };
 
@@ -168,7 +171,8 @@ export function MaterialCriticalStockBanner({
 }) {
   const habisItems = materials.filter((m) => m.is_active && getQty(m) <= 0);
   const menipisItems = materials.filter(
-    (m) => m.is_active && getQty(m) > 0 && getQty(m) < MATERIAL_MINIMUM_STOCK,
+    (m) =>
+      m.is_active && getQty(m) > 0 && getQty(m) < getMaterialMinimumStock(m),
   );
 
   if (habisItems.length === 0 && menipisItems.length === 0) return null;
@@ -187,20 +191,22 @@ export function MaterialCriticalStockBanner({
           )}
           {menipisItems.length > 0 && (
             <>
-              {menipisItems.length} bahan <strong>menipis</strong> (di bawah{" "}
-              {MATERIAL_MINIMUM_STOCK} unit).
+              {menipisItems.length} bahan <strong>menipis</strong> (di bawah
+              minimal stok masing-masing bahan).
             </>
           )}
         </p>
         <ul className="mt-1 text-xs list-disc list-inside">
           {habisItems.map((m) => (
             <li key={m.id} className="text-red-700 font-medium">
-              {m.nama_bahan} — HABIS (0 {satuanLabel(m)})
+              {m.nama_bahan} — HABIS (0 {satuanLabel(m)}, minimal{" "}
+              {getMaterialMinimumStock(m)} {satuanLabel(m)})
             </li>
           ))}
           {menipisItems.map((m) => (
             <li key={m.id} className="text-orange-600">
-              {m.nama_bahan} — stok: {getQty(m)} {satuanLabel(m)}
+              {m.nama_bahan} — stok: {getQty(m)} {satuanLabel(m)} (minimal{" "}
+              {getMaterialMinimumStock(m)} {satuanLabel(m)})
             </li>
           ))}
         </ul>
