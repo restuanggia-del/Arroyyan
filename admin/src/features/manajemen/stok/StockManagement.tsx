@@ -171,7 +171,7 @@ export function StockManagement() {
             Manajemen Stok
           </h1>
           <p className="text-gray-600">
-            Kelola stok pusat, karyawan, dan sales
+            Kelola stok pabrik dan sales
           </p>
         </div>
         <button
@@ -189,7 +189,7 @@ export function StockManagement() {
           <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
           <div>
             <h3 className="font-semibold text-red-900 mb-1">
-              Peringatan Stok Pusat Kritis
+              Peringatan Stok Pabrik Kritis
             </h3>
             <p className="text-sm text-red-700">
               {habisItems.length > 0 && (
@@ -214,7 +214,7 @@ export function StockManagement() {
               ))}
               {menipisItems.map((i) => (
                 <li key={i.product_id} className="text-orange-600">
-                  {i.product_name} — stok pusat: {i.stokPusat} {i.unit} (min.{" "}
+                  {i.product_name} — stok pabrik: {i.stokPusat} {i.unit} (min.{" "}
                   {i.minimumStok} {i.unit})
                 </li>
               ))}
@@ -228,7 +228,7 @@ export function StockManagement() {
           <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
             <Warehouse className="w-6 h-6 text-blue-600" />
           </div>
-          <h3 className="text-sm text-gray-600 mb-1">Total Stok Pusat</h3>
+          <h3 className="text-sm text-gray-600 mb-1">Total Stok Pabrik</h3>
           <p className="text-2xl font-bold text-gray-900">
             {loading ? "—" : `${totalPusat} Unit`}
           </p>
@@ -323,7 +323,7 @@ export function StockManagement() {
                     {[
                       "Produk",
                       "Kategori",
-                      "Stok Pusat",
+                      "Stok Pabrik",
                       "Stok Sales",
                       "Total",
                       "Min. Stok",
@@ -400,7 +400,7 @@ export function StockManagement() {
                             <button
                               onClick={() => setEditingStock(item)}
                               className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
-                              title="Koreksi Stok Pusat"
+                              title="Koreksi Stok Pabrik"
                             >
                               <Pencil className="w-4 h-4" />
                             </button>
@@ -451,7 +451,7 @@ export function StockManagement() {
                               <span>
                                 {mov.karyawan?.nama ??
                                   mov.sales?.nama_sales ??
-                                  "Stok Pusat"}
+                                  "Stok Pabrik"}
                               </span>
                               <ArrowRight className="w-3 h-3" />
                               <span>{isIn ? "Stok Masuk" : "Stok Keluar"}</span>
