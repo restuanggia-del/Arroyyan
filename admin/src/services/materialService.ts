@@ -440,3 +440,110 @@ export const recordSisaBahan = async (
 
     return { error: null };
 };
+
+export const recordPemakaianProduksiGabungan = async (
+    materialId: string,
+    jumlahSatuan: number,
+    rejectQtyPcs: number,
+    sisaQtyPcs: number,
+    note: string
+) => {
+    if (jumlahSatuan < 1) {
+        return { error: { message: "Jumlah pemakaian harus minimal 1." } };
+    }
+    if (rejectQtyPcs < 0 || sisaQtyPcs < 0) {
+        return { error: { message: "Jumlah reject/sisa tidak boleh negatif." } };
+    }
+
+    const { data: existing, error: fetchErr } = await supabaseAdmin
+        .from("materials")
+        .select("id, nama_bahan, satuan, stock_sementara, isi_per_satuan")
+        .eq("id", materialId)
+        .single();
+
+    if (fetchErr) return { error: fetchErr };
+
+    const stokSaatIni = Number(existing.stock_sementara) || 0;
+    if (jumlahSatuan > stokSaatIni) {
+        return {
+            error: {
+                message: `Jumlah yang diambil (${jumlahSatuan} ${existing.satuan}) melebihi Stok Sementara saat ini (${stokSaatIni} ${existing.satuan}).`,
+            },
+        };
+    }
+
+    const isiPerSatuan = Number(existing.isi_per_satuan) || 0;
+    const pcsPerUnit = isiPerSatuan > 0 ? isiPerSatuan : 1;
+    const grossPcs = jumlahSatuan * pcsPerUnit;
+
+    if (rejectQtyPcs + sisaQtyPcs > grossPcs) {
+        return {
+            error: {
+                message: `Total Reject + Sisa Bahan (${(rejectQtyPcs + sisaQtyPcs).toLocaleString("id-ID")} pcs) tidak boleh melebihi Jumlah yang diambil (${grossPcs.toLocaleString("id-ID")} pcs).`,
+            },
+        };
+    }
+
+    const netUsagePcs = grossPcs - rejectQtyPcs - sisaQtyPcs;
+    const rejectSatuan = rejectQtyPcs / pcsPerUnit;
+    const sisaSatuan = sisaQtyPcs / pcsPerUnit;
+    const netUsageSatuan = netUsagePcs / pcsPerUnit;
+
+    const pengurangan = jumlahSatuan - sisaSatuan;
+    const saldoBaru = stokSaatIni - pengurangan;
+
+    const { error } = await supabaseAdmin
+        .from("materials")
+        .update({ stock_sementara: saldoBaru })
+        .eq("id", materialId);
+
+    if (error) return { error };
+
+    const movements: {
+        material_id: string;
+        movement_type: "produksi" | "reject";
+        quantity: number;
+        note: string | null;
+    }[] = [];
+
+    const netUsageQty = Math.round(netUsageSatuan);
+    if (netUsageQty > 0) {
+        movements.push({
+            material_id: materialId,
+            movement_type: "produksi",
+            quantity: netUsageQty,
+            note: note || null,
+        });
+    }
+
+    if (rejectQtyPcs > 0) {
+        const autoNote =
+            isiPerSatuan > 0
+                ? `Reject ${rejectQtyPcs.toLocaleString("id-ID")} pcs (dari Pemakaian Produksi)`
+                : `Reject dari Pemakaian Produksi`;
+        movements.push({
+            material_id: materialId,
+            movement_type: "reject",
+            quantity: Math.max(Math.round(rejectSatuan), 1),
+            note: note ? `${autoNote} — ${note}` : autoNote,
+        });
+    }
+
+    if (movements.length > 0) {
+        const { error: movErr } = await supabaseAdmin
+            .from("material_movements")
+            .insert(movements);
+        if (movErr) return { error: movErr };
+    }
+
+    await supabaseAdmin.from("activity_logs").insert([{
+        activity_type: "pemakaian_produksi_material",
+        description:
+            `Pemakaian Produksi ${existing.nama_bahan}: ambil ${jumlahSatuan} ${existing.satuan} (${grossPcs.toLocaleString("id-ID")} pcs)` +
+            (rejectQtyPcs > 0 ? `, reject ${rejectQtyPcs.toLocaleString("id-ID")} pcs` : "") +
+            (sisaQtyPcs > 0 ? `, sisa ${sisaQtyPcs.toLocaleString("id-ID")} pcs (tetap di Stok Sementara)` : "") +
+            ` → bersih terpakai ${netUsageQty.toLocaleString("id-ID")} ${existing.satuan}.`,
+    }]);
+
+    return { error: null };
+};

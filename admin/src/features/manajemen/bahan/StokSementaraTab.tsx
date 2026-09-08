@@ -9,8 +9,6 @@ import {
   ClipboardList,
   Factory,
   PackageOpen,
-  Ban,
-  ClipboardCheck,
 } from "lucide-react";
 import {
   MovementList,
@@ -76,10 +74,10 @@ export function StokSementaraTab({
             kebersihan, dan sterilitas bahan. Kalau ada bahan yang memang selalu
             ditempatkan langsung di area produksi (tidak pernah lewat Gudang),
             tambahkan lewat "Tambah Bahan" di bawah lalu isi saldo awalnya lewat
-            "Stok Awal". Setelah produksi selesai, hitung sisa fisiknya lalu
-            catat lewat tombol "Sisa Bahan" — sistem otomatis menghitung &
-            mencatat Pemakaian Produksi dari selisihnya, tidak perlu dihitung
-            manual.
+            "Stok Awal". Untuk mencatat pemakaian produksi, klik "Pemakaian
+            Produksi" — di form yang sama, sekalian isi jumlah Bahan
+            Rusak/Reject dan Sisa Bahan (kalau ada); sistem otomatis menghitung
+            Pemakaian Produksi bersihnya, tidak perlu dihitung manual.
           </p>
         </div>
       </div>
@@ -161,20 +159,6 @@ export function StokSementaraTab({
             >
               <Factory className="w-4 h-4" />
               Pemakaian Produksi
-            </button>
-            <button
-              onClick={() => onAddTransaction("reject")}
-              className="clay-red clay-pressable text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer"
-            >
-              <Ban className="w-4 h-4" />
-              Bahan Rusak / Reject
-            </button>
-            <button
-              onClick={() => onAddTransaction("sisa_produksi")}
-              className="clay-lime clay-pressable text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer"
-            >
-              <ClipboardCheck className="w-4 h-4" />
-              Sisa Bahan
             </button>
           </div>
         </div>
