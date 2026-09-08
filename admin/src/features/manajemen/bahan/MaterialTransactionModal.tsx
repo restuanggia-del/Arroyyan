@@ -149,7 +149,6 @@ export function MaterialTransactionModal({
 
   const [materialId, setMaterialId] = useState("");
   const [quantity, setQuantity] = useState(0);
-  // Hanya dipakai saat type === "produksi" (form gabungan)
   const [rejectQty, setRejectQty] = useState(0);
   const [sisaQty, setSisaQty] = useState(0);
   const [note, setNote] = useState("");

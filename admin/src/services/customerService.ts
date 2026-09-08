@@ -7,44 +7,48 @@ export interface Customer {
     address: string | null;
     is_subscribed: boolean;
     created_at: string;
+    sales_id: string | null;
+    sales?: { id: string; nama_sales: string } | null;
 }
+
+const CUSTOMER_SELECT = "*, sales:sales_id ( id, nama_sales )";
 
 export const getAllCustomers = async () => {
     const { data, error } = await supabaseAdmin
         .from("customers")
-        .select("*")
+        .select(CUSTOMER_SELECT)
         .order("created_at", { ascending: false });
 
     if (error) return { data: null, error };
-    return { data: data as Customer[], error: null };
+    return { data: data as unknown as Customer[], error: null };
 };
 
 export const createCustomer = async (
-    customer: Omit<Customer, "id" | "created_at">
+    customer: Omit<Customer, "id" | "created_at" | "sales">
 ) => {
     const { data, error } = await supabaseAdmin
         .from("customers")
         .insert([customer])
-        .select()
+        .select(CUSTOMER_SELECT)
         .single();
 
     if (error) return { data: null, error };
-    return { data: data as Customer, error: null };
+    return { data: data as unknown as Customer, error: null };
 };
 
 export const updateCustomer = async (
     id: string,
-    customer: Partial<Omit<Customer, "id" | "created_at">>
+    customer: Partial<Omit<Customer, "id" | "created_at" | "sales">>
 ) => {
     const { data, error } = await supabaseAdmin
         .from("customers")
         .update(customer)
         .eq("id", id)
-        .select()
+        .select(CUSTOMER_SELECT)
         .single();
 
     if (error) return { data: null, error };
-    return { data: data as Customer, error: null };
+    return { data: data as unknown as Customer, error: null };
 };
 
 export const deleteCustomer = async (id: string) => {
