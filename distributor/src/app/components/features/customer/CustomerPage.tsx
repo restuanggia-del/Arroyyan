@@ -12,20 +12,17 @@ import {
   AlertCircle,
   ChevronRight,
 } from "lucide-react";
-import { getCustomers, getTransactionHistory, SalesCustomer } from "../../../services";
+import {
+  getCustomers,
+  getTransactionHistory,
+  SalesCustomer,
+} from "../../../services";
 import CustomerFormModal, { CustomerFormValue } from "./CustomerFormModal";
 
 type TxRow = Awaited<ReturnType<typeof getTransactionHistory>>[number];
 
 interface CustomerPageProps {
-  /** Needed to look up a customer's own purchase history (scoped to this sales rep). */
   salesId: string;
-  /**
-   * "manage" (default): full page — search, add, edit, view purchase history.
-   * "picker": renders as a bottom-sheet overlay for choosing a customer inside
-   *           a transaction. Selecting a row (or adding a new one) calls
-   *           onSelect and then onClose.
-   */
   mode?: "manage" | "picker";
   onSelect?: (customer: { id: string; name: string; phone: string }) => void;
   onClose?: () => void;
@@ -45,9 +42,13 @@ export default function CustomerPage({
   const [search, setSearch] = useState("");
 
   const [showForm, setShowForm] = useState(false);
-  const [editingCustomer, setEditingCustomer] = useState<SalesCustomer | null>(null);
+  const [editingCustomer, setEditingCustomer] = useState<SalesCustomer | null>(
+    null,
+  );
 
-  const [historyCustomer, setHistoryCustomer] = useState<SalesCustomer | null>(null);
+  const [historyCustomer, setHistoryCustomer] = useState<SalesCustomer | null>(
+    null,
+  );
   const [historyData, setHistoryData] = useState<TxRow[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
 
@@ -80,7 +81,9 @@ export default function CustomerPage({
     try {
       const all = await getTransactionHistory(salesId);
       setHistoryData(
-        all.filter((t) => t.customer.toLowerCase() === customer.name.toLowerCase()),
+        all.filter(
+          (t) => t.customer.toLowerCase() === customer.name.toLowerCase(),
+        ),
       );
     } catch (err: any) {
       setError(err.message ?? "Gagal memuat riwayat pembelian.");
@@ -99,7 +102,6 @@ export default function CustomerPage({
       return [...next].sort((a, b) => a.name.localeCompare(b.name));
     });
 
-    // In picker mode, adding a brand-new customer immediately selects it too.
     if (mode === "picker" && !editingCustomer) {
       onSelect?.({ id: saved.id, name: saved.name, phone: saved.phone });
       onClose?.();
@@ -170,7 +172,9 @@ export default function CustomerPage({
         <div className="text-center py-16">
           <Users className="w-10 h-10 text-[#111111]/25 mx-auto mb-3" />
           <p className="text-sm text-[#111111]/35">
-            {search ? "Pelanggan tidak ditemukan." : "Belum ada data pelanggan."}
+            {search
+              ? "Pelanggan tidak ditemukan."
+              : "Belum ada data pelanggan."}
           </p>
         </div>
       ) : (
@@ -186,18 +190,19 @@ export default function CustomerPage({
                 className="w-full text-left clay-raised rounded-xl p-3.5 flex items-center justify-between cursor-pointer active:border-[#0249E1]"
               >
                 <div>
-                  <p className="text-sm font-semibold text-[#111111]">{c.name}</p>
+                  <p className="text-sm font-semibold text-[#111111]">
+                    {c.name}
+                  </p>
                   {c.phone && (
-                    <p className="text-xs text-[#111111]/40 mt-0.5">{c.phone}</p>
+                    <p className="text-xs text-[#111111]/40 mt-0.5">
+                      {c.phone}
+                    </p>
                   )}
                 </div>
                 <ChevronRight className="w-4 h-4 text-[#111111]/25 flex-shrink-0" />
               </button>
             ) : (
-              <div
-                key={c.id}
-                className="clay-raised rounded-xl p-3.5"
-              >
+              <div key={c.id} className="clay-raised rounded-xl p-3.5">
                 <div className="flex items-start justify-between mb-1.5">
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-[#111111] truncate">
@@ -252,7 +257,9 @@ export default function CustomerPage({
                 <X className="w-5 h-5 text-[#111111]/45" />
               </button>
             </div>
-            <div className="overflow-y-auto flex-1 px-5 py-4">{listContent}</div>
+            <div className="overflow-y-auto flex-1 px-5 py-4">
+              {listContent}
+            </div>
           </div>
         </div>
       ) : (
@@ -271,6 +278,7 @@ export default function CustomerPage({
                 }
               : null
           }
+          salesId={salesId}
           onClose={() => setShowForm(false)}
           onSaved={handleSaved}
         />
@@ -282,7 +290,9 @@ export default function CustomerPage({
             <div className="flex items-center justify-between px-5 py-4 border-b border-[rgba(140,172,214,0.35)]">
               <div>
                 <h2 className="font-bold text-[#111111]">Riwayat Pembelian</h2>
-                <p className="text-xs text-[#111111]/45">{historyCustomer.name}</p>
+                <p className="text-xs text-[#111111]/45">
+                  {historyCustomer.name}
+                </p>
               </div>
               <button
                 onClick={() => setHistoryCustomer(null)}
@@ -306,10 +316,7 @@ export default function CustomerPage({
                 </div>
               ) : (
                 historyData.map((t) => (
-                  <div
-                    key={t.fullId}
-                    className="clay-raised rounded-xl p-3.5"
-                  >
+                  <div key={t.fullId} className="clay-raised rounded-xl p-3.5">
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-xs text-[#111111]/35">
                         #{t.id} · {formatDate(t.createdAt)}

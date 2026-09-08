@@ -10,14 +10,15 @@ export interface CustomerFormValue {
 }
 
 interface CustomerFormModalProps {
-  /** Pass an existing customer to edit it, or omit/null to create a new one. */
   customer?: CustomerFormValue | null;
+  salesId?: string;
   onClose: () => void;
   onSaved: (customer: CustomerFormValue) => void;
 }
 
 export default function CustomerFormModal({
   customer,
+  salesId,
   onClose,
   onSaved,
 }: CustomerFormModalProps) {
@@ -53,6 +54,7 @@ export default function CustomerFormModal({
           customer_name: name.trim(),
           phone: phone.trim(),
           address: address.trim(),
+          sales_id: salesId,
         });
         onSaved({
           id: created.id,

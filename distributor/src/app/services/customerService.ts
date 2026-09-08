@@ -24,8 +24,18 @@ export const getCustomers = async (): Promise<SalesCustomer[]> => {
     }));
 };
 
-export const createCustomer = async (customer: { customer_name: string; phone: string; address: string }) => {
-    const { data, error } = await supabase.from('customers').insert([customer]).select().single();
+export const createCustomer = async (customer: {
+    customer_name: string;
+    phone: string;
+    address: string;
+    sales_id?: string;
+}) => {
+    const { sales_id, ...rest } = customer;
+    const { data, error } = await supabase
+        .from('customers')
+        .insert([{ ...rest, sales_id: sales_id ?? null }])
+        .select()
+        .single();
     if (error) throw new Error(error.message);
     return data;
 };
