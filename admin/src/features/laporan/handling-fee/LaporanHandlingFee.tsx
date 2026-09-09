@@ -90,8 +90,9 @@ const exportToPDF = async (
 };
 
 interface KaryawanSummary {
-  karyawan_id: string;
+  worker_key: string;
   nama: string;
+  is_manual: boolean;
   jumlah_kegiatan: number;
   total_fee: number;
 }
@@ -132,14 +133,15 @@ export function LaporanHandlingFee() {
   const summaryByKaryawan = useMemo<KaryawanSummary[]>(() => {
     const map = new Map<string, KaryawanSummary>();
     for (const row of data) {
-      const existing = map.get(row.karyawan_id);
+      const existing = map.get(row.worker_key);
       if (existing) {
         existing.jumlah_kegiatan += 1;
         existing.total_fee += row.fee_per_orang;
       } else {
-        map.set(row.karyawan_id, {
-          karyawan_id: row.karyawan_id,
+        map.set(row.worker_key, {
+          worker_key: row.worker_key,
           nama: row.nama,
+          is_manual: row.is_manual,
           jumlah_kegiatan: 1,
           total_fee: row.fee_per_orang,
         });
@@ -168,7 +170,7 @@ export function LaporanHandlingFee() {
       await exportToExcel(
         data.map((r) => ({
           Tanggal: r.tanggal,
-          Karyawan: r.nama,
+          "Nama Pekerja": r.nama,
           "Jumlah Dus": r.jumlah_dus,
           "Rate/Dus": r.rate_per_dus,
           "Fee Diterima": r.fee_per_orang,
@@ -176,7 +178,7 @@ export function LaporanHandlingFee() {
         })),
         [
           "Tanggal",
-          "Karyawan",
+          "Nama Pekerja",
           "Jumlah Dus",
           "Rate/Dus",
           "Fee Diterima",
@@ -194,7 +196,7 @@ export function LaporanHandlingFee() {
     try {
       await exportToPDF(
         `Laporan Handling Fee (${startDate} s/d ${endDate})`,
-        ["Tanggal", "Karyawan", "Jumlah Dus", "Rate/Dus", "Fee Diterima"],
+        ["Tanggal", "Nama Pekerja", "Jumlah Dus", "Rate/Dus", "Fee Diterima"],
         data.map((r) => [
           formatDate(r.tanggal),
           r.nama,
@@ -243,7 +245,7 @@ export function LaporanHandlingFee() {
           <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
             <Users className="w-6 h-6 text-green-600" />
           </div>
-          <h3 className="text-sm text-gray-600 mb-1">Karyawan Terlibat</h3>
+          <h3 className="text-sm text-gray-600 mb-1">Orang Terlibat</h3>
           <p className="text-2xl font-bold text-gray-900">
             {loading ? "—" : summaryByKaryawan.length}
           </p>
@@ -253,7 +255,7 @@ export function LaporanHandlingFee() {
       <div className="clay-raised rounded-lg overflow-hidden mb-8">
         <div className="border-b border-[rgba(140,172,214,0.35)] px-6 py-4">
           <h2 className="text-lg font-semibold text-gray-900">
-            Rekap per Karyawan
+            Rekap per Pekerja
           </h2>
         </div>
         {loading ? (
@@ -269,26 +271,33 @@ export function LaporanHandlingFee() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b-2 border-[rgba(140,172,214,0.35)] bg-[rgba(215,233,255,0.4)]">
-                  {["Karyawan", "Jumlah Kegiatan", "Total Fee Diterima"].map(
-                    (h) => (
-                      <th
-                        key={h}
-                        className="text-left py-3 px-4 font-semibold text-gray-700"
-                      >
-                        {h}
-                      </th>
-                    ),
-                  )}
+                  {[
+                    "Nama Pekerja",
+                    "Jumlah Kegiatan",
+                    "Total Fee Diterima",
+                  ].map((h) => (
+                    <th
+                      key={h}
+                      className="text-left py-3 px-4 font-semibold text-gray-700"
+                    >
+                      {h}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
                 {summaryByKaryawan.map((s) => (
                   <tr
-                    key={s.karyawan_id}
+                    key={s.worker_key}
                     className="border-b border-[rgba(140,172,214,0.2)] hover:bg-[rgba(215,233,255,0.5)]"
                   >
                     <td className="py-3 px-4 font-medium text-gray-900">
                       {s.nama}
+                      {s.is_manual && (
+                        <span className="ml-2 inline-flex px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-purple-100 text-purple-700 align-middle">
+                          manual
+                        </span>
+                      )}
                     </td>
                     <td className="py-3 px-4 text-gray-600">
                       {s.jumlah_kegiatan}
@@ -387,7 +396,7 @@ export function LaporanHandlingFee() {
                   <tr className="border-b-2 border-[rgba(140,172,214,0.35)]">
                     {[
                       "Tanggal",
-                      "Karyawan",
+                      "Nama Pekerja",
                       "Jumlah Dus",
                       "Rate/Dus",
                       "Fee Diterima",
@@ -411,7 +420,14 @@ export function LaporanHandlingFee() {
                       <td className="py-3 px-3 text-gray-600 whitespace-nowrap">
                         {formatDate(r.tanggal)}
                       </td>
-                      <td className="py-3 px-3 font-medium">{r.nama}</td>
+                      <td className="py-3 px-3 font-medium">
+                        {r.nama}
+                        {r.is_manual && (
+                          <span className="ml-2 inline-flex px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-purple-100 text-purple-700 align-middle">
+                            manual
+                          </span>
+                        )}
+                      </td>
                       <td className="py-3 px-3">
                         {r.jumlah_dus.toLocaleString("id-ID")}
                       </td>

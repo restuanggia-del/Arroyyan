@@ -1,11 +1,25 @@
 import { useState, useEffect, useMemo } from "react";
-import { X, RefreshCw, AlertCircle, HardHat } from "lucide-react";
+import {
+  X,
+  RefreshCw,
+  AlertCircle,
+  HardHat,
+  UserPlus,
+  Trash2,
+} from "lucide-react";
 import { getActiveKaryawan, Karyawan } from "../../services/karyawanService";
 import { createHandlingFee } from "../../services/handlingFeeService";
 
 interface HandlingFeeModalProps {
   onClose: () => void;
   onSaveSuccess: () => void;
+}
+
+interface SelectedWorker {
+  key: string;
+  type: "karyawan" | "manual";
+  karyawan_id?: string;
+  nama: string;
 }
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -24,7 +38,9 @@ export function HandlingFeeModal({
   const [jumlahDus, setJumlahDus] = useState(0);
   const [ratePerDus, setRatePerDus] = useState(DEFAULT_RATE);
   const [keterangan, setKeterangan] = useState("");
-  const [selectedKaryawanIds, setSelectedKaryawanIds] = useState<string[]>([]);
+
+  const [selectedWorkers, setSelectedWorkers] = useState<SelectedWorker[]>([]);
+  const [manualNameInput, setManualNameInput] = useState("");
 
   useEffect(() => {
     const load = async () => {
@@ -38,9 +54,9 @@ export function HandlingFeeModal({
 
   const totalFee = jumlahDus * ratePerDus;
   const feePerOrang = useMemo(() => {
-    if (selectedKaryawanIds.length === 0) return 0;
-    return Math.round((totalFee / selectedKaryawanIds.length) * 100) / 100;
-  }, [totalFee, selectedKaryawanIds.length]);
+    if (selectedWorkers.length === 0) return 0;
+    return Math.round((totalFee / selectedWorkers.length) * 100) / 100;
+  }, [totalFee, selectedWorkers.length]);
 
   const handleNumberChange =
     (setter: (v: number) => void) => (value: string) => {
@@ -49,11 +65,37 @@ export function HandlingFeeModal({
       setFormError(null);
     };
 
-  const toggleKaryawan = (id: string) => {
-    setSelectedKaryawanIds((prev) =>
-      prev.includes(id) ? prev.filter((k) => k !== id) : [...prev, id],
-    );
+  const toggleKaryawan = (k: Karyawan) => {
+    const key = `k:${k.id}`;
+    setSelectedWorkers((prev) => {
+      const exists = prev.some((w) => w.key === key);
+      if (exists) return prev.filter((w) => w.key !== key);
+      return [
+        ...prev,
+        { key, type: "karyawan", karyawan_id: k.id, nama: k.nama },
+      ];
+    });
     setFormError(null);
+  };
+
+  const handleAddManualWorker = () => {
+    const nama = manualNameInput.trim();
+    if (!nama) return;
+
+    const key = `m:${nama.toLowerCase()}`;
+    const alreadyAdded = selectedWorkers.some((w) => w.key === key);
+    if (alreadyAdded) {
+      setFormError(`"${nama}" sudah ada di daftar.`);
+      return;
+    }
+
+    setSelectedWorkers((prev) => [...prev, { key, type: "manual", nama }]);
+    setManualNameInput("");
+    setFormError(null);
+  };
+
+  const handleRemoveWorker = (key: string) => {
+    setSelectedWorkers((prev) => prev.filter((w) => w.key !== key));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -63,8 +105,10 @@ export function HandlingFeeModal({
       setFormError("Jumlah dus harus lebih dari 0.");
       return;
     }
-    if (selectedKaryawanIds.length === 0) {
-      setFormError("Pilih minimal 1 karyawan yang mengerjakan handling.");
+    if (selectedWorkers.length === 0) {
+      setFormError(
+        "Pilih minimal 1 karyawan atau tambahkan minimal 1 nama pekerja manual.",
+      );
       return;
     }
 
@@ -76,7 +120,11 @@ export function HandlingFeeModal({
       jumlah_dus: jumlahDus,
       rate_per_dus: ratePerDus,
       keterangan: keterangan || null,
-      karyawan_ids: selectedKaryawanIds,
+      workers: selectedWorkers.map((w) =>
+        w.type === "karyawan"
+          ? { karyawan_id: w.karyawan_id }
+          : { nama_manual: w.nama },
+      ),
     });
 
     if (error) {
@@ -170,7 +218,7 @@ export function HandlingFeeModal({
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
-              Karyawan yang Mengerjakan <span className="text-red-500">*</span>
+              Karyawan yang Mengerjakan
             </label>
             {loadingKaryawan ? (
               <div className="flex items-center gap-2 text-sm text-gray-500 py-2">
@@ -190,8 +238,10 @@ export function HandlingFeeModal({
                   >
                     <input
                       type="checkbox"
-                      checked={selectedKaryawanIds.includes(k.id)}
-                      onChange={() => toggleKaryawan(k.id)}
+                      checked={selectedWorkers.some(
+                        (w) => w.key === `k:${k.id}`,
+                      )}
+                      onChange={() => toggleKaryawan(k)}
                       className="w-4 h-4 rounded border-[rgba(140,172,214,0.5)] text-orange-600 focus:ring-orange-500 cursor-pointer"
                     />
                     <span className="text-sm text-gray-700">{k.nama}</span>
@@ -199,10 +249,81 @@ export function HandlingFeeModal({
                 ))}
               </div>
             )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Tambah Pekerja Lain (bukan dari Manajemen Karyawan)
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={manualNameInput}
+                onChange={(e) => {
+                  setManualNameInput(e.target.value);
+                  setFormError(null);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleAddManualWorker();
+                  }
+                }}
+                placeholder="Contoh: Pak Slamet (bantuan harian)"
+                className="flex-1 px-4 py-2.5 clay-inset border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
+              />
+              <button
+                type="button"
+                onClick={handleAddManualWorker}
+                disabled={!manualNameInput.trim()}
+                className="px-4 py-2.5 clay-inset border-0 rounded-lg text-orange-600 hover:bg-orange-50 disabled:opacity-40 cursor-pointer flex items-center gap-1.5 flex-shrink-0"
+              >
+                <UserPlus className="w-4 h-4" />
+                Tambah
+              </button>
+            </div>
             <p className="text-xs text-gray-400 mt-1">
-              Fee akan dibagi rata ke semua karyawan yang dicentang.
+              Untuk orang yang bantu handling tapi belum terdaftar sebagai
+              karyawan (mis. pekerja lepas/harian).
             </p>
           </div>
+
+          {selectedWorkers.length > 0 && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Daftar yang Akan Mendapat Fee ({selectedWorkers.length} orang)
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {selectedWorkers.map((w) => (
+                  <span
+                    key={w.key}
+                    className={`inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1.5 rounded-full text-xs font-medium ${
+                      w.type === "manual"
+                        ? "bg-purple-100 text-purple-700"
+                        : "bg-orange-100 text-orange-700"
+                    }`}
+                  >
+                    {w.nama}
+                    {w.type === "manual" && (
+                      <span className="text-[10px] text-purple-500 font-normal">
+                        (manual)
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveWorker(w.key)}
+                      className="p-0.5 hover:bg-black/10 rounded-full cursor-pointer"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+              <p className="text-xs text-gray-400 mt-1">
+                Fee akan dibagi rata ke semua orang di daftar ini.
+              </p>
+            </div>
+          )}
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
@@ -227,7 +348,7 @@ export function HandlingFeeModal({
             </div>
             <div className="flex items-center justify-between text-sm">
               <span className="text-orange-800">
-                Fee per Orang ({selectedKaryawanIds.length || 0} karyawan)
+                Fee per Orang ({selectedWorkers.length || 0} orang)
               </span>
               <span className="font-semibold text-orange-900">
                 Rp {feePerOrang.toLocaleString("id-ID")}
@@ -246,7 +367,7 @@ export function HandlingFeeModal({
             </button>
             <button
               type="submit"
-              disabled={saving || loadingKaryawan || karyawanList.length === 0}
+              disabled={saving}
               className="px-5 py-2.5 clay-amber clay-pressable text-white rounded-xl transition-colors cursor-pointer disabled:opacity-70 flex items-center gap-2"
             >
               {saving && <RefreshCw className="w-4 h-4 animate-spin" />}

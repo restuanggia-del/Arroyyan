@@ -4,10 +4,25 @@ const DEFAULT_RATE_PER_DUS = 300;
 
 export interface HandlingFeeWorker {
     id: string;
-    karyawan_id: string;
+    karyawan_id: string | null;
+    nama_manual: string | null;
     fee_per_orang: number;
     karyawan: { nama: string } | null;
 }
+
+export const getWorkerDisplayName = (w: {
+    karyawan_id: string | null;
+    nama_manual: string | null;
+    karyawan?: { nama: string } | null;
+}): string => {
+    if (w.karyawan_id) return w.karyawan?.nama ?? "(Karyawan tidak aktif)";
+    return w.nama_manual ?? "—";
+};
+
+export const getWorkerKey = (w: {
+    karyawan_id: string | null;
+    nama_manual: string | null;
+}): string => (w.karyawan_id ? `k:${w.karyawan_id}` : `m:${w.nama_manual}`);
 
 export interface HandlingFeeRecord {
     id: string;
@@ -22,7 +37,7 @@ export interface HandlingFeeRecord {
 
 const RECORD_SELECT = `
   id, tanggal, jumlah_dus, rate_per_dus, total_fee, keterangan, created_at,
-  handling_fee_workers ( id, karyawan_id, fee_per_orang, karyawan ( nama ) )
+  handling_fee_workers ( id, karyawan_id, nama_manual, fee_per_orang, karyawan ( nama ) )
 `;
 
 export const getHandlingFeeRecords = async (limit = 200) => {
@@ -51,7 +66,10 @@ export const getHandlingFeeRecordsByDateRange = async (startDate: string, endDat
 
 export interface HandlingFeeDetailRow {
     tanggal: string;
-    karyawan_id: string;
+    worker_key: string;
+    karyawan_id: string | null;
+    nama_manual: string | null;
+    is_manual: boolean;
     nama: string;
     jumlah_dus: number;
     rate_per_dus: number;
@@ -71,8 +89,11 @@ export const getHandlingFeeDetailByDateRange = async (
         for (const w of record.handling_fee_workers) {
             rows.push({
                 tanggal: record.tanggal,
+                worker_key: getWorkerKey(w),
                 karyawan_id: w.karyawan_id,
-                nama: w.karyawan?.nama ?? "(Karyawan tidak aktif)",
+                nama_manual: w.nama_manual,
+                is_manual: !w.karyawan_id,
+                nama: getWorkerDisplayName(w),
                 jumlah_dus: record.jumlah_dus,
                 rate_per_dus: Number(record.rate_per_dus),
                 fee_per_orang: Number(w.fee_per_orang),
@@ -85,20 +106,38 @@ export const getHandlingFeeDetailByDateRange = async (
     return { data: rows, error: null };
 };
 
+export interface HandlingFeeWorkerInput {
+    karyawan_id?: string | null;
+    nama_manual?: string | null;
+}
+
 export const createHandlingFee = async (input: {
     tanggal: string;
     jumlah_dus: number;
     rate_per_dus?: number;
     keterangan?: string | null;
-    karyawan_ids: string[];
+    workers: HandlingFeeWorkerInput[];
 }) => {
-    if (input.karyawan_ids.length === 0) {
-        return { data: null, error: { message: "Pilih minimal 1 karyawan yang mengerjakan handling." } };
+    const cleanedWorkers = input.workers
+        .map((w) => ({
+            karyawan_id: w.karyawan_id || null,
+            nama_manual: w.nama_manual?.trim() || null,
+        }))
+        .filter((w) => w.karyawan_id || w.nama_manual);
+
+    if (cleanedWorkers.length === 0) {
+        return {
+            data: null,
+            error: {
+                message:
+                    "Pilih minimal 1 karyawan atau isi minimal 1 nama pekerja yang mengerjakan handling.",
+            },
+        };
     }
 
     const ratePerDus = input.rate_per_dus ?? DEFAULT_RATE_PER_DUS;
     const totalFee = input.jumlah_dus * ratePerDus;
-    const feePerOrang = Math.round((totalFee / input.karyawan_ids.length) * 100) / 100;
+    const feePerOrang = Math.round((totalFee / cleanedWorkers.length) * 100) / 100;
 
     const { data: record, error: recordError } = await supabaseAdmin
         .from("handling_fee_records")
@@ -117,18 +156,20 @@ export const createHandlingFee = async (input: {
     const { error: workersError } = await supabaseAdmin
         .from("handling_fee_workers")
         .insert(
-            input.karyawan_ids.map((karyawanId) => ({
+            cleanedWorkers.map((w) => ({
                 handling_fee_id: record.id,
-                karyawan_id: karyawanId,
+                karyawan_id: w.karyawan_id,
+                nama_manual: w.nama_manual,
                 fee_per_orang: feePerOrang,
             })),
         );
 
     if (workersError) return { data: null, error: workersError };
 
+    const namaRingkas = cleanedWorkers.length;
     await supabaseAdmin.from("activity_logs").insert([{
         activity_type: "create_handling_fee",
-        description: `Handling fee ${input.jumlah_dus} dus (Rp ${totalFee.toLocaleString("id-ID")}) dicatat untuk ${input.karyawan_ids.length} karyawan`,
+        description: `Handling fee ${input.jumlah_dus} dus (Rp ${totalFee.toLocaleString("id-ID")}) dicatat untuk ${namaRingkas} orang`,
     }]);
 
     return { data: record, error: null };
@@ -147,7 +188,10 @@ export const deleteHandlingFee = async (id: string) => {
 };
 
 export interface HandlingFeeSummaryKaryawan {
-    karyawan_id: string;
+    worker_key: string;
+    karyawan_id: string | null;
+    nama_manual: string | null;
+    is_manual: boolean;
     nama: string;
     total_fee_diterima: number;
     total_kegiatan: number;
@@ -159,21 +203,24 @@ export const getHandlingFeeSummaryByKaryawan = async (): Promise<{
 }> => {
     const { data, error } = await supabaseAdmin
         .from("handling_fee_workers")
-        .select("karyawan_id, fee_per_orang, karyawan ( nama )");
+        .select("karyawan_id, nama_manual, fee_per_orang, karyawan ( nama )");
 
     if (error) return { data: null, error };
 
     const map = new Map<string, HandlingFeeSummaryKaryawan>();
     for (const row of (data ?? []) as any[]) {
-        const id = row.karyawan_id as string;
-        const nama = row.karyawan?.nama ?? "(Karyawan tidak aktif)";
-        const existing = map.get(id);
+        const key = getWorkerKey(row);
+        const nama = getWorkerDisplayName(row);
+        const existing = map.get(key);
         if (existing) {
             existing.total_fee_diterima += Number(row.fee_per_orang);
             existing.total_kegiatan += 1;
         } else {
-            map.set(id, {
-                karyawan_id: id,
+            map.set(key, {
+                worker_key: key,
+                karyawan_id: row.karyawan_id,
+                nama_manual: row.nama_manual,
+                is_manual: !row.karyawan_id,
                 nama,
                 total_fee_diterima: Number(row.fee_per_orang),
                 total_kegiatan: 1,

@@ -13,6 +13,7 @@ import {
   HandlingFeeRecord,
   getHandlingFeeRecords,
   deleteHandlingFee,
+  getWorkerDisplayName,
 } from "../../services/handlingFeeService";
 
 const formatRp = (n: number) => `Rp ${n.toLocaleString("id-ID")}`;
@@ -79,8 +80,8 @@ export function HandlingFeeManagement() {
             Handling Fee
           </h1>
           <p className="text-gray-600">
-            Catat fee handling per batch dus, bisa dikerjakan lebih dari 1
-            karyawan sekaligus
+            Catat fee handling per batch dus, bisa dikerjakan lebih dari 1 orang
+            sekaligus (karyawan terdaftar maupun pekerja lepas/manual)
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -94,7 +95,7 @@ export function HandlingFeeManagement() {
           </button>
           <button
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2.5 clay-amber clay-pressable text-white rounded-lg text-sm font-medium transition-colors cursor-pointer"
+            className="flex items-center gap-2 px-4 py-2.5 clay-amber clay-pressable text-white rounded-lg text-sm font-medium whitespace-nowrap transition-colors cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             Tambah Handling Fee
@@ -109,7 +110,6 @@ export function HandlingFeeManagement() {
         </div>
       )}
 
-      {/* Ringkasan */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="clay-raised rounded-lg p-6">
           <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-4">
@@ -160,7 +160,7 @@ export function HandlingFeeManagement() {
                     "Jumlah Dus",
                     "Rate/Dus",
                     "Total Fee",
-                    "Karyawan",
+                    "Nama Pekerja",
                     "Keterangan",
                     "Aksi",
                   ].map((h) => (
@@ -207,9 +207,13 @@ export function HandlingFeeManagement() {
                             <span
                               key={w.id}
                               title={`Rp ${Number(w.fee_per_orang).toLocaleString("id-ID")}`}
-                              className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-700"
+                              className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
+                                w.karyawan_id
+                                  ? "bg-orange-100 text-orange-700"
+                                  : "bg-purple-100 text-purple-700"
+                              }`}
                             >
-                              {w.karyawan?.nama ?? "—"}
+                              {getWorkerDisplayName(w)}
                             </span>
                           ))}
                         </div>
