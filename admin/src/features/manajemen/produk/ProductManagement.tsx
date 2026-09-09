@@ -1,14 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
-import {
-  Plus,
-  Edit2,
-  Trash2,
-  Search,
-  Filter,
-  RefreshCw,
-  AlertCircle,
-} from "lucide-react";
+import { Plus, Search, Filter, RefreshCw, AlertCircle } from "lucide-react";
 import { ProductModal } from "./ProductModal";
+import { ProductTable } from "../produk/ProductTable";
+import { ProductDeleteModal } from "../produk/ProductDeleteModal";
 import {
   Product,
   getProducts,
@@ -18,6 +12,8 @@ import {
 
 export type { Product };
 
+type CategoryFilter = "all" | "cup" | "botol" | "galon";
+
 export function ProductManagement() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -25,9 +21,7 @@ export function ProductManagement() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterKategori, setFilterKategori] = useState<
-    "all" | "cup" | "botol" | "galon"
-  >("all");
+  const [filterKategori, setFilterKategori] = useState<CategoryFilter>("all");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<{
     id: string;
@@ -102,8 +96,6 @@ export function ProductManagement() {
     return matchesSearch && matchesKategori;
   });
 
-  const formatRupiah = (n: number) => "Rp " + n.toLocaleString("id-ID");
-
   return (
     <div className="p-8">
       <div className="mb-6 flex items-center justify-between">
@@ -143,9 +135,7 @@ export function ProductManagement() {
               <select
                 value={filterKategori}
                 onChange={(e) =>
-                  setFilterKategori(
-                    e.target.value as "all" | "cup" | "botol" | "galon",
-                  )
+                  setFilterKategori(e.target.value as CategoryFilter)
                 }
                 className="px-4 py-2 clay-inset border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40 cursor-pointer"
               >
@@ -179,148 +169,15 @@ export function ProductManagement() {
           </div>
         ) : (
           <>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-[rgba(140,172,214,0.35)]">
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
-                      Foto
-                    </th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
-                      Nama Produk
-                    </th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
-                      Kategori
-                    </th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
-                      Ukuran
-                    </th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
-                      Harga
-                    </th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
-                      Satuan
-                    </th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
-                      Status
-                    </th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
-                      Aksi
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredProducts.map((product) => (
-                    <tr
-                      key={product.id}
-                      className="border-b border-[rgba(140,172,214,0.2)] hover:bg-[rgba(215,233,255,0.5)]"
-                    >
-                      <td className="py-3 px-4">
-                        <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-cyan-100 rounded-lg flex items-center justify-center overflow-hidden">
-                          {product.photo_url ? (
-                            <img
-                              src={product.photo_url}
-                              alt={product.product_name}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <span className="text-lg">
-                              {product.category === "cup"
-                                ? "🥤"
-                                : product.category === "galon"
-                                  ? "🚰"
-                                  : "🍶"}
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">
-                        <span className="text-sm font-medium text-gray-900">
-                          {product.product_name}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4">
-                        <span
-                          className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
-                            product.category === "cup"
-                              ? "bg-blue-100 text-blue-700"
-                              : product.category === "galon"
-                                ? "bg-cyan-100 text-cyan-700"
-                                : "bg-purple-100 text-purple-700"
-                          }`}
-                        >
-                          {product.category === "cup"
-                            ? "Cup"
-                            : product.category === "galon"
-                              ? "Galon"
-                              : "Botol"}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4">
-                        <span className="text-sm text-gray-600">
-                          {product.size ?? "-"}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4">
-                        <span className="text-sm text-gray-900">
-                          {formatRupiah(product.price)}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4">
-                        <span className="text-sm text-gray-600">
-                          {product.unit}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4">
-                        {actionLoading === product.id ? (
-                          <RefreshCw className="w-4 h-4 animate-spin text-gray-400" />
-                        ) : (
-                          <button
-                            onClick={() => handleToggleStatus(product)}
-                            className={`inline-flex px-3 py-1 rounded-full text-xs font-medium transition-colors cursor-pointer ${
-                              product.is_active
-                                ? "bg-green-100 text-green-700 hover:bg-green-200"
-                                : "bg-[rgba(215,233,255,0.55)] text-gray-700 hover:bg-gray-200"
-                            }`}
-                          >
-                            {product.is_active ? "Aktif" : "Nonaktif"}
-                          </button>
-                        )}
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => handleEditProduct(product)}
-                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
-                            title="Edit"
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() =>
-                              setConfirmDelete({
-                                id: product.id,
-                                name: product.product_name,
-                              })
-                            }
-                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
-                            title="Hapus"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-
-              {!loading && filteredProducts.length === 0 && (
-                <div className="text-center py-12">
-                  <p className="text-gray-500">Tidak ada produk ditemukan</p>
-                </div>
-              )}
-            </div>
+            <ProductTable
+              products={filteredProducts}
+              actionLoadingId={actionLoading}
+              onToggleStatus={handleToggleStatus}
+              onEdit={handleEditProduct}
+              onDelete={(product) =>
+                setConfirmDelete({ id: product.id, name: product.product_name })
+              }
+            />
 
             <div className="mt-4">
               <p className="text-sm text-gray-600">
@@ -341,36 +198,11 @@ export function ProductManagement() {
       )}
 
       {confirmDelete && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm">
-            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Trash2 className="w-6 h-6 text-red-600" />
-            </div>
-            <h3 className="text-lg font-semibold text-gray-900 text-center mb-2">
-              Hapus Produk?
-            </h3>
-            <p className="text-sm text-gray-600 text-center mb-1">
-              <span className="font-medium">{confirmDelete.name}</span>
-            </p>
-            <p className="text-xs text-gray-400 text-center mb-6">
-              Produk yang sudah dihapus tidak bisa dikembalikan.
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setConfirmDelete(null)}
-                className="flex-1 px-4 py-2.5 clay-inset-sm border-0 rounded-xl text-sm text-gray-700 cursor-pointer"
-              >
-                Batal
-              </button>
-              <button
-                onClick={handleDeleteConfirm}
-                className="flex-1 px-4 py-2.5 clay-red clay-pressable text-white rounded-xl text-sm font-medium cursor-pointer"
-              >
-                Ya, Hapus
-              </button>
-            </div>
-          </div>
-        </div>
+        <ProductDeleteModal
+          productName={confirmDelete.name}
+          onCancel={() => setConfirmDelete(null)}
+          onConfirm={handleDeleteConfirm}
+        />
       )}
     </div>
   );

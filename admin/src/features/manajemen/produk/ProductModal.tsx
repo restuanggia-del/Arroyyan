@@ -27,6 +27,7 @@ interface FormState {
   photo_url: string;
   is_active: boolean;
   minimum_stock: number;
+  isi_per_dus: number;
 }
 
 const defaultForm: FormState = {
@@ -38,6 +39,7 @@ const defaultForm: FormState = {
   photo_url: "",
   is_active: true,
   minimum_stock: 100,
+  isi_per_dus: 0,
 };
 
 export function ProductModal({
@@ -74,6 +76,7 @@ export function ProductModal({
         photo_url: product.photo_url ?? "",
         is_active: product.is_active,
         minimum_stock: product.minimum_stock ?? 100,
+        isi_per_dus: product.isi_per_dus ?? 0,
       });
       loadPrices(product.id);
     } else {
@@ -134,6 +137,7 @@ export function ProductModal({
       photo_url: formData.photo_url.trim() || null,
       is_active: formData.is_active,
       minimum_stock: formData.minimum_stock,
+      isi_per_dus: formData.isi_per_dus || null,
     };
 
     let error;
@@ -281,6 +285,33 @@ export function ProductModal({
             <p className="text-xs text-gray-400 mt-1.5">
               Kalau Stok Pusat produk ini turun di bawah angka ini, akan muncul
               peringatan "Menipis" di Dashboard dan Manajemen Stok.
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Isi per Dus
+              <span className="text-gray-400 font-normal ml-1">
+                (opsional, untuk konversi ke satuan dus)
+              </span>
+            </label>
+            <input
+              type="text"
+              inputMode="numeric"
+              value={formData.isi_per_dus === 0 ? "" : formData.isi_per_dus}
+              onChange={(e) => {
+                const digits = e.target.value.replace(/[^0-9]/g, "");
+                handleChange(
+                  "isi_per_dus",
+                  digits === "" ? 0 : parseInt(digits, 10),
+                );
+              }}
+              placeholder="Contoh: 48"
+              className="w-full px-4 py-2.5 clay-inset border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
+            />
+            <p className="text-xs text-gray-400 mt-1.5">
+              Berapa {formData.unit || "pcs"} isi dalam 1 dus produk ini.
+              Dipakai untuk laporan/insentif yang dihitung per dus.
             </p>
           </div>
 
