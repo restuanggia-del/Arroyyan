@@ -16,7 +16,8 @@ import { supabaseAdmin } from "../../lib/supabaseAdmin";
 
 interface UserProfileProps {
   name: string;
-  role: "Admin" | "Karyawan";
+  role: string;
+  email?: string;
   onSettings: () => void;
   onLogout: () => void;
   userId?: string;
@@ -66,11 +67,13 @@ function AccountSettingsModal({
   onClose,
   onNameUpdated,
   userId,
+  email,
 }: {
   currentName: string;
   onClose: () => void;
   onNameUpdated: (newName: string) => void;
   userId?: string;
+  email?: string;
 }) {
   const [name, setName] = useState(currentName);
   const [currentPassword, setCurrentPassword] = useState("");
@@ -235,6 +238,18 @@ function AccountSettingsModal({
             <div className="space-y-3">
               <div>
                 <label className="block text-xs font-bold text-[#5b6a8f] mb-1.5">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  value={email ?? "—"}
+                  readOnly
+                  disabled
+                  className="w-full px-3 py-2.5 clay-inset border-0 rounded-xl text-sm text-[#5b6a8f] cursor-not-allowed"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-[#5b6a8f] mb-1.5">
                   Nama Lengkap
                 </label>
                 <input
@@ -375,6 +390,7 @@ function AccountSettingsModal({
 export function UserProfile({
   name: initialName,
   role,
+  email,
   onSettings,
   onLogout,
   userId,
@@ -470,6 +486,7 @@ export function UserProfile({
         <AccountSettingsModal
           currentName={currentName}
           userId={userId}
+          email={email}
           onClose={() => setShowAccountSettings(false)}
           onNameUpdated={(newName) => setCurrentName(newName)}
         />
