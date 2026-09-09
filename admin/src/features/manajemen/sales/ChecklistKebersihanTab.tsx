@@ -9,6 +9,8 @@ import {
   XCircle,
   ArrowLeft,
   Truck,
+  Route,
+  Gauge,
 } from "lucide-react";
 import {
   getChecklistOverview,
@@ -16,6 +18,7 @@ import {
   getChecklistMatrix,
   ChecklistOverviewRow,
   ChecklistMatrixRow,
+  OdometerDayCell,
 } from "../../../services/checklistKebersihanService";
 
 const currentPeriode = () => new Date().toISOString().slice(0, 7);
@@ -27,9 +30,13 @@ const formatDate = (d: string) =>
     year: "numeric",
   });
 
+const formatKm = (n: number) => `${n.toLocaleString("id-ID")} km`;
+
 const exportMatrixToExcel = async (
   rows: ChecklistMatrixRow[],
   parafByDay: Record<number, string>,
+  odometerByDay: Record<number, OdometerDayCell>,
+  totalJarakBulan: number,
   lastDay: number,
   meta: { namaSales: string; kendaraan: string; periode: string },
 ) => {
@@ -43,6 +50,7 @@ const exportMatrixToExcel = async (
   wsData.push([`Bulan`, month]);
   wsData.push([`Sales`, meta.namaSales]);
   wsData.push([`Kendaraan`, meta.kendaraan]);
+  wsData.push([`Total KM Bulan Ini`, totalJarakBulan]);
   wsData.push([]);
 
   const dayNumbers = Array.from({ length: lastDay }, (_, i) => i + 1);
@@ -63,6 +71,18 @@ const exportMatrixToExcel = async (
 
   wsData.push([]);
   wsData.push(["Paraf", ...dayNumbers.map((d) => parafByDay[d] ?? "")]);
+  wsData.push([
+    "Odometer Awal (KM)",
+    ...dayNumbers.map((d) => odometerByDay[d]?.odometerAwal ?? ""),
+  ]);
+  wsData.push([
+    "Odometer Akhir (KM)",
+    ...dayNumbers.map((d) => odometerByDay[d]?.odometerAkhir ?? ""),
+  ]);
+  wsData.push([
+    "Jarak Tempuh (KM)",
+    ...dayNumbers.map((d) => odometerByDay[d]?.jarakKm ?? ""),
+  ]);
 
   const ws = XLSX.utils.aoa_to_sheet(wsData);
   const wb = XLSX.utils.book_new();
@@ -86,6 +106,10 @@ export function ChecklistKebersihanTab() {
 
   const [matrixRows, setMatrixRows] = useState<ChecklistMatrixRow[]>([]);
   const [parafByDay, setParafByDay] = useState<Record<number, string>>({});
+  const [odometerByDay, setOdometerByDay] = useState<
+    Record<number, OdometerDayCell>
+  >({});
+  const [totalJarakBulan, setTotalJarakBulan] = useState(0);
   const [lastDay, setLastDay] = useState(31);
   const [loadingMatrix, setLoadingMatrix] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -109,6 +133,14 @@ export function ChecklistKebersihanTab() {
     return Array.from(map.entries()).map(([id, name]) => ({ id, name }));
   }, [overview]);
 
+  const totalKmPerSales = useMemo(() => {
+    const map = new Map<string, number>();
+    overview.forEach((r) => {
+      map.set(r.salesId, (map.get(r.salesId) ?? 0) + (r.jarakKm ?? 0));
+    });
+    return map;
+  }, [overview]);
+
   const openMatrixFor = useCallback(
     async (salesId: string, namaSales: string) => {
       setSelectedSalesId(salesId);
@@ -128,14 +160,13 @@ export function ChecklistKebersihanTab() {
     if (!selectedSalesId || !selectedVehicle) return;
     setLoadingMatrix(true);
     setError(null);
-    const { rows, parafByDay, lastDay, error } = await getChecklistMatrix(
-      selectedSalesId,
-      selectedVehicle,
-      periode,
-    );
+    const { rows, parafByDay, odometerByDay, totalJarakBulan, lastDay, error } =
+      await getChecklistMatrix(selectedSalesId, selectedVehicle, periode);
     if (error) setError("Gagal memuat matriks checklist.");
     setMatrixRows(rows);
     setParafByDay(parafByDay);
+    setOdometerByDay(odometerByDay);
+    setTotalJarakBulan(totalJarakBulan);
     setLastDay(lastDay);
     setLoadingMatrix(false);
   }, [selectedSalesId, selectedVehicle, periode]);
@@ -148,11 +179,18 @@ export function ChecklistKebersihanTab() {
     if (!selectedSalesId || !selectedVehicle) return;
     setExporting(true);
     try {
-      await exportMatrixToExcel(matrixRows, parafByDay, lastDay, {
-        namaSales: selectedSalesName,
-        kendaraan: selectedVehicle,
-        periode,
-      });
+      await exportMatrixToExcel(
+        matrixRows,
+        parafByDay,
+        odometerByDay,
+        totalJarakBulan,
+        lastDay,
+        {
+          namaSales: selectedSalesName,
+          kendaraan: selectedVehicle,
+          periode,
+        },
+      );
     } finally {
       setExporting(false);
     }
@@ -170,8 +208,8 @@ export function ChecklistKebersihanTab() {
             Checklist Kebersihan Kendaraan
           </h2>
           <p className="text-sm text-gray-600">
-            Rekap checklist kebersihan kendaraan (form F.7.3-1) yang diisi sales
-            setiap hari.
+            Rekap checklist kebersihan kendaraan (form F.7.3-1) serta riwayat
+            odometer/KM yang diisi sales setiap hari.
           </p>
         </div>
         <div className="flex items-end gap-3">
@@ -231,12 +269,21 @@ export function ChecklistKebersihanTab() {
             <div className="p-4 space-y-6">
               {salesOptions.map(({ id, name }) => {
                 const rowsForSales = overview.filter((r) => r.salesId === id);
+                const totalKm = totalKmPerSales.get(id) ?? 0;
                 return (
                   <div key={id}>
                     <div className="flex items-center justify-between mb-2 px-2">
-                      <h3 className="text-sm font-semibold text-gray-900">
-                        {name}
-                      </h3>
+                      <div className="flex items-center gap-2.5">
+                        <h3 className="text-sm font-semibold text-gray-900">
+                          {name}
+                        </h3>
+                        {totalKm > 0 && (
+                          <span className="inline-flex items-center gap-1 text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full">
+                            <Route className="w-3 h-3" />
+                            {formatKm(totalKm)}
+                          </span>
+                        )}
+                      </div>
                       <button
                         onClick={() => openMatrixFor(id, name)}
                         className="text-xs font-medium text-blue-600 hover:text-blue-700 cursor-pointer"
@@ -260,6 +307,15 @@ export function ChecklistKebersihanTab() {
                                 </p>
                                 <p className="text-xs text-gray-500">
                                   {formatDate(r.tanggal)} · Paraf: {r.paraf}
+                                  {r.jarakKm !== null && (
+                                    <>
+                                      {" "}
+                                      ·{" "}
+                                      <span className="text-blue-600 font-medium">
+                                        {formatKm(r.jarakKm)}
+                                      </span>
+                                    </>
+                                  )}
                                 </p>
                               </div>
                             </div>
@@ -308,6 +364,12 @@ export function ChecklistKebersihanTab() {
             </div>
 
             <div className="flex items-center gap-2">
+              {totalJarakBulan > 0 && (
+                <span className="inline-flex items-center gap-1.5 text-sm font-bold text-blue-700 bg-blue-50 px-3 py-2 rounded-lg">
+                  <Route className="w-4 h-4" />
+                  {formatKm(totalJarakBulan)}
+                </span>
+              )}
               <select
                 value={selectedVehicle ?? ""}
                 onChange={(e) => setSelectedVehicle(e.target.value)}
@@ -412,11 +474,69 @@ export function ChecklistKebersihanTab() {
                       </td>
                     ))}
                   </tr>
+                  <tr className="bg-blue-50/40">
+                    <td
+                      colSpan={2}
+                      className="sticky left-0 bg-blue-50/40 border border-[rgba(140,172,214,0.35)] px-2 py-2 font-medium text-gray-700"
+                    >
+                      <span className="flex items-center gap-1">
+                        <Gauge className="w-3.5 h-3.5 text-blue-500" />
+                        Odometer Awal
+                      </span>
+                    </td>
+                    {dayNumbers.map((d) => (
+                      <td
+                        key={d}
+                        className="border border-[rgba(140,172,214,0.35)] px-1 py-2 text-center text-gray-600"
+                      >
+                        {odometerByDay[d]?.odometerAwal ?? ""}
+                      </td>
+                    ))}
+                  </tr>
+                  <tr className="bg-blue-50/40">
+                    <td
+                      colSpan={2}
+                      className="sticky left-0 bg-blue-50/40 border border-[rgba(140,172,214,0.35)] px-2 py-2 font-medium text-gray-700"
+                    >
+                      <span className="flex items-center gap-1">
+                        <Gauge className="w-3.5 h-3.5 text-blue-500" />
+                        Odometer Akhir
+                      </span>
+                    </td>
+                    {dayNumbers.map((d) => (
+                      <td
+                        key={d}
+                        className="border border-[rgba(140,172,214,0.35)] px-1 py-2 text-center text-gray-600"
+                      >
+                        {odometerByDay[d]?.odometerAkhir ?? ""}
+                      </td>
+                    ))}
+                  </tr>
+                  <tr className="bg-blue-50">
+                    <td
+                      colSpan={2}
+                      className="sticky left-0 bg-blue-50 border border-[rgba(140,172,214,0.35)] px-2 py-2 font-semibold text-blue-700"
+                    >
+                      <span className="flex items-center gap-1">
+                        <Route className="w-3.5 h-3.5" />
+                        Jarak Tempuh (KM)
+                      </span>
+                    </td>
+                    {dayNumbers.map((d) => (
+                      <td
+                        key={d}
+                        className="border border-[rgba(140,172,214,0.35)] px-1 py-2 text-center font-semibold text-blue-700"
+                      >
+                        {odometerByDay[d]?.jarakKm ?? ""}
+                      </td>
+                    ))}
+                  </tr>
                 </tbody>
               </table>
               <p className="text-xs text-gray-400 mt-3">
                 Arahkan kursor ke tanda silang untuk melihat catatan yang
-                ditulis sales pada hari itu.
+                ditulis sales pada hari itu. Baris Odometer &amp; Jarak Tempuh
+                menampilkan riwayat KM kendaraan per hari/perjalanan.
               </p>
             </div>
           )}

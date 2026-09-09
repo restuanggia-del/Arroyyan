@@ -27,6 +27,9 @@ export interface VehicleChecklist {
     paraf: string;
     keteranganUmum: string;
     items: ChecklistItemValue[];
+    odometerAwal: number | null;
+    odometerAkhir: number | null;
+    jarakKm: number | null;
 }
 
 export const buildEmptyItems = (): ChecklistItemValue[] =>
@@ -38,24 +41,37 @@ export const buildEmptyItems = (): ChecklistItemValue[] =>
     }));
 
 const CHECKLIST_SELECT =
-    'id, kendaraan, tanggal, paraf, keterangan_umum, vehicle_checklist_items ( id, item_no, item_name, is_checked, keterangan )';
+    'id, kendaraan, tanggal, paraf, keterangan_umum, odometer_awal, odometer_akhir, vehicle_checklist_items ( id, item_no, item_name, is_checked, keterangan )';
 
-const mapRow = (row: any): VehicleChecklist => ({
-    id: row.id,
-    kendaraan: row.kendaraan,
-    tanggal: row.tanggal,
-    paraf: row.paraf ?? '',
-    keteranganUmum: row.keterangan_umum ?? '',
-    items: ((row.vehicle_checklist_items ?? []) as any[])
-        .slice()
-        .sort((a, b) => a.item_no - b.item_no)
-        .map((it) => ({
-            itemNo: it.item_no,
-            itemName: it.item_name,
-            isChecked: it.is_checked,
-            keterangan: it.keterangan ?? '',
-        })),
-});
+const computeJarak = (awal: number | null, akhir: number | null): number | null => {
+    if (awal === null || akhir === null) return null;
+    if (akhir < awal) return null;
+    return akhir - awal;
+};
+
+const mapRow = (row: any): VehicleChecklist => {
+    const odometerAwal = row.odometer_awal ?? null;
+    const odometerAkhir = row.odometer_akhir ?? null;
+    return {
+        id: row.id,
+        kendaraan: row.kendaraan,
+        tanggal: row.tanggal,
+        paraf: row.paraf ?? '',
+        keteranganUmum: row.keterangan_umum ?? '',
+        odometerAwal,
+        odometerAkhir,
+        jarakKm: computeJarak(odometerAwal, odometerAkhir),
+        items: ((row.vehicle_checklist_items ?? []) as any[])
+            .slice()
+            .sort((a, b) => a.item_no - b.item_no)
+            .map((it) => ({
+                itemNo: it.item_no,
+                itemName: it.item_name,
+                isChecked: it.is_checked,
+                keterangan: it.keterangan ?? '',
+            })),
+    };
+};
 
 export const getVehiclesUsed = async (salesId: string): Promise<string[]> => {
     const { data, error } = await supabase
@@ -92,7 +108,28 @@ export const getChecklistByDate = async (
     return mapRow(data);
 };
 
-/** Riwayat checklist sales ini dalam satu bulan (periode format yyyy-mm). */
+export const getLastOdometerAkhir = async (
+    salesId: string,
+    kendaraan: string,
+    beforeTanggal: string,
+): Promise<number | null> => {
+    if (!kendaraan.trim()) return null;
+
+    const { data, error } = await supabase
+        .from('vehicle_checklists')
+        .select('odometer_akhir, tanggal')
+        .eq('sales_id', salesId)
+        .eq('kendaraan', kendaraan)
+        .lt('tanggal', beforeTanggal)
+        .not('odometer_akhir', 'is', null)
+        .order('tanggal', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+    if (error) throw new Error(error.message);
+    return data?.odometer_akhir ?? null;
+};
+
 export const getChecklistHistory = async (
     salesId: string,
     periode: string,
@@ -122,6 +159,8 @@ export const saveChecklist = async (
         paraf: string;
         keteranganUmum: string;
         items: ChecklistItemValue[];
+        odometerAwal: number | null;
+        odometerAkhir: number | null;
     },
 ): Promise<VehicleChecklist> => {
     const existing = await getChecklistByDate(salesId, values.kendaraan, values.tanggal);
@@ -133,6 +172,8 @@ export const saveChecklist = async (
             .update({
                 paraf: values.paraf || null,
                 keterangan_umum: values.keteranganUmum || null,
+                odometer_awal: values.odometerAwal,
+                odometer_akhir: values.odometerAkhir,
                 updated_at: new Date().toISOString(),
             })
             .eq('id', existing.id);
@@ -154,6 +195,8 @@ export const saveChecklist = async (
                     tanggal: values.tanggal,
                     paraf: values.paraf || null,
                     keterangan_umum: values.keteranganUmum || null,
+                    odometer_awal: values.odometerAwal,
+                    odometer_akhir: values.odometerAkhir,
                 },
             ])
             .select()

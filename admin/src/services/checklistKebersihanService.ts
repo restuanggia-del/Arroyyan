@@ -23,6 +23,9 @@ export interface ChecklistOverviewRow {
     totalChecked: number;
     totalItems: number;
     keteranganUmum: string;
+    odometerAwal: number | null;
+    odometerAkhir: number | null;
+    jarakKm: number | null;
 }
 
 export interface ChecklistMatrixCell {
@@ -36,6 +39,12 @@ export interface ChecklistMatrixRow {
     days: Record<number, ChecklistMatrixCell>;
 }
 
+export interface OdometerDayCell {
+    odometerAwal: number | null;
+    odometerAkhir: number | null;
+    jarakKm: number | null;
+}
+
 const periodeRange = (periode: string) => {
     const [y, m] = periode.split("-").map(Number);
     const start = `${periode}-01`;
@@ -44,13 +53,19 @@ const periodeRange = (periode: string) => {
     return { start, end, lastDay };
 };
 
+const computeJarak = (awal: number | null, akhir: number | null): number | null => {
+    if (awal === null || akhir === null) return null;
+    if (akhir < awal) return null;
+    return akhir - awal;
+};
+
 export const getChecklistOverview = async (periode: string) => {
     const { start, end } = periodeRange(periode);
 
     const { data, error } = await supabaseAdmin
         .from("vehicle_checklists")
         .select(
-            `id, sales_id, kendaraan, tanggal, paraf, keterangan_umum,
+            `id, sales_id, kendaraan, tanggal, paraf, keterangan_umum, odometer_awal, odometer_akhir,
        sales ( nama_sales ),
        vehicle_checklist_items ( is_checked )`,
         )
@@ -72,6 +87,9 @@ export const getChecklistOverview = async (periode: string) => {
             (it: any) => it.is_checked,
         ).length,
         totalItems: (r.vehicle_checklist_items ?? []).length,
+        odometerAwal: r.odometer_awal ?? null,
+        odometerAkhir: r.odometer_akhir ?? null,
+        jarakKm: computeJarak(r.odometer_awal ?? null, r.odometer_akhir ?? null),
     }));
 
     return { data: rows, error: null };
@@ -102,7 +120,7 @@ export const getChecklistMatrix = async (
     const { data, error } = await supabaseAdmin
         .from("vehicle_checklists")
         .select(
-            `tanggal, paraf,
+            `tanggal, paraf, odometer_awal, odometer_akhir,
        vehicle_checklist_items ( item_no, item_name, is_checked, keterangan )`,
         )
         .eq("sales_id", salesId)
@@ -111,7 +129,14 @@ export const getChecklistMatrix = async (
         .lte("tanggal", end);
 
     if (error) {
-        return { rows: [] as ChecklistMatrixRow[], parafByDay: {} as Record<number, string>, lastDay, error };
+        return {
+            rows: [] as ChecklistMatrixRow[],
+            parafByDay: {} as Record<number, string>,
+            odometerByDay: {} as Record<number, OdometerDayCell>,
+            totalJarakBulan: 0,
+            lastDay,
+            error,
+        };
     }
 
     const rowsMap = new Map<number, ChecklistMatrixRow>();
@@ -120,10 +145,19 @@ export const getChecklistMatrix = async (
     });
 
     const parafByDay: Record<number, string> = {};
+    const odometerByDay: Record<number, OdometerDayCell> = {};
+    let totalJarakBulan = 0;
 
     (data ?? []).forEach((entry: any) => {
         const day = Number(String(entry.tanggal).slice(8, 10));
         parafByDay[day] = entry.paraf ?? "";
+
+        const odometerAwal = entry.odometer_awal ?? null;
+        const odometerAkhir = entry.odometer_akhir ?? null;
+        const jarakKm = computeJarak(odometerAwal, odometerAkhir);
+        odometerByDay[day] = { odometerAwal, odometerAkhir, jarakKm };
+        if (jarakKm !== null) totalJarakBulan += jarakKm;
+
         (entry.vehicle_checklist_items ?? []).forEach((it: any) => {
             const row = rowsMap.get(it.item_no);
             if (row) {
@@ -138,6 +172,8 @@ export const getChecklistMatrix = async (
     return {
         rows: Array.from(rowsMap.values()).sort((a, b) => a.itemNo - b.itemNo),
         parafByDay,
+        odometerByDay,
+        totalJarakBulan,
         lastDay,
         error: null,
     };

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import {
   Sparkles,
   Truck,
@@ -12,6 +12,8 @@ import {
   ChevronDown,
   ChevronUp,
   X,
+  Gauge,
+  Route,
 } from "lucide-react";
 import { SalesUser } from "../../../services";
 import {
@@ -20,6 +22,7 @@ import {
   getVehiclesUsed,
   getChecklistByDate,
   getChecklistHistory,
+  getLastOdometerAkhir,
   saveChecklist,
   ChecklistItemValue,
   VehicleChecklist,
@@ -46,6 +49,8 @@ const formatTanggalShort = (d: string) =>
     month: "short",
   });
 
+const formatKm = (n: number) => `${n.toLocaleString("id-ID")} km`;
+
 export default function ChecklistKebersihanPage({
   user,
 }: ChecklistKebersihanPageProps) {
@@ -56,6 +61,11 @@ export default function ChecklistKebersihanPage({
   const [keteranganUmum, setKeteranganUmum] = useState("");
   const [items, setItems] = useState<ChecklistItemValue[]>(buildEmptyItems());
   const [existingId, setExistingId] = useState<string | null>(null);
+
+  // Odometer / riwayat KM
+  const [odometerAwal, setOdometerAwal] = useState("");
+  const [odometerAkhir, setOdometerAkhir] = useState("");
+  const odometerAwalTouchedRef = useRef(false);
 
   const [loadingEntry, setLoadingEntry] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -70,6 +80,20 @@ export default function ChecklistKebersihanPage({
   const checkedCount = useMemo(
     () => items.filter((i) => i.isChecked).length,
     [items],
+  );
+
+  const jarakTempuh = useMemo(() => {
+    const awal = odometerAwal.trim() === "" ? null : Number(odometerAwal);
+    const akhir = odometerAkhir.trim() === "" ? null : Number(odometerAkhir);
+    if (awal === null || akhir === null) return null;
+    if (Number.isNaN(awal) || Number.isNaN(akhir)) return null;
+    if (akhir < awal) return null;
+    return akhir - awal;
+  }, [odometerAwal, odometerAkhir]);
+
+  const totalKmBulanIni = useMemo(
+    () => history.reduce((sum, h) => sum + (h.jarakKm ?? 0), 0),
+    [history],
   );
 
   const loadVehicles = useCallback(async () => {
@@ -98,10 +122,13 @@ export default function ChecklistKebersihanPage({
   }, [loadVehicles, loadHistory]);
 
   const loadEntryForSelection = useCallback(async () => {
+    odometerAwalTouchedRef.current = false;
     if (!kendaraan.trim()) {
       setItems(buildEmptyItems());
       setExistingId(null);
       setKeteranganUmum("");
+      setOdometerAwal("");
+      setOdometerAkhir("");
       return;
     }
     setLoadingEntry(true);
@@ -117,11 +144,32 @@ export default function ChecklistKebersihanPage({
         setKeteranganUmum(existing.keteranganUmum);
         setParaf(existing.paraf || user.namaSales);
         setExistingId(existing.id);
+        setOdometerAwal(
+          existing.odometerAwal !== null ? String(existing.odometerAwal) : "",
+        );
+        setOdometerAkhir(
+          existing.odometerAkhir !== null ? String(existing.odometerAkhir) : "",
+        );
+        odometerAwalTouchedRef.current = true; // sudah ada nilai tersimpan, jangan ditimpa auto-fill
       } else {
         setItems(buildEmptyItems());
         setKeteranganUmum("");
         setParaf(user.namaSales);
         setExistingId(null);
+        setOdometerAkhir("");
+
+        // Auto-isi Odometer Awal dari odometer akhir terakhir kendaraan ini,
+        // supaya riwayat KM nyambung antar hari / perjalanan.
+        try {
+          const lastAkhir = await getLastOdometerAkhir(
+            user.salesId,
+            kendaraan.trim(),
+            tanggal,
+          );
+          setOdometerAwal(lastAkhir !== null ? String(lastAkhir) : "");
+        } catch {
+          setOdometerAwal("");
+        }
       }
     } catch (err: any) {
       setError(err.message ?? "Gagal memuat data checklist.");
@@ -162,6 +210,28 @@ export default function ChecklistKebersihanPage({
       return;
     }
 
+    const awalNum = odometerAwal.trim() === "" ? null : Number(odometerAwal);
+    const akhirNum = odometerAkhir.trim() === "" ? null : Number(odometerAkhir);
+
+    if (odometerAwal.trim() !== "" && Number.isNaN(awalNum)) {
+      setError("Odometer Awal harus berupa angka.");
+      return;
+    }
+    if (odometerAkhir.trim() !== "" && Number.isNaN(akhirNum)) {
+      setError("Odometer Akhir harus berupa angka.");
+      return;
+    }
+    if (
+      awalNum !== null &&
+      akhirNum !== null &&
+      !Number.isNaN(awalNum) &&
+      !Number.isNaN(akhirNum) &&
+      akhirNum < awalNum
+    ) {
+      setError("Odometer Akhir tidak boleh lebih kecil dari Odometer Awal.");
+      return;
+    }
+
     setSaving(true);
     try {
       await saveChecklist(user.salesId, {
@@ -170,6 +240,8 @@ export default function ChecklistKebersihanPage({
         paraf: paraf.trim(),
         keteranganUmum,
         items,
+        odometerAwal: awalNum,
+        odometerAkhir: akhirNum,
       });
       setSuccessMsg(
         existingId
@@ -249,6 +321,52 @@ export default function ChecklistKebersihanPage({
             </datalist>
           </div>
         </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="flex items-center gap-1.5 text-[11px] font-bold text-[#111111]/45 uppercase tracking-wide mb-1.5">
+              <Gauge className="w-3.5 h-3.5" /> Odometer Awal (KM)
+            </label>
+            <input
+              type="number"
+              inputMode="numeric"
+              min={0}
+              value={odometerAwal}
+              onChange={(e) => {
+                odometerAwalTouchedRef.current = true;
+                setOdometerAwal(e.target.value);
+              }}
+              placeholder="cth. 45210"
+              className="w-full px-3 py-2.5 clay-inset-sm border-0 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
+            />
+          </div>
+          <div>
+            <label className="flex items-center gap-1.5 text-[11px] font-bold text-[#111111]/45 uppercase tracking-wide mb-1.5">
+              <Gauge className="w-3.5 h-3.5" /> Odometer Akhir (KM)
+            </label>
+            <input
+              type="number"
+              inputMode="numeric"
+              min={0}
+              value={odometerAkhir}
+              onChange={(e) => setOdometerAkhir(e.target.value)}
+              placeholder="cth. 45285"
+              className="w-full px-3 py-2.5 clay-inset-sm border-0 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
+            />
+          </div>
+        </div>
+
+        {jarakTempuh !== null && (
+          <div className="flex items-center gap-2 px-3 py-2 clay-inset-sm rounded-xl">
+            <Route className="w-4 h-4 text-[#0249E1] flex-shrink-0" />
+            <p className="text-xs text-[#111111]/70">
+              Jarak tempuh hari ini:{" "}
+              <span className="font-bold text-[#0249E1]">
+                {formatKm(jarakTempuh)}
+              </span>
+            </p>
+          </div>
+        )}
 
         {existingId && (
           <p className="text-xs text-[#0249E1]/70 font-medium">
@@ -335,11 +453,19 @@ export default function ChecklistKebersihanPage({
       </div>
 
       <div className="clay-raised rounded-3xl p-4">
-        <div className="flex items-center gap-2 mb-3">
-          <History className="w-4 h-4 text-[#0249E1]" />
-          <h3 className="text-sm font-bold text-[#111111]">
-            Riwayat Bulan Ini
-          </h3>
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <History className="w-4 h-4 text-[#0249E1]" />
+            <h3 className="text-sm font-bold text-[#111111]">
+              Riwayat Bulan Ini
+            </h3>
+          </div>
+          {totalKmBulanIni > 0 && (
+            <span className="flex items-center gap-1 text-xs font-bold text-[#0249E1] bg-[#0249E1]/10 px-2.5 py-1 rounded-full">
+              <Route className="w-3.5 h-3.5" />
+              {formatKm(totalKmBulanIni)}
+            </span>
+          )}
         </div>
 
         {loadingHistory ? (
@@ -368,6 +494,15 @@ export default function ChecklistKebersihanPage({
                     </p>
                     <p className="text-xs text-[#111111]/40">
                       Paraf: {h.paraf || "-"}
+                      {h.jarakKm !== null && (
+                        <>
+                          {" "}
+                          ·{" "}
+                          <span className="text-[#0249E1] font-medium">
+                            {formatKm(h.jarakKm)}
+                          </span>
+                        </>
+                      )}
                     </p>
                   </div>
                   <span
@@ -406,6 +541,41 @@ export default function ChecklistKebersihanPage({
               </button>
             </div>
             <div className="overflow-y-auto flex-1 px-5 py-4 space-y-2">
+              {(detailChecklist.odometerAwal !== null ||
+                detailChecklist.odometerAkhir !== null) && (
+                <div className="clay-inset-sm rounded-xl p-3 grid grid-cols-3 gap-2 text-center">
+                  <div>
+                    <p className="text-[10px] font-bold text-[#111111]/40 uppercase tracking-wide">
+                      Awal
+                    </p>
+                    <p className="text-sm font-bold text-[#111111]">
+                      {detailChecklist.odometerAwal !== null
+                        ? formatKm(detailChecklist.odometerAwal)
+                        : "-"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-[#111111]/40 uppercase tracking-wide">
+                      Akhir
+                    </p>
+                    <p className="text-sm font-bold text-[#111111]">
+                      {detailChecklist.odometerAkhir !== null
+                        ? formatKm(detailChecklist.odometerAkhir)
+                        : "-"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-[#0249E1]/70 uppercase tracking-wide">
+                      Jarak
+                    </p>
+                    <p className="text-sm font-bold text-[#0249E1]">
+                      {detailChecklist.jarakKm !== null
+                        ? formatKm(detailChecklist.jarakKm)
+                        : "-"}
+                    </p>
+                  </div>
+                </div>
+              )}
               {detailChecklist.items.map((it) => (
                 <div
                   key={it.itemNo}
