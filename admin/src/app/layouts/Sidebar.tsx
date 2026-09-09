@@ -23,7 +23,9 @@ import {
   HandCoins,
   ClipboardCheck,
   Briefcase,
+  ClipboardList,
 } from "lucide-react";
+import { ROLE_ALLOWED_MENUS, PanelRole } from "../../config/rolePermissions";
 
 interface MenuItem {
   id: string;
@@ -35,6 +37,7 @@ interface MenuItem {
 interface SidebarProps {
   activeMenu: string;
   onMenuChange: (menuId: string) => void;
+  role?: string | null;
 }
 
 const menuItems: MenuItem[] = [
@@ -155,6 +158,11 @@ const menuItems: MenuItem[] = [
         icon: <Boxes className="w-5 h-5" />,
       },
       {
+        id: "laporan-stok",
+        label: "Laporan Stok",
+        icon: <ClipboardList className="w-5 h-5" />,
+      },
+      {
         id: "laporan-bonus",
         label: "Laporan Bonus",
         icon: <Award className="w-5 h-5" />,
@@ -198,7 +206,34 @@ const menuItems: MenuItem[] = [
   },
 ];
 
-export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
+const filterMenuByRole = (
+  items: MenuItem[],
+  role?: string | null,
+): MenuItem[] => {
+  if (!role) return items;
+  const allowed = ROLE_ALLOWED_MENUS[role as PanelRole];
+  if (!allowed || allowed === "all") return items;
+
+  return items.reduce<MenuItem[]>((acc, item) => {
+    if (item.children?.length) {
+      const filteredChildren = item.children.filter((child) =>
+        allowed.includes(child.id),
+      );
+      if (filteredChildren.length > 0) {
+        acc.push({ ...item, children: filteredChildren });
+      }
+      return acc;
+    }
+    if (allowed.includes(item.id)) {
+      acc.push(item);
+    }
+    return acc;
+  }, []);
+};
+
+export function Sidebar({ activeMenu, onMenuChange, role }: SidebarProps) {
+  const visibleMenuItems = filterMenuByRole(menuItems, role);
+
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(
     {
       manajemen: false,
@@ -216,18 +251,18 @@ export function Sidebar({ activeMenu, onMenuChange }: SidebarProps) {
   };
 
   useEffect(() => {
-    const parent = menuItems.find((item) =>
+    const parent = visibleMenuItems.find((item) =>
       item.children?.some((child) => child.id === activeMenu),
     );
     if (parent && !expandedGroups[parent.id]) {
       setExpandedGroups((prev) => ({ ...prev, [parent.id]: true }));
     }
-  }, [activeMenu]);
+  }, [activeMenu, visibleMenuItems]);
 
   return (
     <aside className="w-64 clay-sidebar h-screen flex flex-col overflow-hidden rounded-r-[32px] shadow-[10px_0_28px_rgba(15,23,42,0.10)]">
       <nav className="flex-1 min-h-0 py-4 px-3 overflow-y-auto overscroll-contain">
-        {menuItems.map((item) => {
+        {visibleMenuItems.map((item) => {
           const hasChildren = Boolean(item.children?.length);
           const isExpanded = expandedGroups[item.id];
           const isParentActive =

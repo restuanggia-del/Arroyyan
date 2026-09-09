@@ -34,6 +34,7 @@ import { LaporanHandlingFee } from "../features/laporan/handling-fee/LaporanHand
 import { LaporanInsentif } from "../features/laporan/insentif/LaporanInsentif";
 import { LaporanSales } from "../features/laporan/sales/LaporanSales";
 import { LaporanBahan } from "../features/laporan/bahan/LaporanBahan";
+import { LaporanStok } from "../features/laporan/stok/LaporanStok";
 import { LaporanTandaTerimaInsentif } from "../features/laporan/tanda-terima-insentif/LaporanTandaTerimaInsentif";
 import { LaporanGlobal } from "../features/laporan/global/LaporanGlobal";
 import { CustomerManagement } from "../features/manajemen/customer/CustomerManagement";
@@ -55,6 +56,7 @@ import {
 } from "../services/reportService";
 import { supabase } from "../lib/supabase";
 import { supabaseAdmin } from "../lib/supabaseAdmin";
+import { isMenuAllowedForRole, getRoleLabel } from "../config/rolePermissions";
 
 const calcMA = (values: number[], n: number): number => {
   if (values.length < n) return 0;
@@ -104,7 +106,8 @@ export default function App() {
       } = await supabase.auth.getSession();
       if (session) {
         const userData = await getCurrentUserRole();
-        if (userData && userData.role === "admin") {
+        const access = userData ? assertAdminAccess(userData) : null;
+        if (userData && access?.allowed) {
           setCurrentUser(userData);
           setIsAuthenticated(true);
         } else {
@@ -120,6 +123,13 @@ export default function App() {
   useEffect(() => {
     if (isAuthenticated && activeMenu === "dashboard") fetchDashboardData();
   }, [isAuthenticated, activeMenu]);
+
+  useEffect(() => {
+    if (!isAuthenticated || !currentUser) return;
+    if (!isMenuAllowedForRole(currentUser.role, activeMenu)) {
+      setActiveMenu("dashboard");
+    }
+  }, [isAuthenticated, currentUser, activeMenu]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -455,6 +465,8 @@ export default function App() {
         return <LaporanSales />;
       case "laporan-bahan":
         return <LaporanBahan />;
+      case "laporan-stok":
+        return <LaporanStok />;
       case "laporan-tanda-terima-insentif":
         return <LaporanTandaTerimaInsentif />;
       case "laporan-global":
@@ -475,7 +487,11 @@ export default function App() {
     <div className="flex h-screen clay-page-bg">
       <div className="flex flex-col flex-shrink-0">
         <Logo />
-        <Sidebar activeMenu={activeMenu} onMenuChange={handleMenuChange} />
+        <Sidebar
+          activeMenu={activeMenu}
+          onMenuChange={handleMenuChange}
+          role={currentUser?.role}
+        />
       </div>
       <div className="flex-1 flex flex-col overflow-hidden p-4 gap-4">
         <header className="clay-raised rounded-[28px] px-6 py-3.5 flex-shrink-0">
@@ -485,7 +501,8 @@ export default function App() {
               <NotificationBell />
               <UserProfile
                 name={currentUser?.name ?? "User"}
-                role="Admin"
+                role={getRoleLabel(currentUser?.role)}
+                email={currentUser?.email}
                 onSettings={() => setActiveMenu("pengaturan")}
                 onLogout={handleLogout}
               />
