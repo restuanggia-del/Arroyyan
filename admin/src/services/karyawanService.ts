@@ -1,6 +1,6 @@
 import { supabaseAdmin } from "../lib/supabaseAdmin";
 
-export type KaryawanRole = "produksi" | "handling" | "jual_antar" | "admin";
+export type KaryawanRole = "produksi" | "handling" | "jual_antar" | "qc" | "admin";
 
 export interface Karyawan {
     id: string;
@@ -33,8 +33,6 @@ export const getAllKaryawan = async () => {
     return { data: data as unknown as Karyawan[], error: null };
 };
 
-// Karyawan aktif, opsional difilter berdasarkan salah satu peran (mis. "jual_antar"
-// untuk daftar tujuan distribusi / pilihan sales di transaksi).
 export const getActiveKaryawan = async (role?: KaryawanRole) => {
     const { data, error } = await getAllKaryawan();
     if (error) return { data: null, error };
@@ -122,7 +120,6 @@ export const updateKaryawan = async (
 };
 
 export const deleteKaryawan = async (karyawanId: string, nama?: string) => {
-    // karyawan_roles ikut terhapus otomatis lewat ON DELETE CASCADE
     const { error } = await supabaseAdmin.from("karyawan").delete().eq("id", karyawanId);
     if (error) return { error };
 
