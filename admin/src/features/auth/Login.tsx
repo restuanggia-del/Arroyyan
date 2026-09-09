@@ -1,13 +1,14 @@
 import { useState, useEffect } from "react";
-import { Mail, Lock, Eye, EyeOff, ShieldX } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, ShieldX, UserPlus } from "lucide-react";
 import { ForgotPassword } from "./ForgotPassword";
+import { Register } from "../auth/Register";
 
 interface LoginProps {
   onLogin: (email: string, password: string, rememberMe: boolean) => void;
   externalError?: string | null;
 }
 
-type View = "login" | "forgot";
+type View = "login" | "forgot" | "register";
 
 function BrandingPanel() {
   return (
@@ -154,7 +155,7 @@ export function Login({ onLogin, externalError }: LoginProps) {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Masukkan email admin"
+              placeholder="Masukkan email"
               className={`w-full pl-12 pr-4 py-4 rounded-2xl border-0 clay-inset outline-none transition-all ${
                 errors.email
                   ? "ring-2 ring-red-400"
@@ -263,6 +264,15 @@ export function Login({ onLogin, externalError }: LoginProps) {
           Panel ini khusus untuk Admin Pabrik Arroyyan99
         </p>
       </div>
+
+      <button
+        type="button"
+        onClick={() => setView("register")}
+        className="mt-4 w-full flex items-center justify-center gap-2 text-sm text-[#0249E1] hover:text-[#023dbb] font-semibold cursor-pointer transition-colors"
+      >
+        <UserPlus className="w-4 h-4" />
+        Belum punya akun? Daftar di sini
+      </button>
     </div>
   );
 
@@ -271,12 +281,21 @@ export function Login({ onLogin, externalError }: LoginProps) {
       <div className="w-full max-w-6xl clay-raised-lg rounded-[36px] overflow-hidden grid grid-cols-1 lg:grid-cols-2">
         <BrandingPanel />
         <div className="flex items-center justify-center p-8 md:p-14">
-          {view === "login" ? (
-            renderLogin()
-          ) : (
+          {view === "login" && renderLogin()}
+          {view === "forgot" && (
             <ForgotPassword
               initialEmail={email}
               onBack={() => setView("login")}
+            />
+          )}
+          {view === "register" && (
+            <Register
+              onBack={() => setView("login")}
+              onRegistered={(registeredEmail) => {
+                setEmail(registeredEmail);
+                setPassword("");
+                setView("login");
+              }}
             />
           )}
         </div>
