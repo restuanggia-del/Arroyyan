@@ -1,13 +1,5 @@
 import { useState, useEffect } from "react";
-import {
-  X,
-  RefreshCw,
-  AlertCircle,
-  Plus,
-  Minus,
-  Trash2,
-  UserPlus,
-} from "lucide-react";
+import { X, RefreshCw, AlertCircle, Trash2, UserPlus } from "lucide-react";
 import {
   getProductsWithSalesStock,
   getCustomers,
@@ -76,29 +68,43 @@ export default function KasbonCreateModal({
           i.product.id === product.id ? { ...i, quantity: i.quantity + 1 } : i,
         );
       }
-      return [...prev, { product, quantity: 1, unitPrice: product.hargaPabrik }];
+      return [
+        ...prev,
+        { product, quantity: 1, unitPrice: product.hargaPabrik },
+      ];
     });
     setFormError("");
   };
 
-  const updateQty = (productId: string, delta: number) => {
+  const setQtyDirect = (productId: string, rawValue: string) => {
     setCart((prev) =>
-      prev
-        .map((i) => {
-          if (i.product.id !== productId) return i;
-          const newQty = i.quantity + delta;
-          if (newQty <= 0) return null as any;
-          if (newQty > i.product.stock) return i;
-          return { ...i, quantity: newQty };
-        })
-        .filter(Boolean),
+      prev.map((i) => {
+        if (i.product.id !== productId) return i;
+        if (rawValue.trim() === "") return { ...i, quantity: 0 };
+        const parsed = Math.floor(Number(rawValue));
+        if (Number.isNaN(parsed) || parsed < 0) return i;
+        const clamped = Math.min(parsed, i.product.stock);
+        return { ...i, quantity: clamped };
+      }),
+    );
+  };
+
+  const handleQtyBlur = (productId: string) => {
+    setCart((prev) =>
+      prev.map((i) =>
+        i.product.id === productId && i.quantity < 1
+          ? { ...i, quantity: 1 }
+          : i,
+      ),
     );
   };
 
   const updatePrice = (productId: string, price: number) => {
     setCart((prev) =>
       prev.map((i) =>
-        i.product.id === productId ? { ...i, unitPrice: Math.max(0, price) } : i,
+        i.product.id === productId
+          ? { ...i, unitPrice: Math.max(0, price) }
+          : i,
       ),
     );
   };
@@ -215,7 +221,9 @@ export default function KasbonCreateModal({
                 </p>
                 <div className="grid grid-cols-2 gap-2">
                   {products.map((product) => {
-                    const inCart = cart.find((i) => i.product.id === product.id);
+                    const inCart = cart.find(
+                      (i) => i.product.id === product.id,
+                    );
                     const disabled = product.stock === 0;
                     return (
                       <button
@@ -295,23 +303,18 @@ export default function KasbonCreateModal({
                         </div>
 
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-1.5">
-                            <button
-                              onClick={() => updateQty(item.product.id, -1)}
-                              className="w-7 h-7 clay-raised-sm clay-pressable rounded-lg flex items-center justify-center cursor-pointer"
-                            >
-                              <Minus className="w-3.5 h-3.5" />
-                            </button>
-                            <span className="w-7 text-center text-sm font-semibold">
-                              {item.quantity}
-                            </span>
-                            <button
-                              onClick={() => updateQty(item.product.id, 1)}
-                              className="w-7 h-7 clay-raised-sm clay-pressable rounded-lg flex items-center justify-center cursor-pointer"
-                            >
-                              <Plus className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
+                          <input
+                            type="number"
+                            inputMode="numeric"
+                            min={1}
+                            max={item.product.stock}
+                            value={item.quantity === 0 ? "" : item.quantity}
+                            onChange={(e) =>
+                              setQtyDirect(item.product.id, e.target.value)
+                            }
+                            onBlur={() => handleQtyBlur(item.product.id)}
+                            className="w-20 text-center text-sm font-semibold clay-inset border-0 rounded-lg py-1 appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
+                          />
                           <p className="text-sm font-bold text-[#111111]">
                             {formatRp(item.unitPrice * item.quantity)}
                           </p>

@@ -1,8 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import {
   ShoppingCart,
-  Plus,
-  Minus,
   Trash2,
   CreditCard,
   Banknote,
@@ -135,17 +133,26 @@ export function SalesTransaction({ role, salesId }: SalesTransactionProps) {
     );
   };
 
-  const updateQty = (productId: string, delta: number) => {
+  const setQtyDirect = (productId: string, rawValue: string) => {
     setCart((prev) =>
-      prev
-        .map((i) => {
-          if (i.product.id !== productId) return i;
-          const newQty = i.quantity + delta;
-          if (newQty <= 0) return null as any;
-          if (newQty > i.maxStock) return i;
-          return { ...i, quantity: newQty };
-        })
-        .filter(Boolean),
+      prev.map((i) => {
+        if (i.product.id !== productId) return i;
+        if (rawValue.trim() === "") return { ...i, quantity: 0 };
+        const parsed = Math.floor(Number(rawValue));
+        if (Number.isNaN(parsed) || parsed < 0) return i;
+        const clamped = Math.min(parsed, i.maxStock);
+        return { ...i, quantity: clamped };
+      }),
+    );
+  };
+
+  const handleQtyBlur = (productId: string) => {
+    setCart((prev) =>
+      prev.map((i) =>
+        i.product.id === productId && i.quantity < 1
+          ? { ...i, quantity: 1 }
+          : i,
+      ),
     );
   };
 
@@ -454,23 +461,18 @@ export function SalesTransaction({ role, salesId }: SalesTransactionProps) {
                         </div>
 
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-1.5">
-                            <button
-                              onClick={() => updateQty(item.product.id, -1)}
-                              className="w-7 h-7 clay-raised-sm clay-pressable border-0 rounded-lg flex items-center justify-center cursor-pointer"
-                            >
-                              <Minus className="w-3.5 h-3.5" />
-                            </button>
-                            <span className="w-8 text-center text-sm font-semibold">
-                              {item.quantity}
-                            </span>
-                            <button
-                              onClick={() => updateQty(item.product.id, 1)}
-                              className="w-7 h-7 clay-raised-sm clay-pressable border-0 rounded-lg flex items-center justify-center cursor-pointer"
-                            >
-                              <Plus className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
+                          <input
+                            type="number"
+                            inputMode="numeric"
+                            min={1}
+                            max={item.maxStock}
+                            value={item.quantity === 0 ? "" : item.quantity}
+                            onChange={(e) =>
+                              setQtyDirect(item.product.id, e.target.value)
+                            }
+                            onBlur={() => handleQtyBlur(item.product.id)}
+                            className="w-16 text-center text-sm font-semibold clay-inset border-0 rounded-lg py-1 appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
+                          />
                           <p className="text-sm font-bold text-gray-900">
                             {formatRp(item.unitPrice * item.quantity)}
                           </p>
