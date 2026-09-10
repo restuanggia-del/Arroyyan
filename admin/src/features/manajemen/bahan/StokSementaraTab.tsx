@@ -35,14 +35,18 @@ export function StokSementaraTab({
 }: TabProps) {
   const [subTab, setSubTab] = useState<"daftar" | "riwayat">("daftar");
 
-  const materialsWithSementara = materials.filter(
+  const sortedMaterials = [...materials].sort((a, b) =>
+    (a.nama_bahan || "").localeCompare(b.nama_bahan || "", "id"),
+  );
+
+  const materialsWithSementara = sortedMaterials.filter(
     (m) => Number(m.stock_sementara) > 0,
   );
-  const totalStokSementara = materials.reduce(
+  const totalStokSementara = sortedMaterials.reduce(
     (s, m) => s + Number(m.stock_sementara),
     0,
   );
-  const kritisSementaraItems = materials.filter(
+  const kritisSementaraItems = sortedMaterials.filter(
     (m) =>
       m.is_active && Number(m.stock_sementara) < getMaterialMinimumStock(m),
   );
@@ -201,7 +205,7 @@ export function StokSementaraTab({
                   </tr>
                 </thead>
                 <tbody>
-                  {materials.length === 0 ? (
+                  {sortedMaterials.length === 0 ? (
                     <tr>
                       <td
                         colSpan={8}
@@ -211,7 +215,7 @@ export function StokSementaraTab({
                       </td>
                     </tr>
                   ) : (
-                    materials.map((m) => {
+                    sortedMaterials.map((m) => {
                       const stockStatus = getMaterialStockStatus(
                         Number(m.stock_sementara),
                         getMaterialMinimumStock(m),

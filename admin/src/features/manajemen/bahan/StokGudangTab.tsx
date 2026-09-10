@@ -38,10 +38,14 @@ export function StokGudangTab({
 }: TabProps) {
   const [subTab, setSubTab] = useState<"daftar" | "riwayat">("daftar");
 
-  const lowStockItems = materials.filter(
+  const sortedMaterials = [...materials].sort((a, b) =>
+    (a.nama_bahan || "").localeCompare(b.nama_bahan || "", "id"),
+  );
+
+  const lowStockItems = sortedMaterials.filter(
     (m) => m.is_active && m.stock_quantity < getMaterialMinimumStock(m),
   );
-  const totalStokGudang = materials.reduce(
+  const totalStokGudang = sortedMaterials.reduce(
     (s, m) => s + Number(m.stock_quantity),
     0,
   );
@@ -191,7 +195,7 @@ export function StokGudangTab({
                   </tr>
                 </thead>
                 <tbody>
-                  {materials.length === 0 ? (
+                  {sortedMaterials.length === 0 ? (
                     <tr>
                       <td
                         colSpan={8}
@@ -201,7 +205,7 @@ export function StokGudangTab({
                       </td>
                     </tr>
                   ) : (
-                    materials.map((m) => {
+                    sortedMaterials.map((m) => {
                       const stockStatus = getMaterialStockStatus(
                         Number(m.stock_quantity),
                         getMaterialMinimumStock(m),

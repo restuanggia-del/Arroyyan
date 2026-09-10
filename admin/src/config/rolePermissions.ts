@@ -15,6 +15,7 @@ export const ROLE_ALLOWED_MENUS: Record<PanelRole, string[] | "all"> = {
 
     admin_produk: [
         "dashboard",
+        "bahan",
         "stok",
         "insentif",
         "laporan-insentif",
