@@ -152,7 +152,6 @@ export function CustomerTable({
                       <td className="py-3 px-4">
                         {c.sales?.nama_sales ? (
                           <div className="flex items-center gap-1.5 text-sm text-gray-600">
-                            <Briefcase className="w-3.5 h-3.5 text-gray-400" />
                             {c.sales.nama_sales}
                           </div>
                         ) : (

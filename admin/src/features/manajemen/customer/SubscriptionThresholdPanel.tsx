@@ -37,7 +37,6 @@ export function SubscriptionThresholdPanel({
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Sync jika threshold prop berubah (misalnya setelah load awal)
   useEffect(() => {
     setForm({
       min_total_price:

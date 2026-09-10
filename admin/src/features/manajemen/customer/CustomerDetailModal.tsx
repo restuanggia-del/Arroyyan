@@ -47,7 +47,6 @@ export function CustomerDetailModal({
           <div className="space-y-2 text-sm">
             <div className="flex justify-between py-2 border-b border-[rgba(140,172,214,0.2)]">
               <span className="text-gray-500 flex items-center gap-1.5">
-                <Briefcase className="w-3.5 h-3.5" />
                 Sales
               </span>
               <span className="font-medium">
