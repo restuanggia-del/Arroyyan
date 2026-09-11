@@ -32,6 +32,7 @@ export function StokSementaraTab({
   onDeleteMaterial,
   onToggleStatus,
   onAddTransaction,
+  onOpenProduksiHarian,
 }: TabProps) {
   const [subTab, setSubTab] = useState<"daftar" | "riwayat">("daftar");
 
@@ -158,7 +159,7 @@ export function StokSementaraTab({
               Stok Awal
             </button>
             <button
-              onClick={() => onAddTransaction("produksi")}
+              onClick={onOpenProduksiHarian}
               className="clay-purple clay-pressable text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer"
             >
               <Factory className="w-4 h-4" />

@@ -4,12 +4,11 @@ import {
   TrendingUp,
   TrendingDown,
   ArrowRightCircle,
-  Factory,
   RefreshCw,
   AlertCircle,
   ClipboardList,
   Ban,
-  ClipboardCheck,
+  FlaskConical,
 } from "lucide-react";
 import {
   getActiveMaterials,
@@ -18,8 +17,10 @@ import {
   reduceMaterialStock,
   moveToSementara,
   addSementaraStokAwal,
-  recordPemakaianProduksiGabungan,
+  recordSampel,
+  recordRejectBahan,
   MOVEMENT_TYPE_LABEL,
+  REJECT_BAHAN_REASON_SUGGESTIONS,
 } from "../../../services/materialService";
 
 export type MaterialTxType =
@@ -28,7 +29,8 @@ export type MaterialTxType =
   | "keluar"
   | "ke_sementara"
   | "stok_awal_sementara"
-  | "produksi";
+  | "sampel"
+  | "reject_bahan";
 
 interface MaterialTransactionModalProps {
   type: MaterialTxType;
@@ -42,14 +44,15 @@ const TX_TITLE: Record<MaterialTxType, string> = {
   keluar: MOVEMENT_TYPE_LABEL.keluar,
   ke_sementara: MOVEMENT_TYPE_LABEL.ke_sementara,
   stok_awal_sementara: MOVEMENT_TYPE_LABEL.stok_awal_sementara,
-  produksi: "Pemakaian Produksi (Stok Sementara)",
+  sampel: MOVEMENT_TYPE_LABEL.sampel_out,
+  reject_bahan: MOVEMENT_TYPE_LABEL.reject_bahan,
 };
 
 const TX_CONFIG: Record<
   MaterialTxType,
   {
     icon: React.ReactNode;
-    color: "green" | "cyan" | "red" | "blue" | "amber" | "purple";
+    color: "green" | "cyan" | "red" | "blue" | "amber" | "teal" | "rose";
     sourceField: "stock_quantity" | "stock_sementara" | null;
     notePlaceholder: string;
     effectText: string;
@@ -93,13 +96,22 @@ const TX_CONFIG: Record<
     effectText:
       "✓ Stok Sementara akan bertambah (tercatat terpisah dari Pindah ke Sementara biasa)",
   },
-  produksi: {
-    icon: <Factory className="w-5 h-5" />,
-    color: "purple",
+  sampel: {
+    icon: <FlaskConical className="w-5 h-5" />,
+    color: "teal",
     sourceField: "stock_sementara",
-    notePlaceholder: "Contoh: Terpakai produksi batch pagi",
+    notePlaceholder: "Contoh: Sampel QC batch pagi",
     effectText:
-      "⚠ Stok Sementara berkurang sebesar Jumlah dikurangi Sisa. Reject & Pemakaian Produksi (bersih) otomatis tercatat sebagai riwayat terpisah. Sisa Bahan TETAP tersimpan sebagai Stok Sementara (tidak hilang, tidak dikembalikan ke Gudang).",
+      "⚠ Stok Sementara akan berkurang (diambil sebagai sampel, bukan reject/pemakaian).",
+  },
+  reject_bahan: {
+    icon: <Ban className="w-5 h-5" />,
+    color: "rose",
+    sourceField: "stock_sementara",
+    notePlaceholder:
+      "Contoh: Kardus sobek/basah saat penyimpanan di ruang produksi",
+    effectText:
+      "⚠ Stok Sementara akan berkurang. Dipakai untuk bahan yang rusak SEBELUM sempat dipakai produksi di luar sesi Pemakaian Produksi.",
   },
 };
 
@@ -130,10 +142,15 @@ const COLOR_CLASSES: Record<string, { bg: string; text: string; btn: string }> =
       text: "text-amber-600",
       btn: "clay-amber clay-pressable",
     },
-    purple: {
-      bg: "bg-purple-100",
-      text: "text-purple-600",
-      btn: "clay-purple clay-pressable",
+    teal: {
+      bg: "bg-teal-100",
+      text: "text-teal-600",
+      btn: "bg-teal-600 hover:bg-teal-700",
+    },
+    rose: {
+      bg: "bg-rose-100",
+      text: "text-rose-600",
+      btn: "bg-rose-600 hover:bg-rose-700",
     },
   };
 
@@ -149,8 +166,7 @@ export function MaterialTransactionModal({
 
   const [materialId, setMaterialId] = useState("");
   const [quantity, setQuantity] = useState(0);
-  const [rejectQty, setRejectQty] = useState(0);
-  const [sisaQty, setSisaQty] = useState(0);
+  const [singleReason, setSingleReason] = useState("");
   const [note, setNote] = useState("");
 
   useEffect(() => {
@@ -170,22 +186,17 @@ export function MaterialTransactionModal({
     ? selectedMaterial?.[config.sourceField]
     : undefined;
 
-  const isProduksi = type === "produksi";
-  const isiPerSatuan = selectedMaterial?.isi_per_satuan || 0;
-  const pcsPerUnit = isiPerSatuan > 0 ? isiPerSatuan : 1;
-  const usesPcsConversion = isProduksi && isiPerSatuan > 0;
-
-  const grossPcs = quantity * pcsPerUnit;
-  const rejectPcsVal = isProduksi ? rejectQty : 0;
-  const sisaPcsVal = isProduksi ? sisaQty : 0;
-  const netUsagePcs = grossPcs - rejectPcsVal - sisaPcsVal;
-  const netUsageSatuan = netUsagePcs / pcsPerUnit;
-  const sisaSatuan = sisaPcsVal / pcsPerUnit;
-  const overAllocated = isProduksi && rejectPcsVal + sisaPcsVal > grossPcs;
+  const isRejectBahan = type === "reject_bahan";
   const overStock =
-    isProduksi &&
+    !!config.sourceField &&
     !!selectedMaterial &&
+    config.sourceField === "stock_sementara" &&
     quantity > selectedMaterial.stock_sementara;
+  const overStockGudang =
+    !!config.sourceField &&
+    !!selectedMaterial &&
+    config.sourceField === "stock_quantity" &&
+    quantity > selectedMaterial.stock_quantity;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -198,23 +209,17 @@ export function MaterialTransactionModal({
       setFormError("Jumlah harus minimal 1.");
       return;
     }
-    if (isProduksi) {
-      if (rejectQty < 0 || sisaQty < 0) {
-        setFormError("Jumlah reject/sisa tidak boleh negatif.");
-        return;
-      }
-      if (overAllocated) {
-        setFormError(
-          `Total Reject + Sisa Bahan (${(rejectPcsVal + sisaPcsVal).toLocaleString("id-ID")} pcs) tidak boleh melebihi Jumlah yang diambil (${grossPcs.toLocaleString("id-ID")} pcs).`,
-        );
-        return;
-      }
-      if (overStock && selectedMaterial) {
-        setFormError(
-          `Jumlah yang diambil (${quantity} ${selectedMaterial.satuan}) tidak boleh lebih besar dari Stok Sementara saat ini (${selectedMaterial.stock_sementara} ${selectedMaterial.satuan}).`,
-        );
-        return;
-      }
+    if (overStock && selectedMaterial) {
+      setFormError(
+        `Jumlah yang diambil (${quantity} ${selectedMaterial.satuan}) tidak boleh lebih besar dari Stok Sementara saat ini (${selectedMaterial.stock_sementara} ${selectedMaterial.satuan}).`,
+      );
+      return;
+    }
+    if (overStockGudang && selectedMaterial) {
+      setFormError(
+        `Jumlah yang diambil (${quantity} ${selectedMaterial.satuan}) tidak boleh lebih besar dari Stok Gudang saat ini (${selectedMaterial.stock_quantity} ${selectedMaterial.satuan}).`,
+      );
+      return;
     }
 
     setSaving(true);
@@ -225,12 +230,13 @@ export function MaterialTransactionModal({
       ({ error } = await addMaterialStock(materialId, quantity, note, type));
     } else if (type === "stok_awal_sementara") {
       ({ error } = await addSementaraStokAwal(materialId, quantity, note));
-    } else if (type === "produksi") {
-      ({ error } = await recordPemakaianProduksiGabungan(
+    } else if (type === "sampel") {
+      ({ error } = await recordSampel(materialId, quantity, note));
+    } else if (type === "reject_bahan") {
+      ({ error } = await recordRejectBahan(
         materialId,
         quantity,
-        rejectQty,
-        sisaQty,
+        singleReason || "Lainnya",
         note,
       ));
     } else {
@@ -323,8 +329,7 @@ export function MaterialTransactionModal({
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
-              {isProduksi ? "Jumlah Pemakaian" : "Jumlah"}{" "}
-              {selectedMaterial ? `(${selectedMaterial.satuan})` : ""}{" "}
+              Jumlah {selectedMaterial ? `(${selectedMaterial.satuan})` : ""}{" "}
               <span className="text-red-500">*</span>
             </label>
             <input
@@ -338,136 +343,62 @@ export function MaterialTransactionModal({
               }}
               placeholder="0"
               className={`w-full px-4 py-2.5 clay-inset border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40 ${
-                overStock ? "ring-2 ring-red-400" : ""
+                overStock || overStockGudang ? "ring-2 ring-red-400" : ""
               }`}
             />
-            {selectedMaterial && isiPerSatuan > 0 && quantity > 0 && (
-              <p className="text-xs text-gray-400 mt-1.5">
-                {quantity.toLocaleString("id-ID")} {selectedMaterial.satuan} ×{" "}
-                {isiPerSatuan.toLocaleString("id-ID")} pcs ={" "}
-                <span className="font-semibold text-gray-500">
-                  {grossPcs.toLocaleString("id-ID")} pcs
-                </span>
-              </p>
-            )}
+            {selectedMaterial &&
+              (selectedMaterial.isi_per_satuan || 0) > 0 &&
+              quantity > 0 && (
+                <p className="text-xs text-gray-400 mt-1.5">
+                  {quantity.toLocaleString("id-ID")} {selectedMaterial.satuan} ×{" "}
+                  {(selectedMaterial.isi_per_satuan || 0).toLocaleString(
+                    "id-ID",
+                  )}{" "}
+                  pcs ={" "}
+                  <span className="font-semibold text-gray-500">
+                    {(
+                      quantity * (selectedMaterial.isi_per_satuan || 0)
+                    ).toLocaleString("id-ID")}{" "}
+                    pcs
+                  </span>
+                </p>
+              )}
             {overStock && selectedMaterial && (
               <p className="text-xs mt-1.5 text-red-600">
                 Melebihi Stok Sementara saat ini (
                 {selectedMaterial.stock_sementara} {selectedMaterial.satuan}).
               </p>
             )}
+            {overStockGudang && selectedMaterial && (
+              <p className="text-xs mt-1.5 text-red-600">
+                Melebihi Stok Gudang saat ini ({selectedMaterial.stock_quantity}{" "}
+                {selectedMaterial.satuan}).
+              </p>
+            )}
           </div>
 
-          {isProduksi && (
-            <>
-              <div>
-                <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 mb-1.5">
-                  <Ban className="w-3.5 h-3.5 text-red-500" />
-                  Bahan Rusak / Reject{" "}
-                  {usesPcsConversion
-                    ? "(pcs)"
-                    : selectedMaterial
-                      ? `(${selectedMaterial.satuan})`
-                      : ""}
-                  <span className="text-gray-400 font-normal">(opsional)</span>
-                </label>
-                <input
-                  type="text"
-                  value={rejectQty === 0 ? "" : rejectQty}
-                  onChange={(e) => {
-                    const v = e.target.value.replace(/\D/g, "");
-                    setRejectQty(v === "" ? 0 : parseInt(v, 10));
-                    setFormError(null);
-                  }}
-                  placeholder="0"
-                  className="w-full px-4 py-2.5 clay-inset border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-400/40"
-                />
-              </div>
-
-              <div>
-                <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 mb-1.5">
-                  <ClipboardCheck className="w-3.5 h-3.5 text-lime-600" />
-                  Sisa Bahan{" "}
-                  {usesPcsConversion
-                    ? "(pcs)"
-                    : selectedMaterial
-                      ? `(${selectedMaterial.satuan})`
-                      : ""}
-                  <span className="text-gray-400 font-normal">(opsional)</span>
-                </label>
-                <input
-                  type="text"
-                  value={sisaQty === 0 ? "" : sisaQty}
-                  onChange={(e) => {
-                    const v = e.target.value.replace(/\D/g, "");
-                    setSisaQty(v === "" ? 0 : parseInt(v, 10));
-                    setFormError(null);
-                  }}
-                  placeholder="0"
-                  className="w-full px-4 py-2.5 clay-inset border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-lime-400/40"
-                />
-                <p className="text-xs text-gray-400 mt-1.5">
-                  Sisa TETAP tersimpan sebagai Stok Sementara (tidak hilang,
-                  tidak dikembalikan ke Gudang).
-                </p>
-              </div>
-
-              {selectedMaterial && quantity > 0 && (
-                <div
-                  className={`rounded-xl p-4 space-y-1.5 ${
-                    overAllocated
-                      ? "bg-red-50 border border-red-200"
-                      : "bg-purple-50 border border-purple-200"
-                  }`}
-                >
-                  <p className="text-sm text-gray-700">
-                    {grossPcs.toLocaleString("id-ID")} pcs − reject{" "}
-                    {rejectPcsVal.toLocaleString("id-ID")} pcs − sisa{" "}
-                    {sisaPcsVal.toLocaleString("id-ID")} pcs ={" "}
-                    <span
-                      className={`font-semibold ${
-                        overAllocated ? "text-red-600" : "text-purple-700"
-                      }`}
-                    >
-                      {netUsagePcs.toLocaleString("id-ID")} pcs
-                    </span>
-                  </p>
-                  <p className="text-sm font-medium text-gray-800">
-                    Pemakaian Produksi (bersih):{" "}
-                    <span className="text-purple-700">
-                      {Math.max(Math.round(netUsageSatuan), 0).toLocaleString(
-                        "id-ID",
-                      )}{" "}
-                      {selectedMaterial.satuan}
-                    </span>{" "}
-                    <span className="text-gray-400">
-                      (
-                      {netUsageSatuan.toLocaleString("id-ID", {
-                        maximumFractionDigits: 2,
-                      })}{" "}
-                      {selectedMaterial.satuan})
-                    </span>
-                  </p>
-                  {overAllocated && (
-                    <p className="text-xs text-red-600">
-                      Total Reject + Sisa melebihi Jumlah yang diambil.
-                    </p>
-                  )}
-                  <p className="text-xs text-gray-500 pt-1 border-t border-current/10">
-                    Stok Sementara:{" "}
-                    {selectedMaterial.stock_sementara.toLocaleString("id-ID")} →{" "}
-                    <span className="font-semibold">
-                      {Math.max(
-                        selectedMaterial.stock_sementara -
-                          (quantity - sisaSatuan),
-                        0,
-                      ).toLocaleString("id-ID", { maximumFractionDigits: 2 })}
-                    </span>{" "}
-                    {selectedMaterial.satuan}
-                  </p>
-                </div>
-              )}
-            </>
+          {isRejectBahan && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Alasan / Jenis Reject Bahan
+                <span className="text-gray-400 font-normal ml-1">
+                  (opsional)
+                </span>
+              </label>
+              <input
+                type="text"
+                list="reject-bahan-reason-suggestions"
+                value={singleReason}
+                onChange={(e) => setSingleReason(e.target.value)}
+                placeholder="Contoh: Kardus sobek/basah"
+                className="w-full px-4 py-2.5 clay-inset border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-400/40"
+              />
+              <datalist id="reject-bahan-reason-suggestions">
+                {REJECT_BAHAN_REASON_SUGGESTIONS.map((r) => (
+                  <option key={r} value={r} />
+                ))}
+              </datalist>
+            </div>
           )}
 
           <div>
@@ -507,8 +438,8 @@ export function MaterialTransactionModal({
                 saving ||
                 loadingMaterials ||
                 materials.length === 0 ||
-                overAllocated ||
-                overStock
+                overStock ||
+                overStockGudang
               }
               className={`px-5 py-2.5 text-white rounded-xl transition-colors cursor-pointer disabled:opacity-70 flex items-center gap-2 ${colors.btn}`}
             >

@@ -248,12 +248,13 @@ export interface ProductStockSummaryRow {
     stokPusat: number;
     stokSales: number;
     minimumStok: number;
+    isiPerDus: number | null;
 }
 
 export const getStockSummaryWithProducts = async () => {
     const { data: products, error: productsError } = await supabaseAdmin
         .from("products")
-        .select("id, product_name, category, unit, minimum_stock")
+        .select("id, product_name, category, unit, minimum_stock, isi_per_dus")
         .eq("is_active", true)
         .order("product_name", { ascending: true });
 
@@ -287,6 +288,7 @@ export const getStockSummaryWithProducts = async () => {
             stokPusat: 0,
             stokSales: 0,
             minimumStok: p.minimum_stock ?? MINIMUM_STOCK,
+            isiPerDus: p.isi_per_dus ?? null,
         });
     }
 

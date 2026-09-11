@@ -28,7 +28,17 @@ interface ProductStockSummary {
   stokPusat: number;
   stokSales: number;
   minimumStok: number;
+  isiPerDus: number | null;
 }
+
+const formatPcsProduk = (
+  qtyDus: number,
+  isiPerDus: number | null | undefined,
+): string => {
+  if (!isiPerDus || isiPerDus <= 0) return "-";
+  const pcs = qtyDus * isiPerDus;
+  return `${pcs.toLocaleString("id-ID", { maximumFractionDigits: 0 })} pcs`;
+};
 
 type StockStatus = "aman" | "menipis" | "habis";
 
@@ -228,18 +238,18 @@ export function StockManagement() {
           <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
             <Warehouse className="w-6 h-6 text-blue-600" />
           </div>
-          <h3 className="text-sm text-gray-600 mb-1">Total Stok Pabrik</h3>
+          <h3 className="text-sm text-gray-600 mb-1">Total Stok Pabrik (Dus)</h3>
           <p className="text-2xl font-bold text-gray-900">
-            {loading ? "—" : `${totalPusat} Unit`}
+            {loading ? "—" : `${totalPusat} Dus`}
           </p>
         </div>
         <div className="clay-raised rounded-lg p-6">
           <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
             <Briefcase className="w-6 h-6 text-purple-600" />
           </div>
-          <h3 className="text-sm text-gray-600 mb-1">Total Stok Sales</h3>
+          <h3 className="text-sm text-gray-600 mb-1">Total Stok Sales (Dus)</h3>
           <p className="text-2xl font-bold text-gray-900">
-            {loading ? "—" : `${totalSales} Unit`}
+            {loading ? "—" : `${totalSales} Dus`}
           </p>
         </div>
         <div className="clay-raised rounded-lg p-6">
@@ -323,15 +333,17 @@ export function StockManagement() {
                     {[
                       "Produk",
                       "Kategori",
-                      "Stok Pabrik",
-                      "Stok Sales",
-                      "Total",
-                      "Min. Stok",
+                      "Stok Pabrik (Dus)",
+                      "Pcs",
+                      "Stok Sales (Dus)",
+                      "Total (Dus)",
+                      "Min. Stok (Dus)",
+                      "Pcs",
                       "Status",
                       "Aksi",
-                    ].map((h) => (
+                    ].map((h, idx) => (
                       <th
-                        key={h}
+                        key={`${h}-${idx}`}
                         className="text-left py-3 px-4 text-sm font-semibold text-gray-700"
                       >
                         {h}
@@ -343,7 +355,7 @@ export function StockManagement() {
                   {stockSummary.length === 0 ? (
                     <tr>
                       <td
-                        colSpan={8}
+                        colSpan={10}
                         className="py-12 text-center text-gray-500 text-sm"
                       >
                         Belum ada data stok
@@ -384,6 +396,9 @@ export function StockManagement() {
                           <td className="py-3 px-4 text-sm text-gray-900">
                             {item.stokPusat}
                           </td>
+                          <td className="py-3 px-4 text-sm text-gray-500">
+                            {formatPcsProduk(item.stokPusat, item.isiPerDus)}
+                          </td>
                           <td className="py-3 px-4 text-sm text-gray-900">
                             {item.stokSales}
                           </td>
@@ -392,6 +407,9 @@ export function StockManagement() {
                           </td>
                           <td className="py-3 px-4 text-sm text-gray-600">
                             {item.minimumStok}
+                          </td>
+                          <td className="py-3 px-4 text-sm text-gray-500">
+                            {formatPcsProduk(item.minimumStok, item.isiPerDus)}
                           </td>
                           <td className="py-3 px-4">
                             <StockStatusBadge status={status} />

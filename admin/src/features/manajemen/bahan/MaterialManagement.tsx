@@ -7,6 +7,7 @@ import {
 } from "./MaterialTransactionModal";
 import { StokGudangTab } from "./StokGudangTab";
 import { StokSementaraTab } from "../bahan/StokSementaraTab";
+import { ProduksiHarianModal } from "./ProduksiHarianModal";
 import { TabProps } from "../bahan/materialShared";
 import {
   Material,
@@ -28,6 +29,7 @@ export function MaterialManagement() {
   const [editingMaterial, setEditingMaterial] = useState<Material | null>(null);
   const [isTxModalOpen, setIsTxModalOpen] = useState(false);
   const [txType, setTxType] = useState<MaterialTxType>("masuk");
+  const [isProduksiHarianOpen, setIsProduksiHarianOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<{
     id: string;
@@ -82,6 +84,11 @@ export function MaterialManagement() {
 
   const handleTxSuccess = () => {
     setIsTxModalOpen(false);
+    fetchAll();
+  };
+
+  const handleProduksiHarianSuccess = () => {
+    setIsProduksiHarianOpen(false);
     fetchAll();
   };
 
@@ -151,6 +158,7 @@ export function MaterialManagement() {
     onDeleteMaterial: (m) => setConfirmDelete({ id: m.id, name: m.nama_bahan }),
     onToggleStatus: handleToggleStatus,
     onAddTransaction: handleAddTransaction,
+    onOpenProduksiHarian: () => setIsProduksiHarianOpen(true),
   };
 
   return (
@@ -212,6 +220,13 @@ export function MaterialManagement() {
           type={txType}
           onClose={() => setIsTxModalOpen(false)}
           onSaveSuccess={handleTxSuccess}
+        />
+      )}
+
+      {isProduksiHarianOpen && (
+        <ProduksiHarianModal
+          onClose={() => setIsProduksiHarianOpen(false)}
+          onSaveSuccess={handleProduksiHarianSuccess}
         />
       )}
 

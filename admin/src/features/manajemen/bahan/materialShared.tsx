@@ -9,6 +9,7 @@ import {
   Ban,
   AlertTriangle,
   PackageX,
+  FlaskConical,
 } from "lucide-react";
 import {
   Material,
@@ -79,6 +80,18 @@ export const MOVEMENT_VISUAL: Record<
     text: "text-red-600",
     sign: "-",
   },
+  reject_bahan: {
+    icon: <Ban className="w-5 h-5" />,
+    bg: "bg-rose-100",
+    text: "text-rose-600",
+    sign: "-",
+  },
+  sampel_out: {
+    icon: <FlaskConical className="w-5 h-5" />,
+    bg: "bg-teal-100",
+    text: "text-teal-600",
+    sign: "-",
+  },
 };
 
 export const GUDANG_MOVEMENT_TYPES: MaterialMovement["movement_type"][] = [
@@ -95,6 +108,8 @@ export const SEMENTARA_MOVEMENT_TYPES: MaterialMovement["movement_type"][] = [
   "produksi",
   "stok_awal_sementara",
   "reject",
+  "reject_bahan",
+  "sampel_out",
 ];
 
 export interface TabProps {
@@ -108,6 +123,7 @@ export interface TabProps {
   onDeleteMaterial: (m: Material) => void;
   onToggleStatus: (m: Material) => void;
   onAddTransaction: (type: MaterialTxType) => void;
+  onOpenProduksiHarian: () => void;
 }
 
 export type MaterialStockStatus = "aman" | "menipis" | "habis";
@@ -252,6 +268,11 @@ export function MovementList({
                     <ArrowRight className="w-3 h-3" />
                     <span>{MOVEMENT_TYPE_LABEL[mov.movement_type]}</span>
                   </div>
+                  {mov.reason && (
+                    <span className="inline-block text-[11px] font-medium bg-gray-100 text-gray-600 rounded-full px-2 py-0.5 mb-1">
+                      Alasan: {mov.reason}
+                    </span>
+                  )}
                   {mov.note && (
                     <p className="text-xs text-gray-500 mt-1">{mov.note}</p>
                   )}
