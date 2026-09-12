@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from "react";
-import { toast } from "sonner";
 import {
   Award,
   Calendar,
@@ -15,75 +14,12 @@ import {
   getBonusRecordsByPeriodeRange,
   BonusRecord,
 } from "../../../services/bonusService";
-
-const formatRp = (n: number) => "Rp " + n.toLocaleString("id-ID");
-const formatDus = (n: number) =>
-  n.toLocaleString("id-ID", { maximumFractionDigits: 2 });
-const currentPeriode = () => new Date().toISOString().slice(0, 7);
-
-const exportToExcel = async (
-  data: Record<string, any>[],
-  headers: string[],
-  fileName: string,
-) => {
-  try {
-    const XLSX = await import("xlsx");
-    const safeData =
-      data.length > 0
-        ? data
-        : [Object.fromEntries(headers.map((h) => [h, ""]))];
-    const ws = XLSX.utils.json_to_sheet(safeData, { header: headers });
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Laporan Bonus");
-    XLSX.writeFile(wb, `${fileName}.xlsx`);
-
-    if (data.length === 0) {
-      toast.info("File Excel diunduh dengan template kosong", {
-        description: "Tidak ada data pada periode yang dipilih.",
-      });
-    }
-  } catch {
-    toast.error("Gagal export Excel", {
-      description: "Jalankan: npm install xlsx",
-    });
-  }
-};
-
-const exportToPDF = async (
-  title: string,
-  headers: string[],
-  rows: (string | number)[][],
-  fileName: string,
-) => {
-  try {
-    const { jsPDF } = await import("jspdf");
-    const autoTable = (await import("jspdf-autotable")).default;
-    const doc = new jsPDF();
-    doc.setFontSize(16);
-    doc.text("ARROYYAN99 — " + title, 14, 20);
-    doc.setFontSize(10);
-    doc.text(`Dicetak: ${new Date().toLocaleString("id-ID")}`, 14, 28);
-    const safeRows = rows.length > 0 ? rows : [Array(headers.length).fill("")];
-    autoTable(doc, {
-      head: [headers],
-      body: safeRows,
-      startY: 35,
-      styles: { fontSize: 9 },
-      headStyles: { fillColor: [217, 119, 6] },
-    });
-    doc.save(`${fileName}.pdf`);
-
-    if (rows.length === 0) {
-      toast.info("File PDF diunduh dengan template kosong", {
-        description: "Tidak ada data pada periode yang dipilih.",
-      });
-    }
-  } catch {
-    toast.error("Gagal export PDF", {
-      description: "Jalankan: npm install jspdf jspdf-autotable",
-    });
-  }
-};
+import { currentPeriode } from "../../../lib/dateUtils";
+import { formatRp, formatDus } from "../../../lib/formatters";
+import {
+  exportBonusToExcel,
+  exportBonusToPDF,
+} from "../bonus/laporanBonusExportUtils";
 
 export function LaporanBonus() {
   const [startPeriode, setStartPeriode] = useState(currentPeriode());
@@ -128,29 +64,7 @@ export function LaporanBonus() {
   const handleExportExcel = async () => {
     setExportingType("excel");
     try {
-      await exportToExcel(
-        data.map((r) => ({
-          Periode: r.periode,
-          Jenis: r.sales_id ? "Sales" : "Karyawan",
-          Nama: r.sales?.nama_sales ?? r.karyawan?.nama ?? "—",
-          "Total Dus Terjual": Number(r.total_dus_terjual),
-          "Bonus Dus": r.bonus_dus,
-          "Bonus Kaos": r.bonus_kaos,
-          "Bonus Uang (Rp)": Number(r.bonus_target_rp),
-          Catatan: r.catatan ?? "",
-        })),
-        [
-          "Periode",
-          "Jenis",
-          "Nama",
-          "Total Dus Terjual",
-          "Bonus Dus",
-          "Bonus Kaos",
-          "Bonus Uang (Rp)",
-          "Catatan",
-        ],
-        `laporan-bonus-${startPeriode}-${endPeriode}`,
-      );
+      await exportBonusToExcel(data, startPeriode, endPeriode);
     } finally {
       setExportingType(null);
     }
@@ -159,28 +73,7 @@ export function LaporanBonus() {
   const handleExportPDF = async () => {
     setExportingType("pdf");
     try {
-      await exportToPDF(
-        `Laporan Bonus (${startPeriode} s/d ${endPeriode})`,
-        [
-          "Periode",
-          "Jenis",
-          "Nama",
-          "Dus Terjual",
-          "Bonus Dus",
-          "Bonus Kaos",
-          "Bonus Uang",
-        ],
-        data.map((r) => [
-          r.periode,
-          r.sales_id ? "Sales" : "Karyawan",
-          r.sales?.nama_sales ?? r.karyawan?.nama ?? "—",
-          formatDus(Number(r.total_dus_terjual)),
-          r.bonus_dus,
-          r.bonus_kaos,
-          formatRp(Number(r.bonus_target_rp)),
-        ]),
-        `laporan-bonus-${startPeriode}-${endPeriode}`,
-      );
+      await exportBonusToPDF(data, startPeriode, endPeriode);
     } finally {
       setExportingType(null);
     }

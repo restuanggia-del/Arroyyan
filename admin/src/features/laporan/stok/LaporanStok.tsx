@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from "react";
-import { toast } from "sonner";
 import {
   Warehouse,
   Calendar,
@@ -16,90 +15,14 @@ import {
   ProductStockReportRow,
 } from "../../../services/laporanStokService";
 
-const today = () => new Date().toISOString().slice(0, 10);
-const firstOfMonth = () => today().slice(0, 8) + "01";
-
-const STATUS_LABEL: Record<string, string> = {
-  aman: "Aman",
-  menipis: "Menipis",
-  habis: "Habis",
-};
-
-const STATUS_CLASS: Record<string, string> = {
-  aman: "bg-green-100 text-green-700",
-  menipis: "bg-amber-100 text-amber-700",
-  habis: "bg-red-100 text-red-700",
-};
-
-const CATEGORY_LABEL: Record<string, string> = {
-  cup: "Cup",
-  botol: "Botol",
-  galon: "Galon",
-};
-
-const exportToExcel = async (
-  data: Record<string, any>[],
-  headers: string[],
-  fileName: string,
-) => {
-  try {
-    const XLSX = await import("xlsx");
-    const safeData =
-      data.length > 0
-        ? data
-        : [Object.fromEntries(headers.map((h) => [h, ""]))];
-    const ws = XLSX.utils.json_to_sheet(safeData, { header: headers });
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Laporan Stok");
-    XLSX.writeFile(wb, `${fileName}.xlsx`);
-
-    if (data.length === 0) {
-      toast.info("File Excel diunduh dengan template kosong", {
-        description: "Tidak ada data produk untuk ditampilkan.",
-      });
-    }
-  } catch {
-    toast.error("Gagal export Excel", {
-      description: "Jalankan: npm install xlsx",
-    });
-  }
-};
-
-const exportToPDF = async (
-  title: string,
-  headers: string[],
-  rows: (string | number)[][],
-  fileName: string,
-) => {
-  try {
-    const { jsPDF } = await import("jspdf");
-    const autoTable = (await import("jspdf-autotable")).default;
-    const doc = new jsPDF();
-    doc.setFontSize(16);
-    doc.text("ARROYYAN99 — " + title, 14, 20);
-    doc.setFontSize(10);
-    doc.text(`Dicetak: ${new Date().toLocaleString("id-ID")}`, 14, 28);
-    const safeRows = rows.length > 0 ? rows : [Array(headers.length).fill("")];
-    autoTable(doc, {
-      head: [headers],
-      body: safeRows,
-      startY: 35,
-      styles: { fontSize: 9 },
-      headStyles: { fillColor: [2, 73, 225] },
-    });
-    doc.save(`${fileName}.pdf`);
-
-    if (rows.length === 0) {
-      toast.info("File PDF diunduh dengan template kosong", {
-        description: "Tidak ada data produk untuk ditampilkan.",
-      });
-    }
-  } catch {
-    toast.error("Gagal export PDF", {
-      description: "Jalankan: npm install jspdf jspdf-autotable",
-    });
-  }
-};
+import { today, firstOfMonth } from "../../../lib/dateUtils";
+import {
+  exportStokToExcel,
+  exportStokToPDF,
+  STATUS_LABEL,
+  STATUS_CLASS,
+  CATEGORY_LABEL,
+} from "./laporanStokExportUtils";
 
 export function LaporanStok() {
   const [startDate, setStartDate] = useState(firstOfMonth());
@@ -142,35 +65,7 @@ export function LaporanStok() {
   const handleExportExcel = async () => {
     setExportingType("excel");
     try {
-      const headers = [
-        "Nama Produk",
-        "Kategori",
-        "Satuan",
-        "Stok Pusat",
-        "Stok Lapangan",
-        "Total Stok",
-        "Minimum Stok",
-        "Masuk (Periode)",
-        "Keluar (Periode)",
-        "Status",
-      ];
-
-      await exportToExcel(
-        data.map((r) => ({
-          "Nama Produk": r.product_name,
-          Kategori: CATEGORY_LABEL[r.category] ?? r.category,
-          Satuan: r.unit,
-          "Stok Pusat": r.stok_pusat,
-          "Stok Lapangan": r.stok_lapangan,
-          "Total Stok": r.total_stok,
-          "Minimum Stok": r.minimum_stock,
-          "Masuk (Periode)": r.total_masuk,
-          "Keluar (Periode)": r.total_keluar,
-          Status: STATUS_LABEL[r.status],
-        })),
-        headers,
-        `laporan-stok-produk-${startDate}-${endDate}`,
-      );
+      await exportStokToExcel(data, startDate, endDate);
     } finally {
       setExportingType(null);
     }
@@ -179,36 +74,7 @@ export function LaporanStok() {
   const handleExportPDF = async () => {
     setExportingType("pdf");
     try {
-      const headers = [
-        "Nama Produk",
-        "Kategori",
-        "Satuan",
-        "Pusat",
-        "Lapangan",
-        "Total",
-        "Min",
-        "Masuk",
-        "Keluar",
-        "Status",
-      ];
-
-      await exportToPDF(
-        `Laporan Stok Produk (${startDate} s/d ${endDate})`,
-        headers,
-        data.map((r) => [
-          r.product_name,
-          CATEGORY_LABEL[r.category] ?? r.category,
-          r.unit,
-          r.stok_pusat,
-          r.stok_lapangan,
-          r.total_stok,
-          r.minimum_stock,
-          r.total_masuk,
-          r.total_keluar,
-          STATUS_LABEL[r.status],
-        ]),
-        `laporan-stok-produk-${startDate}-${endDate}`,
-      );
+      await exportStokToPDF(data, startDate, endDate);
     } finally {
       setExportingType(null);
     }

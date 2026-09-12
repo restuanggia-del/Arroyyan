@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from "react";
-import { toast } from "sonner";
 import {
   Calendar,
   File,
@@ -17,74 +16,14 @@ import {
   JENIS_LABEL,
 } from "../../../services/insentifService";
 
-const formatRp = (n: number) => "Rp " + n.toLocaleString("id-ID");
-const currentPeriode = () => new Date().toISOString().slice(0, 7);
+import { currentPeriode } from "../../../lib/dateUtils";
+import { formatRp } from "../../../lib/formatters";
+import {
+  exportInsentifToExcel,
+  exportInsentifToPDF,
+} from "./laporanInsentifExportUtils";
 
 type FilterJenis = "semua" | "insentif_produksi" | "fee_penjualan";
-
-const exportToExcel = async (
-  data: Record<string, any>[],
-  headers: string[],
-  fileName: string,
-) => {
-  try {
-    const XLSX = await import("xlsx");
-    const safeData =
-      data.length > 0
-        ? data
-        : [Object.fromEntries(headers.map((h) => [h, ""]))];
-    const ws = XLSX.utils.json_to_sheet(safeData, { header: headers });
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Laporan Insentif");
-    XLSX.writeFile(wb, `${fileName}.xlsx`);
-
-    if (data.length === 0) {
-      toast.info("File Excel diunduh dengan template kosong", {
-        description: "Tidak ada data pada periode yang dipilih.",
-      });
-    }
-  } catch {
-    toast.error("Gagal export Excel", {
-      description: "Jalankan: npm install xlsx",
-    });
-  }
-};
-
-const exportToPDF = async (
-  title: string,
-  headers: string[],
-  rows: (string | number)[][],
-  fileName: string,
-) => {
-  try {
-    const { jsPDF } = await import("jspdf");
-    const autoTable = (await import("jspdf-autotable")).default;
-    const doc = new jsPDF();
-    doc.setFontSize(16);
-    doc.text("ARROYYAN99 — " + title, 14, 20);
-    doc.setFontSize(10);
-    doc.text(`Dicetak: ${new Date().toLocaleString("id-ID")}`, 14, 28);
-    const safeRows = rows.length > 0 ? rows : [Array(headers.length).fill("")];
-    autoTable(doc, {
-      head: [headers],
-      body: safeRows,
-      startY: 35,
-      styles: { fontSize: 9 },
-      headStyles: { fillColor: [13, 148, 136] },
-    });
-    doc.save(`${fileName}.pdf`);
-
-    if (rows.length === 0) {
-      toast.info("File PDF diunduh dengan template kosong", {
-        description: "Tidak ada data pada periode yang dipilih.",
-      });
-    }
-  } catch {
-    toast.error("Gagal export PDF", {
-      description: "Jalankan: npm install jspdf jspdf-autotable",
-    });
-  }
-};
 
 export function LaporanInsentif() {
   const [startPeriode, setStartPeriode] = useState(currentPeriode());
@@ -135,29 +74,7 @@ export function LaporanInsentif() {
   const handleExportExcel = async () => {
     setExportingType("excel");
     try {
-      await exportToExcel(
-        data.map((r) => ({
-          Periode: r.periode,
-          Jenis: JENIS_LABEL[r.jenis],
-          "Jenis Pemilik": r.sales_id ? "Sales" : "Karyawan",
-          Nama: r.sales?.nama_sales ?? r.karyawan?.nama ?? "—",
-          "Jumlah Dihitung": Number(r.jumlah_dihitung),
-          "Jumlah Dibayar": Number(r.jumlah_dibayar),
-          Selisih: Number(r.jumlah_dibayar) - Number(r.jumlah_dihitung),
-          Keterangan: r.keterangan ?? "",
-        })),
-        [
-          "Periode",
-          "Jenis",
-          "Jenis Pemilik",
-          "Nama",
-          "Jumlah Dihitung",
-          "Jumlah Dibayar",
-          "Selisih",
-          "Keterangan",
-        ],
-        `laporan-insentif-${startPeriode}-${endPeriode}`,
-      );
+      await exportInsentifToExcel(data, startPeriode, endPeriode);
     } finally {
       setExportingType(null);
     }
@@ -166,28 +83,7 @@ export function LaporanInsentif() {
   const handleExportPDF = async () => {
     setExportingType("pdf");
     try {
-      await exportToPDF(
-        `Laporan Insentif (${startPeriode} s/d ${endPeriode})`,
-        [
-          "Periode",
-          "Jenis",
-          "Pemilik",
-          "Nama",
-          "Dihitung",
-          "Dibayar",
-          "Selisih",
-        ],
-        data.map((r) => [
-          r.periode,
-          JENIS_LABEL[r.jenis],
-          r.sales_id ? "Sales" : "Karyawan",
-          r.sales?.nama_sales ?? r.karyawan?.nama ?? "—",
-          formatRp(Number(r.jumlah_dihitung)),
-          formatRp(Number(r.jumlah_dibayar)),
-          formatRp(Number(r.jumlah_dibayar) - Number(r.jumlah_dihitung)),
-        ]),
-        `laporan-insentif-${startPeriode}-${endPeriode}`,
-      );
+      await exportInsentifToPDF(data, startPeriode, endPeriode);
     } finally {
       setExportingType(null);
     }

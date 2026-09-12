@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { toast } from "sonner";
 import {
   HardHat,
   Calendar,
@@ -14,88 +13,16 @@ import {
   getHandlingFeeDetailByDateRange,
   HandlingFeeDetailRow,
 } from "../../../services/handlingFeeService";
-
-const formatRp = (n: number) => "Rp " + n.toLocaleString("id-ID");
-const formatDate = (d: string) =>
-  new Date(d).toLocaleDateString("id-ID", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-const today = () => new Date().toISOString().slice(0, 10);
-const firstOfMonth = () => today().slice(0, 8) + "01";
-
-const exportToExcel = async (
-  data: Record<string, any>[],
-  headers: string[],
-  fileName: string,
-) => {
-  try {
-    const XLSX = await import("xlsx");
-    const safeData =
-      data.length > 0
-        ? data
-        : [Object.fromEntries(headers.map((h) => [h, ""]))];
-    const ws = XLSX.utils.json_to_sheet(safeData, { header: headers });
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Laporan Handling Fee");
-    XLSX.writeFile(wb, `${fileName}.xlsx`);
-
-    if (data.length === 0) {
-      toast.info("File Excel diunduh dengan template kosong", {
-        description: "Tidak ada data pada rentang tanggal yang dipilih.",
-      });
-    }
-  } catch {
-    toast.error("Gagal export Excel", {
-      description: "Jalankan: npm install xlsx",
-    });
-  }
-};
-
-const exportToPDF = async (
-  title: string,
-  headers: string[],
-  rows: (string | number)[][],
-  fileName: string,
-) => {
-  try {
-    const { jsPDF } = await import("jspdf");
-    const autoTable = (await import("jspdf-autotable")).default;
-    const doc = new jsPDF();
-    doc.setFontSize(16);
-    doc.text("ARROYYAN99 — " + title, 14, 20);
-    doc.setFontSize(10);
-    doc.text(`Dicetak: ${new Date().toLocaleString("id-ID")}`, 14, 28);
-    const safeRows = rows.length > 0 ? rows : [Array(headers.length).fill("")];
-    autoTable(doc, {
-      head: [headers],
-      body: safeRows,
-      startY: 35,
-      styles: { fontSize: 9 },
-      headStyles: { fillColor: [234, 88, 12] },
-    });
-    doc.save(`${fileName}.pdf`);
-
-    if (rows.length === 0) {
-      toast.info("File PDF diunduh dengan template kosong", {
-        description: "Tidak ada data pada rentang tanggal yang dipilih.",
-      });
-    }
-  } catch {
-    toast.error("Gagal export PDF", {
-      description: "Jalankan: npm install jspdf jspdf-autotable",
-    });
-  }
-};
-
-interface KaryawanSummary {
-  worker_key: string;
-  nama: string;
-  is_manual: boolean;
-  jumlah_kegiatan: number;
-  total_fee: number;
-}
+import { today, firstOfMonth, formatDate } from "../../../lib/dateUtils";
+import { formatRp } from "../../../lib/formatters";
+import {
+  exportHandlingFeeToExcel,
+  exportHandlingFeeToPDF,
+} from "../handling-fee/laporanHandlingFeeExportUtils";
+import {
+  KaryawanFeeSummaryTable,
+  KaryawanSummary,
+} from "../handling-fee/KaryawanFeeSummaryTable";
 
 export function LaporanHandlingFee() {
   const [startDate, setStartDate] = useState(firstOfMonth());
@@ -167,25 +94,7 @@ export function LaporanHandlingFee() {
   const handleExportExcel = async () => {
     setExportingType("excel");
     try {
-      await exportToExcel(
-        data.map((r) => ({
-          Tanggal: r.tanggal,
-          "Nama Pekerja": r.nama,
-          "Jumlah Dus": r.jumlah_dus,
-          "Rate/Dus": r.rate_per_dus,
-          "Fee Diterima": r.fee_per_orang,
-          Keterangan: r.keterangan ?? "",
-        })),
-        [
-          "Tanggal",
-          "Nama Pekerja",
-          "Jumlah Dus",
-          "Rate/Dus",
-          "Fee Diterima",
-          "Keterangan",
-        ],
-        `laporan-handling-fee-${startDate}-${endDate}`,
-      );
+      await exportHandlingFeeToExcel(data, startDate, endDate);
     } finally {
       setExportingType(null);
     }
@@ -194,18 +103,7 @@ export function LaporanHandlingFee() {
   const handleExportPDF = async () => {
     setExportingType("pdf");
     try {
-      await exportToPDF(
-        `Laporan Handling Fee (${startDate} s/d ${endDate})`,
-        ["Tanggal", "Nama Pekerja", "Jumlah Dus", "Rate/Dus", "Fee Diterima"],
-        data.map((r) => [
-          formatDate(r.tanggal),
-          r.nama,
-          r.jumlah_dus,
-          formatRp(r.rate_per_dus),
-          formatRp(r.fee_per_orang),
-        ]),
-        `laporan-handling-fee-${startDate}-${endDate}`,
-      );
+      await exportHandlingFeeToPDF(data, startDate, endDate);
     } finally {
       setExportingType(null);
     }
@@ -252,66 +150,7 @@ export function LaporanHandlingFee() {
         </div>
       </div>
 
-      <div className="clay-raised rounded-lg overflow-hidden mb-8">
-        <div className="border-b border-[rgba(140,172,214,0.35)] px-6 py-4">
-          <h2 className="text-lg font-semibold text-gray-900">
-            Rekap per Pekerja
-          </h2>
-        </div>
-        {loading ? (
-          <div className="py-10 text-center">
-            <RefreshCw className="w-6 h-6 animate-spin text-gray-400 mx-auto" />
-          </div>
-        ) : summaryByKaryawan.length === 0 ? (
-          <p className="text-center text-gray-400 py-10 text-sm">
-            Belum ada data pada rentang tanggal ini
-          </p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b-2 border-[rgba(140,172,214,0.35)] bg-[rgba(215,233,255,0.4)]">
-                  {[
-                    "Nama Pekerja",
-                    "Jumlah Kegiatan",
-                    "Total Fee Diterima",
-                  ].map((h) => (
-                    <th
-                      key={h}
-                      className="text-left py-3 px-4 font-semibold text-gray-700"
-                    >
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {summaryByKaryawan.map((s) => (
-                  <tr
-                    key={s.worker_key}
-                    className="border-b border-[rgba(140,172,214,0.2)] hover:bg-[rgba(215,233,255,0.5)]"
-                  >
-                    <td className="py-3 px-4 font-medium text-gray-900">
-                      {s.nama}
-                      {s.is_manual && (
-                        <span className="ml-2 inline-flex px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-purple-100 text-purple-700 align-middle">
-                          manual
-                        </span>
-                      )}
-                    </td>
-                    <td className="py-3 px-4 text-gray-600">
-                      {s.jumlah_kegiatan}
-                    </td>
-                    <td className="py-3 px-4 font-semibold text-orange-600">
-                      {formatRp(s.total_fee)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+      <KaryawanFeeSummaryTable loading={loading} summary={summaryByKaryawan} />
 
       <div className="clay-raised rounded-xl">
         <div className="border-b border-[rgba(140,172,214,0.35)] px-6 py-4 flex items-end justify-between flex-wrap gap-4">

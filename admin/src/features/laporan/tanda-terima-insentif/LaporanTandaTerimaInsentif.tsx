@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from "react";
-import { toast } from "sonner";
 import {
   Calendar,
   File,
@@ -8,10 +7,8 @@ import {
   AlertCircle,
   Calculator,
   CheckCircle2,
-  Circle,
   Wallet,
   Users,
-  Trash2,
 } from "lucide-react";
 import {
   getIncentiveReceipts,
@@ -20,125 +17,14 @@ import {
   deleteIncentiveReceipt,
   IncentiveReceipt,
 } from "../../../services/incentiveReceiptService";
-
-const formatRp = (n: number) => "Rp " + n.toLocaleString("id-ID");
-const formatDate = (d: string) =>
-  new Date(d).toLocaleDateString("id-ID", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-const currentPeriode = () => new Date().toISOString().slice(0, 7);
-const today = () => new Date().toISOString().slice(0, 10);
-
-const exportToExcel = async (data: IncentiveReceipt[], periode: string) => {
-  try {
-    const XLSX = await import("xlsx");
-    const headers = [
-      "Jenis",
-      "Nama",
-      "Insentif Produksi",
-      "Fee Penjualan",
-      "Handling",
-      "Fee Rekapan",
-      "Bonus Target",
-      "Jumlah Total",
-      "Status",
-      "Tanggal Terima",
-    ];
-    const rows = data.map((r) => ({
-      Jenis: r.sales_id ? "Sales" : "Karyawan",
-      Nama: r.sales?.nama_sales ?? r.karyawan?.nama ?? "—",
-      "Insentif Produksi": r.total_produksi,
-      "Fee Penjualan": r.total_fee_penjualan,
-      Handling: r.total_handling,
-      "Fee Rekapan": r.total_fee_rekapan,
-      "Bonus Target": r.total_bonus_target,
-      "Jumlah Total": r.jumlah_total,
-      Status:
-        r.status_tanda_terima === "sudah" ? "Sudah Diterima" : "Belum Diterima",
-      "Tanggal Terima": r.tanggal_terima ?? "",
-    }));
-    const safeRows =
-      rows.length > 0
-        ? rows
-        : [Object.fromEntries(headers.map((h) => [h, ""]))];
-    const ws = XLSX.utils.json_to_sheet(safeRows, {
-      header: headers,
-    });
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Tanda Terima Insentif");
-    XLSX.writeFile(wb, `tanda-terima-insentif-${periode}.xlsx`);
-
-    if (data.length === 0) {
-      toast.info("File Excel diunduh dengan template kosong", {
-        description: "Belum ada rekap untuk periode ini.",
-      });
-    }
-  } catch {
-    toast.error("Gagal export Excel", {
-      description: "Jalankan: npm install xlsx",
-    });
-  }
-};
-
-const exportToPDF = async (data: IncentiveReceipt[], periode: string) => {
-  try {
-    const { jsPDF } = await import("jspdf");
-    const autoTable = (await import("jspdf-autotable")).default;
-    const doc = new jsPDF();
-    doc.setFontSize(16);
-    doc.text("ARROYYAN99 — Tanda Terima Insentif", 14, 20);
-    doc.setFontSize(10);
-    doc.text(`Periode: ${periode}`, 14, 28);
-
-    const tableRows = data.map((r) => [
-      r.sales_id ? "Sales" : "Karyawan",
-      r.sales?.nama_sales ?? r.karyawan?.nama ?? "—",
-      formatRp(r.total_produksi),
-      formatRp(r.total_fee_penjualan),
-      formatRp(r.total_handling),
-      formatRp(r.total_fee_rekapan),
-      formatRp(r.total_bonus_target),
-      formatRp(r.jumlah_total),
-      "",
-    ]);
-    const bodyRows = data.length === 0 ? [Array(9).fill("")] : tableRows;
-
-    autoTable(doc, {
-      head: [
-        [
-          "Jenis",
-          "Nama",
-          "Produksi",
-          "Fee Jual",
-          "Handling",
-          "Fee Rekap",
-          "Bonus",
-          "Total",
-          "Tanda Tangan",
-        ],
-      ],
-      body: bodyRows,
-      startY: 35,
-      styles: { fontSize: 8 },
-      headStyles: { fillColor: [79, 70, 229] },
-      columnStyles: { 7: { minCellWidth: 28 } },
-    });
-
-    doc.save(`tanda-terima-insentif-${periode}.pdf`);
-
-    if (data.length === 0) {
-      toast.info("File PDF diunduh dengan template kosong", {
-        description: "Belum ada rekap untuk periode ini.",
-      });
-    }
-  } catch {
-    toast.error("Gagal export PDF", {
-      description: "Jalankan: npm install jspdf jspdf-autotable",
-    });
-  }
-};
+import { currentPeriode, today } from "../../../lib/dateUtils";
+import { formatRp } from "../../../lib/formatters";
+import {
+  exportTandaTerimaToExcel,
+  exportTandaTerimaToPDF,
+} from "../tanda-terima-insentif/laporanTandaTerimaInsentifExportUtils";
+import { TandaTerimaTable } from "../tanda-terima-insentif/TandaTerimaTable";
+import { DeleteReceiptModal } from "../tanda-terima-insentif/DeleteReceiptModal";
 
 export function LaporanTandaTerimaInsentif() {
   const [periode, setPeriode] = useState(currentPeriode());
@@ -297,7 +183,7 @@ export function LaporanTandaTerimaInsentif() {
               onClick={async () => {
                 setExportingType("pdf");
                 try {
-                  await exportToPDF(data, periode);
+                  await exportTandaTerimaToPDF(data, periode);
                 } finally {
                   setExportingType(null);
                 }
@@ -318,7 +204,7 @@ export function LaporanTandaTerimaInsentif() {
               onClick={async () => {
                 setExportingType("excel");
                 try {
-                  await exportToExcel(data, periode);
+                  await exportTandaTerimaToExcel(data, periode);
                 } finally {
                   setExportingType(null);
                 }
@@ -358,158 +244,22 @@ export function LaporanTandaTerimaInsentif() {
               <RefreshCw className="w-8 h-8 animate-spin text-gray-300 mx-auto mb-3" />
               <p className="text-sm text-gray-400">Memuat data...</p>
             </div>
-          ) : data.length === 0 ? (
-            <p className="text-center text-gray-400 py-12 text-sm">
-              Belum ada rekap untuk periode ini. Klik "Hitung / Refresh Rekap"
-              untuk menghitung dari data yang sudah tersimpan.
-            </p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b-2 border-[rgba(140,172,214,0.35)]">
-                    {[
-                      "Jenis",
-                      "Nama",
-                      "Produksi",
-                      "Fee Jualan",
-                      "Handling",
-                      "Fee Rekap",
-                      "Bonus",
-                      "Total",
-                      "Status",
-                      "Aksi",
-                    ].map((h) => (
-                      <th
-                        key={h}
-                        className="text-left py-3 px-3 font-semibold text-gray-700 whitespace-nowrap"
-                      >
-                        {h}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.map((r) => (
-                    <tr
-                      key={r.id}
-                      className="border-b border-[rgba(140,172,214,0.2)] hover:bg-[rgba(215,233,255,0.5)]"
-                    >
-                      <td className="py-3 px-3">
-                        <span
-                          className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
-                            r.sales_id
-                              ? "bg-cyan-100 text-cyan-700"
-                              : "bg-teal-100 text-teal-700"
-                          }`}
-                        >
-                          {r.sales_id ? "Sales" : "Karyawan"}
-                        </span>
-                      </td>
-                      <td className="py-3 px-3 font-medium text-gray-900 whitespace-nowrap">
-                        {r.sales?.nama_sales ?? r.karyawan?.nama ?? "—"}
-                      </td>
-                      <td className="py-3 px-3 text-gray-600">
-                        {formatRp(r.total_produksi)}
-                      </td>
-                      <td className="py-3 px-3 text-gray-600">
-                        {formatRp(r.total_fee_penjualan)}
-                      </td>
-                      <td className="py-3 px-3 text-gray-600">
-                        {formatRp(r.total_handling)}
-                      </td>
-                      <td className="py-3 px-3 text-gray-600">
-                        {formatRp(r.total_fee_rekapan)}
-                      </td>
-                      <td className="py-3 px-3 text-gray-600">
-                        {formatRp(r.total_bonus_target)}
-                      </td>
-                      <td className="py-3 px-3 font-bold text-indigo-700 whitespace-nowrap">
-                        {formatRp(r.jumlah_total)}
-                      </td>
-                      <td className="py-3 px-3">
-                        {actionLoading === r.id ? (
-                          <RefreshCw className="w-4 h-4 animate-spin text-gray-400" />
-                        ) : (
-                          <button
-                            onClick={() => handleToggleStatus(r)}
-                            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium cursor-pointer transition-colors ${
-                              r.status_tanda_terima === "sudah"
-                                ? "bg-green-100 text-green-700 hover:bg-green-200"
-                                : "bg-[rgba(215,233,255,0.55)] text-gray-500 hover:bg-gray-200"
-                            }`}
-                            title={
-                              r.status_tanda_terima === "sudah"
-                                ? `Diterima ${r.tanggal_terima ? formatDate(r.tanggal_terima) : ""}`
-                                : "Klik untuk tandai sudah diterima"
-                            }
-                          >
-                            {r.status_tanda_terima === "sudah" ? (
-                              <CheckCircle2 className="w-3.5 h-3.5" />
-                            ) : (
-                              <Circle className="w-3.5 h-3.5" />
-                            )}
-                            {r.status_tanda_terima === "sudah"
-                              ? "Sudah Terima"
-                              : "Belum"}
-                          </button>
-                        )}
-                      </td>
-                      <td className="py-3 px-3">
-                        <button
-                          onClick={() => setConfirmDelete(r)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
-                          title="Hapus"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <TandaTerimaTable
+              data={data}
+              actionLoading={actionLoading}
+              onToggleStatus={handleToggleStatus}
+              onRequestDelete={setConfirmDelete}
+            />
           )}
         </div>
       </div>
 
-      {confirmDelete && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm">
-            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Trash2 className="w-6 h-6 text-red-600" />
-            </div>
-            <h3 className="text-lg font-semibold text-gray-900 text-center mb-2">
-              Hapus Rekap Ini?
-            </h3>
-            <p className="text-sm text-gray-600 text-center mb-1">
-              <span className="font-medium">
-                {confirmDelete.sales?.nama_sales ??
-                  confirmDelete.karyawan?.nama ??
-                  ""}
-              </span>{" "}
-              — periode {confirmDelete.periode}
-            </p>
-            <p className="text-xs text-gray-400 text-center mb-6">
-              Bisa dihitung ulang lagi lewat tombol "Hitung / Refresh Rekap".
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setConfirmDelete(null)}
-                className="flex-1 px-4 py-2.5 clay-inset-sm border-0 rounded-xl text-sm text-gray-700 cursor-pointer"
-              >
-                Batal
-              </button>
-              <button
-                onClick={handleDeleteConfirm}
-                className="flex-1 px-4 py-2.5 clay-red clay-pressable text-white rounded-xl text-sm font-medium cursor-pointer"
-              >
-                Ya, Hapus
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <DeleteReceiptModal
+        receipt={confirmDelete}
+        onCancel={() => setConfirmDelete(null)}
+        onConfirm={handleDeleteConfirm}
+      />
     </div>
   );
 }

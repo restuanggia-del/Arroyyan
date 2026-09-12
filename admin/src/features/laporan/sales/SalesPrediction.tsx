@@ -18,6 +18,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { getMonthlySales, MonthlySales } from "../../../services/reportService";
+import { formatRp } from "../../../lib/formatters";
 
 export function SalesPrediction() {
   const [historicalData, setHistoricalData] = useState<MonthlySales[]>([]);
@@ -91,7 +92,6 @@ export function SalesPrediction() {
   };
 
   const accuracy = calcAccuracy();
-  const formatRp = (v: number) => `Rp ${v.toLocaleString("id-ID")}`;
 
   if (loading) {
     return (
