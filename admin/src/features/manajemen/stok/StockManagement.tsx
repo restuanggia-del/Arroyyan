@@ -180,9 +180,7 @@ export function StockManagement() {
           <h1 className="text-2xl font-bold text-gray-900 mb-1">
             Manajemen Stok
           </h1>
-          <p className="text-gray-600">
-            Kelola stok pabrik dan sales
-          </p>
+          <p className="text-gray-600">Kelola stok pabrik dan sales</p>
         </div>
         <button
           onClick={fetchAll}
@@ -238,7 +236,9 @@ export function StockManagement() {
           <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
             <Warehouse className="w-6 h-6 text-blue-600" />
           </div>
-          <h3 className="text-sm text-gray-600 mb-1">Total Stok Pabrik (Dus)</h3>
+          <h3 className="text-sm text-gray-600 mb-1">
+            Total Stok Pabrik (Dus)
+          </h3>
           <p className="text-2xl font-bold text-gray-900">
             {loading ? "—" : `${totalPusat} Dus`}
           </p>
@@ -338,7 +338,7 @@ export function StockManagement() {
                       "Stok Sales (Dus)",
                       "Total (Dus)",
                       "Min. Stok (Dus)",
-                      "Pcs",
+                      "Min. Stok (Pcs)",
                       "Status",
                       "Aksi",
                     ].map((h, idx) => (

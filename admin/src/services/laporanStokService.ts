@@ -134,3 +134,152 @@ export const getLaporanStokProduk = async (
 
     return { data: Array.from(summary.values()), error: null };
 };
+
+export interface KartuStokRow {
+    created_at: string;
+    uraian: string;
+    masuk: number;
+    keluar: number;
+    sisa: number;
+}
+
+export interface KartuStokProduk {
+    product_id: string;
+    product_name: string;
+    category: "cup" | "botol" | "galon";
+    size: string | null;
+    unit: string;
+    isi_per_dus: number | null;
+    stok_awal: number;
+    rows: KartuStokRow[];
+    stok_akhir: number;
+}
+
+interface StockMovementLedgerRow {
+    product_id: string;
+    movement_type: string;
+    quantity: number;
+    note: string | null;
+    created_at: string;
+    karyawan: { nama: string } | null;
+    sales: { nama_sales: string } | null;
+}
+
+const describeMovement = (mv: StockMovementLedgerRow): string => {
+    const note = mv.note?.trim();
+    if (note) return note;
+
+    const who = mv.sales?.nama_sales || mv.karyawan?.nama;
+    switch (mv.movement_type) {
+        case "stok_awal":
+            return "Stok Awal";
+        case "stock_in":
+            return "Produksi";
+        case "distribution_out":
+            return who ? `Distribusi ke ${who}` : "Distribusi Keluar";
+        case "distribution_in":
+            return who ? `Retur dari ${who}` : "Distribusi Masuk";
+        case "sale_out":
+            return "Penjualan Langsung";
+        case "sodaqoh_out":
+            return "Sodaqoh";
+        case "pribadi_out":
+            return "Pribadi";
+        case "bonus_out":
+            return "Bonus";
+        case "return_out":
+            return "Retur";
+        case "koreksi_tambah":
+            return "Koreksi Tambah";
+        case "koreksi_kurang":
+            return "Koreksi Kurang";
+        default:
+            return mv.movement_type;
+    }
+};
+
+export const getKartuStokSemuaProduk = async (
+    startDate: string,
+    endDate: string,
+) => {
+    const { data: products, error: productsError } = await supabaseAdmin
+        .from("products")
+        .select("id, product_name, category, size, unit, isi_per_dus")
+        .eq("is_active", true)
+        .order("product_name", { ascending: true });
+
+    if (productsError) {
+        console.error(
+            "[laporanStokService] getKartuStokSemuaProduk products error:",
+            productsError,
+        );
+        return { data: null, error: productsError };
+    }
+
+    const { data: movements, error: movError } = await supabaseAdmin
+        .from("stock_movements")
+        .select(
+            `
+      product_id, movement_type, quantity, note, created_at,
+      karyawan ( nama ),
+      sales ( nama_sales )
+    `,
+        )
+        .lte("created_at", `${endDate}T23:59:59`)
+        .order("created_at", { ascending: true });
+
+    if (movError) {
+        console.error(
+            "[laporanStokService] getKartuStokSemuaProduk movements error:",
+            movError,
+        );
+        return { data: null, error: movError };
+    }
+
+    const byProduct = new Map<string, StockMovementLedgerRow[]>();
+    for (const mv of (movements as unknown as StockMovementLedgerRow[]) ?? []) {
+        if (!byProduct.has(mv.product_id)) byProduct.set(mv.product_id, []);
+        byProduct.get(mv.product_id)!.push(mv);
+    }
+
+    const startBoundary = `${startDate}T00:00:00`;
+
+    const result: KartuStokProduk[] = ((products as any[]) ?? []).map((p) => {
+        const movs = byProduct.get(p.id) ?? [];
+        let running = 0;
+        let stokAwal = 0;
+        const rows: KartuStokRow[] = [];
+
+        for (const mv of movs) {
+            const qty = Number(mv.quantity) || 0;
+            const isIn = IN_TYPES.has(mv.movement_type);
+            running += isIn ? qty : -qty;
+
+            if (mv.created_at < startBoundary) {
+                stokAwal = running;
+            } else {
+                rows.push({
+                    created_at: mv.created_at,
+                    uraian: describeMovement(mv),
+                    masuk: isIn ? qty : 0,
+                    keluar: isIn ? 0 : qty,
+                    sisa: running,
+                });
+            }
+        }
+
+        return {
+            product_id: p.id,
+            product_name: p.product_name ?? "—",
+            category: p.category,
+            size: p.size ?? null,
+            unit: p.unit ?? "unit",
+            isi_per_dus: p.isi_per_dus ?? null,
+            stok_awal: stokAwal,
+            rows,
+            stok_akhir: running,
+        };
+    });
+
+    return { data: result, error: null };
+};
