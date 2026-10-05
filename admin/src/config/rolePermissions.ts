@@ -5,9 +5,10 @@ export const ROLE_ALLOWED_MENUS: Record<PanelRole, string[] | "all"> = {
 
     admin_gudang: [
         "dashboard",
-        "bahan",
-        "handling-fee",
         "stok",
+        "bahan",
+        "distribusi",
+        "handling-fee",
         "laporan-bahan",
         "laporan-handling-fee",
         "laporan-stok",
