@@ -219,7 +219,7 @@ export default function DashboardPage({
               </div>
               <div>
                 <p className="text-sm font-bold text-[#111111]">
-                  Kesehatan Stok
+                  Ketersediaan Stok
                 </p>
                 <p className="text-xs text-[#111111]/45 font-medium">
                   {stats.lowStockCount > 0
