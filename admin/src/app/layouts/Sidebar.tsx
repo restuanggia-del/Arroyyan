@@ -117,7 +117,7 @@ const menuItems: MenuItem[] = [
       },
       {
         id: "bonus",
-        label: "Bonus Karyawan",
+        label: "Bonus Karyawan & Sales",
         icon: <Award className="w-5 h-5" />,
       },
       {
