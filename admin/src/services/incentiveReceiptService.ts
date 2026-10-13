@@ -193,6 +193,7 @@ export const calculateReceiptTotals = async (
     }
 
     for (const h of (handlingRes.data ?? []) as any[]) {
+        if (!h.karyawan_id) continue;
         const row = getRow("karyawan", h.karyawan_id);
         row.total_handling += Number(h.fee_per_orang);
     }
@@ -223,7 +224,9 @@ export const generateReceipts = async (periode: string) => {
     const { data: totals, error } = await calculateReceiptTotals(periode);
     if (error) return { data: null, error };
 
-    const relevant = (totals ?? []).filter((r) => r.jumlah_total > 0);
+    const relevant = (totals ?? []).filter(
+        (r) => r.jumlah_total > 0 && !!r.owner_id,
+    );
 
     const karyawanRows = relevant
         .filter((r) => r.owner_type === "karyawan")
