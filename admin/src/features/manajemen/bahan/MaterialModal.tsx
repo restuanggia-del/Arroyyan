@@ -108,8 +108,6 @@ export function MaterialModal({
   const minStokSatuanNum = parseInt(formData.minimum_stock_satuan, 10) || 0;
   const minStokPcsNum = parseInt(formData.minimum_stock_pcs, 10) || 0;
 
-  // Nilai final minimal stok yang akan disimpan, selalu dalam satuan bahan
-  // (sama seperti stock_quantity), mengikuti field mana yang terakhir diisi.
   const minimumStockFinal =
     formData.minimum_stock_active === "pcs" && isiPerSatuanNum > 0
       ? Math.ceil(minStokPcsNum / isiPerSatuanNum)
@@ -117,8 +115,6 @@ export function MaterialModal({
   const minimumStockFinalPcs =
     isiPerSatuanNum > 0 ? minimumStockFinal * isiPerSatuanNum : null;
 
-  // Nilai yang ditampilkan di field yang sedang tidak aktif, dihitung otomatis
-  // dari field yang aktif supaya keduanya selalu sinkron.
   const minStokSatuanDisplay =
     formData.minimum_stock_active === "satuan"
       ? formData.minimum_stock_satuan

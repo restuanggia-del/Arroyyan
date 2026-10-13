@@ -32,8 +32,14 @@ export function CustomerFormModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSaving(true);
     setError(null);
+
+    if (!form.customer_name.trim()) {
+      setError("Nama wajib diisi.");
+      return;
+    }
+
+    setSaving(true);
 
     const payload = {
       customer_name: form.customer_name.trim(),
@@ -70,7 +76,7 @@ export function CustomerFormModal({
             <X className="w-5 h-5 text-gray-500" />
           </button>
         </div>
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} noValidate className="p-6 space-y-4">
           {error && (
             <div className="p-3 clay-inset-red border-0 rounded-lg text-sm text-red-700">
               {error}
@@ -81,11 +87,11 @@ export function CustomerFormModal({
               Nama <span className="text-red-500">*</span>
             </label>
             <input
-              required
               value={form.customer_name}
-              onChange={(e) =>
-                setForm((p) => ({ ...p, customer_name: e.target.value }))
-              }
+              onChange={(e) => {
+                setForm((p) => ({ ...p, customer_name: e.target.value }));
+                setError(null);
+              }}
               className="w-full px-4 py-2.5 clay-inset border-0 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
               placeholder="Nama pelanggan"
             />
