@@ -1,0 +1,215 @@
+import { useState, useEffect } from "react";
+import { X, RefreshCw, AlertCircle, Banknote } from "lucide-react";
+import { getActiveKaryawan, Karyawan } from "../../services/karyawanService";
+import { createCashMasuk } from "../../services/potonganSetoranService";
+
+interface CashMasukModalProps {
+  currentUserId: string;
+  defaultKaryawanId?: string;
+  onClose: () => void;
+  onSaveSuccess: () => void;
+}
+
+const today = () => new Date().toISOString().slice(0, 10);
+
+export function CashMasukModal({
+  currentUserId,
+  defaultKaryawanId,
+  onClose,
+  onSaveSuccess,
+}: CashMasukModalProps) {
+  const [karyawanList, setKaryawanList] = useState<Karyawan[]>([]);
+  const [loadingKaryawan, setLoadingKaryawan] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+
+  const [tanggal, setTanggal] = useState(today());
+  const [karyawanId, setKaryawanId] = useState(defaultKaryawanId ?? "");
+  const [jumlah, setJumlah] = useState(0);
+  const [keterangan, setKeterangan] = useState("");
+
+  useEffect(() => {
+    const load = async () => {
+      setLoadingKaryawan(true);
+      const { data } = await getActiveKaryawan();
+      setKaryawanList(data || []);
+      setLoadingKaryawan(false);
+    };
+    load();
+  }, []);
+
+  const handleJumlahChange = (value: string) => {
+    const v = value.replace(/\D/g, "");
+    setJumlah(v === "" ? 0 : parseInt(v, 10));
+    setFormError(null);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!tanggal) {
+      setFormError("Tanggal wajib diisi.");
+      return;
+    }
+    if (!karyawanId) {
+      setFormError("Pilih karyawan terlebih dahulu.");
+      return;
+    }
+    if (jumlah <= 0) {
+      setFormError("Jumlah cash masuk harus lebih dari 0.");
+      return;
+    }
+
+    setSaving(true);
+    setFormError(null);
+
+    const { error } = await createCashMasuk({
+      tanggal,
+      jumlah,
+      karyawan_id: karyawanId,
+      diterima_oleh: currentUserId || null,
+      keterangan: keterangan || null,
+    });
+
+    if (error) {
+      setFormError("Gagal menyimpan cash masuk: " + (error as any).message);
+      setSaving(false);
+      return;
+    }
+
+    setSaving(false);
+    onSaveSuccess();
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl">
+        <div className="border-b border-[rgba(140,172,214,0.35)] px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
+              <Banknote className="w-5 h-5 text-blue-600" />
+            </div>
+            <h2 className="text-xl font-semibold text-gray-900">
+              Tambah Cash Masuk
+            </h2>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-[rgba(215,233,255,0.55)] rounded-lg transition-colors cursor-pointer"
+          >
+            <X className="w-5 h-5 text-gray-500" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} noValidate className="p-6 space-y-4">
+          {formError && (
+            <div className="p-3 clay-inset-red border-0 rounded-lg flex items-center gap-2 text-sm text-red-700">
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              {formError}
+            </div>
+          )}
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Tanggal <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="date"
+              value={tanggal}
+              onChange={(e) => setTanggal(e.target.value)}
+              className="w-full px-4 py-2.5 clay-inset border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Uang Cash Dari (Karyawan) <span className="text-red-500">*</span>
+            </label>
+            {loadingKaryawan ? (
+              <div className="flex items-center gap-2 text-sm text-gray-500 py-2">
+                <RefreshCw className="w-4 h-4 animate-spin" />
+                Memuat daftar karyawan...
+              </div>
+            ) : karyawanList.length === 0 ? (
+              <p className="text-sm text-gray-500 py-2">
+                Belum ada karyawan aktif. Tambahkan karyawan terlebih dahulu.
+              </p>
+            ) : (
+              <select
+                value={karyawanId}
+                onChange={(e) => {
+                  setKaryawanId(e.target.value);
+                  setFormError(null);
+                }}
+                className="w-full px-4 py-2.5 clay-inset border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40 cursor-pointer"
+              >
+                <option value="">-- Pilih Karyawan --</option>
+                {karyawanList.map((k) => (
+                  <option key={k.id} value={k.id}>
+                    {k.nama}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Jumlah Cash Masuk (Rp) <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              inputMode="numeric"
+              value={jumlah === 0 ? "" : jumlah}
+              onChange={(e) => handleJumlahChange(e.target.value)}
+              placeholder="0"
+              className="w-full px-4 py-2.5 clay-inset border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Keterangan
+              <span className="text-gray-400 font-normal ml-1">(opsional)</span>
+            </label>
+            <textarea
+              value={keterangan}
+              onChange={(e) => setKeterangan(e.target.value)}
+              placeholder="Contoh: Hasil penjualan tunai tanggal 13 Oktober"
+              rows={3}
+              className="w-full px-4 py-2.5 clay-inset border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40 resize-none"
+            />
+          </div>
+
+          <div className="clay-inset-green border-0 rounded-xl p-4">
+            <p className="text-sm font-medium text-green-800">
+              ✓ Cash masuk ini akan menambah Sisa Dana Penjualan karyawan
+            </p>
+            <p className="text-xs text-green-700 mt-1">
+              Dicatat sebagai diterima oleh akun admin yang sedang login.
+            </p>
+          </div>
+
+          <div className="flex items-center justify-end gap-3 pt-1">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={saving}
+              className="px-5 py-2.5 text-gray-700 bg-[rgba(215,233,255,0.55)] hover:bg-gray-200 rounded-xl transition-colors cursor-pointer disabled:opacity-50"
+            >
+              Batal
+            </button>
+            <button
+              type="submit"
+              disabled={saving || loadingKaryawan || karyawanList.length === 0}
+              className="px-5 py-2.5 clay-blue clay-pressable text-white rounded-xl transition-colors cursor-pointer disabled:opacity-70 flex items-center gap-2"
+            >
+              {saving && <RefreshCw className="w-4 h-4 animate-spin" />}
+              Simpan Cash Masuk
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}

@@ -11,15 +11,19 @@ import {
 } from "lucide-react";
 import { PotonganModal } from "./PotonganModal";
 import { SetoranModal } from "./SetoranModal";
+import { CashMasukModal } from "./CashMasukModal";
 import {
   Potongan,
   SetoranOwner,
+  CashMasuk,
   SisaDanaKaryawan,
   getPotonganList,
   getSetoranList,
+  getCashMasukList,
   getSisaDanaPenjualan,
   deletePotongan,
   deleteSetoran,
+  deleteCashMasuk,
   KATEGORI_POTONGAN_LABEL,
 } from "../../services/potonganSetoranService";
 
@@ -38,12 +42,13 @@ const formatDate = (d: string) =>
 export function PotonganSetoranManagement({
   currentUserId,
 }: PotonganSetoranManagementProps) {
-  const [activeTab, setActiveTab] = useState<"potongan" | "setoran">(
-    "potongan",
-  );
+  const [activeTab, setActiveTab] = useState<
+    "potongan" | "cash_masuk" | "setoran"
+  >("potongan");
 
   const [potonganList, setPotonganList] = useState<Potongan[]>([]);
   const [setoranList, setSetoranList] = useState<SetoranOwner[]>([]);
+  const [cashMasukList, setCashMasukList] = useState<CashMasuk[]>([]);
   const [sisaDana, setSisaDana] = useState<SisaDanaKaryawan[]>([]);
 
   const [loading, setLoading] = useState(true);
@@ -51,10 +56,12 @@ export function PotonganSetoranManagement({
 
   const [isPotonganModalOpen, setIsPotonganModalOpen] = useState(false);
   const [isSetoranModalOpen, setIsSetoranModalOpen] = useState(false);
+  const [isCashMasukModalOpen, setIsCashMasukModalOpen] = useState(false);
+  const [cashMasukKaryawanId, setCashMasukKaryawanId] = useState<string>("");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<{
     id: string;
-    type: "potongan" | "setoran";
+    type: "potongan" | "setoran" | "cash_masuk";
     label: string;
   } | null>(null);
 
@@ -62,18 +69,25 @@ export function PotonganSetoranManagement({
     setLoading(true);
     setError(null);
 
-    const [potonganRes, setoranRes, sisaRes] = await Promise.all([
+    const [potonganRes, setoranRes, cashMasukRes, sisaRes] = await Promise.all([
       getPotonganList(),
       getSetoranList(),
+      getCashMasukList(),
       getSisaDanaPenjualan(),
     ]);
 
-    if (potonganRes.error || setoranRes.error || sisaRes.error) {
+    if (
+      potonganRes.error ||
+      setoranRes.error ||
+      cashMasukRes.error ||
+      sisaRes.error
+    ) {
       setError("Gagal memuat sebagian data potongan & setoran.");
     }
 
     setPotonganList(potonganRes.data || []);
     setSetoranList(setoranRes.data || []);
+    setCashMasukList(cashMasukRes.data || []);
     setSisaDana(sisaRes.data || []);
     setLoading(false);
   }, []);
@@ -82,10 +96,16 @@ export function PotonganSetoranManagement({
     fetchAll();
   }, [fetchAll]);
 
-  const handleSaveSuccess = (type: "potongan" | "setoran") => {
+  const handleSaveSuccess = (type: "potongan" | "setoran" | "cash_masuk") => {
     if (type === "potongan") setIsPotonganModalOpen(false);
+    else if (type === "cash_masuk") setIsCashMasukModalOpen(false);
     else setIsSetoranModalOpen(false);
     fetchAll();
+  };
+
+  const openCashMasukModal = (karyawanId = "") => {
+    setCashMasukKaryawanId(karyawanId);
+    setIsCashMasukModalOpen(true);
   };
 
   const handleDeleteConfirm = async () => {
@@ -97,13 +117,17 @@ export function PotonganSetoranManagement({
     const { error } =
       target.type === "potongan"
         ? await deletePotongan(target.id)
-        : await deleteSetoran(target.id);
+        : target.type === "cash_masuk"
+          ? await deleteCashMasuk(target.id)
+          : await deleteSetoran(target.id);
 
     if (error) {
       alert("Gagal menghapus data: " + (error as any).message);
     } else {
       if (target.type === "potongan") {
         setPotonganList((prev) => prev.filter((p) => p.id !== target.id));
+      } else if (target.type === "cash_masuk") {
+        setCashMasukList((prev) => prev.filter((c) => c.id !== target.id));
       } else {
         setSetoranList((prev) => prev.filter((s) => s.id !== target.id));
       }
@@ -190,10 +214,11 @@ export function PotonganSetoranManagement({
           <div className="group relative">
             <Info className="w-4 h-4 text-gray-400 cursor-help" />
             <div className="hidden group-hover:block absolute right-0 top-6 w-72 bg-gray-900 text-white text-xs rounded-lg p-3 z-10">
-              Dihitung otomatis dari: uang cash yang diterima karyawan (dari
-              transaksi tunai & pembayaran titipan) dikurangi potongan dan
-              setoran yang sudah dicatat. Belum termasuk bagian yang sudah
-              langsung diserahkan ke owner saat pembayaran titipan.
+              Dihitung dari: cash masuk (yang dicatat manual lewat tombol + di
+              kolom Cash Masuk, ditambah transaksi tunai & pembayaran titipan
+              atas nama karyawan) dikurangi potongan dan setoran yang sudah
+              dicatat. Belum termasuk bagian yang sudah langsung diserahkan ke
+              owner saat pembayaran titipan.
             </div>
           </div>
         </div>
@@ -238,7 +263,16 @@ export function PotonganSetoranManagement({
                         {k.nama}
                       </td>
                       <td className="py-3 px-4 text-sm text-gray-600">
-                        {formatRp(k.total_cash_masuk)}
+                        <div className="flex items-center gap-2">
+                          <span>{formatRp(k.total_cash_masuk)}</span>
+                          <button
+                            onClick={() => openCashMasukModal(k.karyawan_id)}
+                            className="p-1 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
+                            title={`Tambah cash masuk ${k.nama}`}
+                          >
+                            <Plus className="w-4 h-4" />
+                          </button>
+                        </div>
                       </td>
                       <td className="py-3 px-4 text-sm text-red-600">
                         {formatRp(k.total_potongan)}
@@ -276,6 +310,16 @@ export function PotonganSetoranManagement({
               Riwayat Potongan
             </button>
             <button
+              onClick={() => setActiveTab("cash_masuk")}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
+                activeTab === "cash_masuk"
+                  ? "bg-blue-50 text-blue-600"
+                  : "text-gray-600 hover:bg-[rgba(215,233,255,0.5)]"
+              }`}
+            >
+              Riwayat Cash Masuk
+            </button>
+            <button
               onClick={() => setActiveTab("setoran")}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
                 activeTab === "setoran"
@@ -294,6 +338,14 @@ export function PotonganSetoranManagement({
               >
                 <Plus className="w-4 h-4" />
                 Tambah Potongan
+              </button>
+            ) : activeTab === "cash_masuk" ? (
+              <button
+                onClick={() => openCashMasukModal()}
+                className="clay-blue clay-pressable text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                Tambah Cash Masuk
               </button>
             ) : (
               <button
@@ -399,7 +451,7 @@ export function PotonganSetoranManagement({
                 </tbody>
               </table>
             </div>
-          ) : (
+          ) : activeTab === "setoran" ? (
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
@@ -477,6 +529,84 @@ export function PotonganSetoranManagement({
                 </tbody>
               </table>
             </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-[rgba(140,172,214,0.35)]">
+                    {[
+                      "Tanggal",
+                      "Dari Karyawan",
+                      "Diterima Oleh",
+                      "Jumlah",
+                      "Keterangan",
+                      "Aksi",
+                    ].map((h) => (
+                      <th
+                        key={h}
+                        className="text-left py-3 px-4 text-sm font-semibold text-gray-700"
+                      >
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {cashMasukList.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={6}
+                        className="py-12 text-center text-gray-500 text-sm"
+                      >
+                        Belum ada data cash masuk
+                      </td>
+                    </tr>
+                  ) : (
+                    cashMasukList.map((c) => (
+                      <tr
+                        key={c.id}
+                        className="border-b border-[rgba(140,172,214,0.2)] hover:bg-[rgba(215,233,255,0.5)]"
+                      >
+                        <td className="py-3 px-4 text-sm text-gray-600">
+                          {formatDate(c.tanggal)}
+                        </td>
+                        <td className="py-3 px-4 text-sm font-medium text-gray-900">
+                          {c.karyawan_cash?.nama ?? "—"}
+                        </td>
+                        <td className="py-3 px-4 text-sm text-gray-600">
+                          {c.user_penerima?.name ?? "—"}
+                        </td>
+                        <td className="py-3 px-4 text-sm font-semibold text-blue-600">
+                          {formatRp(Number(c.jumlah))}
+                        </td>
+                        <td className="py-3 px-4 text-sm text-gray-500 max-w-xs truncate">
+                          {c.keterangan || "—"}
+                        </td>
+                        <td className="py-3 px-4">
+                          {actionLoading === c.id ? (
+                            <RefreshCw className="w-4 h-4 animate-spin text-gray-400" />
+                          ) : (
+                            <button
+                              onClick={() =>
+                                setConfirmDelete({
+                                  id: c.id,
+                                  type: "cash_masuk",
+                                  label: `Cash masuk ${c.karyawan_cash?.nama ?? ""}`,
+                                })
+                              }
+                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                              title="Hapus"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       </div>
@@ -485,6 +615,15 @@ export function PotonganSetoranManagement({
         <PotonganModal
           onClose={() => setIsPotonganModalOpen(false)}
           onSaveSuccess={() => handleSaveSuccess("potongan")}
+        />
+      )}
+
+      {isCashMasukModalOpen && (
+        <CashMasukModal
+          currentUserId={currentUserId}
+          defaultKaryawanId={cashMasukKaryawanId}
+          onClose={() => setIsCashMasukModalOpen(false)}
+          onSaveSuccess={() => handleSaveSuccess("cash_masuk")}
         />
       )}
 

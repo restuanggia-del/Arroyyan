@@ -39,6 +39,18 @@ export interface SetoranOwner {
     user_penerima: { name: string } | null;
 }
 
+export interface CashMasuk {
+    id: string;
+    tanggal: string;
+    karyawan_id: string;
+    jumlah: number;
+    keterangan: string | null;
+    diterima_oleh: string | null;
+    created_at: string;
+    karyawan_cash: { nama: string } | null;
+    user_penerima: { name: string } | null;
+}
+
 export interface SisaDanaKaryawan {
     karyawan_id: string;
     nama: string;
@@ -168,11 +180,70 @@ export const deleteSetoran = async (id: string) => {
     return { error: null };
 };
 
+const CASH_MASUK_SELECT = `
+  id, tanggal, karyawan_id, jumlah, keterangan, diterima_oleh, created_at,
+  karyawan_cash:karyawan!cash_masuk_karyawan_id_fkey ( nama ),
+  user_penerima:users!cash_masuk_diterima_oleh_fkey ( name )
+`;
+
+export const getCashMasukList = async (limit = 200) => {
+    const { data, error } = await supabaseAdmin
+        .from("cash_masuk")
+        .select(CASH_MASUK_SELECT)
+        .order("tanggal", { ascending: false })
+        .order("created_at", { ascending: false })
+        .limit(limit);
+
+    if (error) return { data: null, error };
+    return { data: (data as unknown) as CashMasuk[], error: null };
+};
+
+export const createCashMasuk = async (input: {
+    tanggal: string;
+    jumlah: number;
+    karyawan_id: string;
+    diterima_oleh?: string | null;
+    keterangan?: string | null;
+}) => {
+    const { data, error } = await supabaseAdmin
+        .from("cash_masuk")
+        .insert([{
+            tanggal: input.tanggal,
+            jumlah: input.jumlah,
+            karyawan_id: input.karyawan_id,
+            diterima_oleh: input.diterima_oleh || null,
+            keterangan: input.keterangan || null,
+        }])
+        .select(CASH_MASUK_SELECT)
+        .single();
+
+    if (error) return { data: null, error };
+
+    await supabaseAdmin.from("activity_logs").insert([{
+        activity_type: "create_cash_masuk",
+        description: `Cash masuk sebesar Rp ${input.jumlah.toLocaleString("id-ID")} dicatat`,
+    }]);
+
+    return { data: (data as unknown) as CashMasuk, error: null };
+};
+
+export const deleteCashMasuk = async (id: string) => {
+    const { error } = await supabaseAdmin.from("cash_masuk").delete().eq("id", id);
+    if (error) return { error };
+
+    await supabaseAdmin.from("activity_logs").insert([{
+        activity_type: "delete_cash_masuk",
+        description: `Data cash masuk dihapus`,
+    }]);
+
+    return { error: null };
+};
+
 export const getSisaDanaPenjualan = async (): Promise<{
     data: SisaDanaKaryawan[] | null;
     error: any;
 }> => {
-    const [cashTrxRes, kasbonRes, potonganRes, setoranRes, karyawanRes] =
+    const [cashTrxRes, kasbonRes, potonganRes, setoranRes, karyawanRes, cashManualRes] =
         await Promise.all([
             supabaseAdmin
                 .from("transactions")
@@ -184,6 +255,7 @@ export const getSisaDanaPenjualan = async (): Promise<{
             supabaseAdmin.from("potongan").select("karyawan_id, jumlah").not("karyawan_id", "is", null),
             supabaseAdmin.from("setoran_owner").select("disetorkan_oleh, jumlah"),
             supabaseAdmin.from("karyawan").select("id, nama").eq("is_active", true),
+            supabaseAdmin.from("cash_masuk").select("karyawan_id, jumlah"),
         ]);
 
     if (cashTrxRes.error) return { data: null, error: cashTrxRes.error };
@@ -191,6 +263,7 @@ export const getSisaDanaPenjualan = async (): Promise<{
     if (potonganRes.error) return { data: null, error: potonganRes.error };
     if (setoranRes.error) return { data: null, error: setoranRes.error };
     if (karyawanRes.error) return { data: null, error: karyawanRes.error };
+    if (cashManualRes.error) return { data: null, error: cashManualRes.error };
 
     const cashMap = new Map<string, number>();
 
@@ -204,6 +277,10 @@ export const getSisaDanaPenjualan = async (): Promise<{
         if (!karyawanId) continue;
         const net = Number(k.jumlah_cash) - Number(k.jumlah_ke_owner);
         cashMap.set(karyawanId, (cashMap.get(karyawanId) ?? 0) + net);
+    }
+
+    for (const cm of (cashManualRes.data ?? []) as { karyawan_id: string; jumlah: number }[]) {
+        cashMap.set(cm.karyawan_id, (cashMap.get(cm.karyawan_id) ?? 0) + Number(cm.jumlah));
     }
 
     const potonganMap = new Map<string, number>();
