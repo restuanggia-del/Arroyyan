@@ -178,7 +178,7 @@ export function DistributionModal({
             <p className="text-sm text-gray-500">Memuat data...</p>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="p-6 space-y-5">
+          <form onSubmit={handleSubmit} noValidate className="p-6 space-y-5">
             <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex gap-3">
               <Package className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
               <p className="text-sm text-blue-700">
