@@ -240,7 +240,7 @@ export function MaterialModal({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} noValidate className="p-6 space-y-4">
           {formError && (
             <div className="p-3 clay-inset-red border-0 rounded-lg text-sm text-red-700">
               {formError}
