@@ -45,6 +45,10 @@ export function SetoranModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!tanggal) {
+      setFormError("Tanggal wajib diisi.");
+      return;
+    }
     if (!disetorkanOleh) {
       setFormError("Pilih karyawan yang menyetor terlebih dahulu.");
       return;
@@ -95,7 +99,7 @@ export function SetoranModal({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} noValidate className="p-6 space-y-4">
           {formError && (
             <div className="p-3 clay-inset-red border-0 rounded-lg flex items-center gap-2 text-sm text-red-700">
               <AlertCircle className="w-4 h-4 flex-shrink-0" />
