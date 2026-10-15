@@ -63,7 +63,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} noValidate className="space-y-4">
             <div>
               <label className="block text-xs font-bold text-[#111111]/60 uppercase tracking-wide mb-1.5">
                 Email
