@@ -10,13 +10,15 @@ export interface SalesDeposit {
     keterangan: string | null;
     created_at: string;
     sales?: { nama_sales: string } | null;
+    user_penerima?: { name: string } | null;
 }
 
 export const getSalesDeposits = async (salesId?: string) => {
     let query = supabaseAdmin
         .from("sales_deposits")
         .select(`id, sales_id, tanggal, jumlah_cash, jumlah_transfer,
-      diterima_oleh, keterangan, created_at, sales ( nama_sales )`)
+      diterima_oleh, keterangan, created_at, sales ( nama_sales ),
+      user_penerima:users!sales_deposits_diterima_oleh_fkey ( name )`)
         .order("created_at", { ascending: false });
 
     if (salesId) query = query.eq("sales_id", salesId);
@@ -56,4 +58,34 @@ export const createSalesDeposit = async (input: {
     }]);
 
     return { data: data as SalesDeposit, error: null };
+};
+
+export const confirmSalesDeposit = async (id: string, userId: string) => {
+    const { error } = await supabaseAdmin
+        .from("sales_deposits")
+        .update({ diterima_oleh: userId })
+        .eq("id", id);
+    if (error) return { error };
+
+    await supabaseAdmin.from("activity_logs").insert([{
+        activity_type: "confirm_sales_deposit",
+        description: `Setoran sales #${id.slice(0, 8)} dikonfirmasi diterima`,
+    }]);
+
+    return { error: null };
+};
+
+export const deleteSalesDeposit = async (id: string) => {
+    const { error } = await supabaseAdmin
+        .from("sales_deposits")
+        .delete()
+        .eq("id", id);
+    if (error) return { error };
+
+    await supabaseAdmin.from("activity_logs").insert([{
+        activity_type: "delete_sales_deposit",
+        description: `Setoran sales #${id.slice(0, 8)} dihapus`,
+    }]);
+
+    return { error: null };
 };

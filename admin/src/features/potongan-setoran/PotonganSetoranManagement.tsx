@@ -8,10 +8,17 @@ import {
   Wallet,
   PiggyBank,
   Info,
+  CheckCircle2,
 } from "lucide-react";
 import { PotonganModal } from "./PotonganModal";
 import { SetoranModal } from "./SetoranModal";
 import { CashMasukModal } from "./CashMasukModal";
+import {
+  SalesDeposit,
+  getSalesDeposits,
+  confirmSalesDeposit,
+  deleteSalesDeposit,
+} from "../../services/salesDepositService";
 import {
   Potongan,
   SetoranOwner,
@@ -43,13 +50,14 @@ export function PotonganSetoranManagement({
   currentUserId,
 }: PotonganSetoranManagementProps) {
   const [activeTab, setActiveTab] = useState<
-    "potongan" | "cash_masuk" | "setoran"
+    "potongan" | "cash_masuk" | "setoran" | "setoran_sales"
   >("potongan");
 
   const [potonganList, setPotonganList] = useState<Potongan[]>([]);
   const [setoranList, setSetoranList] = useState<SetoranOwner[]>([]);
   const [cashMasukList, setCashMasukList] = useState<CashMasuk[]>([]);
   const [sisaDana, setSisaDana] = useState<SisaDanaKaryawan[]>([]);
+  const [salesDepositList, setSalesDepositList] = useState<SalesDeposit[]>([]);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -61,7 +69,7 @@ export function PotonganSetoranManagement({
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<{
     id: string;
-    type: "potongan" | "setoran" | "cash_masuk";
+    type: "potongan" | "setoran" | "cash_masuk" | "setoran_sales";
     label: string;
   } | null>(null);
 
@@ -69,18 +77,21 @@ export function PotonganSetoranManagement({
     setLoading(true);
     setError(null);
 
-    const [potonganRes, setoranRes, cashMasukRes, sisaRes] = await Promise.all([
-      getPotonganList(),
-      getSetoranList(),
-      getCashMasukList(),
-      getSisaDanaPenjualan(),
-    ]);
+    const [potonganRes, setoranRes, cashMasukRes, sisaRes, salesDepositRes] =
+      await Promise.all([
+        getPotonganList(),
+        getSetoranList(),
+        getCashMasukList(),
+        getSisaDanaPenjualan(),
+        getSalesDeposits(),
+      ]);
 
     if (
       potonganRes.error ||
       setoranRes.error ||
       cashMasukRes.error ||
-      sisaRes.error
+      sisaRes.error ||
+      salesDepositRes.error
     ) {
       setError("Gagal memuat sebagian data potongan & setoran.");
     }
@@ -89,6 +100,7 @@ export function PotonganSetoranManagement({
     setSetoranList(setoranRes.data || []);
     setCashMasukList(cashMasukRes.data || []);
     setSisaDana(sisaRes.data || []);
+    setSalesDepositList(salesDepositRes.data || []);
     setLoading(false);
   }, []);
 
@@ -119,7 +131,9 @@ export function PotonganSetoranManagement({
         ? await deletePotongan(target.id)
         : target.type === "cash_masuk"
           ? await deleteCashMasuk(target.id)
-          : await deleteSetoran(target.id);
+          : target.type === "setoran_sales"
+            ? await deleteSalesDeposit(target.id)
+            : await deleteSetoran(target.id);
 
     if (error) {
       alert("Gagal menghapus data: " + (error as any).message);
@@ -128,6 +142,8 @@ export function PotonganSetoranManagement({
         setPotonganList((prev) => prev.filter((p) => p.id !== target.id));
       } else if (target.type === "cash_masuk") {
         setCashMasukList((prev) => prev.filter((c) => c.id !== target.id));
+      } else if (target.type === "setoran_sales") {
+        setSalesDepositList((prev) => prev.filter((d) => d.id !== target.id));
       } else {
         setSetoranList((prev) => prev.filter((s) => s.id !== target.id));
       }
@@ -136,6 +152,30 @@ export function PotonganSetoranManagement({
     }
     setActionLoading(null);
   };
+
+  const handleConfirmSalesDeposit = async (id: string) => {
+    if (!currentUserId) {
+      alert("Gagal mengonfirmasi: data pengguna tidak ditemukan.");
+      return;
+    }
+    setActionLoading(id);
+    const { error } = await confirmSalesDeposit(id, currentUserId);
+    if (error) {
+      alert("Gagal mengonfirmasi setoran: " + (error as any).message);
+    } else {
+      await fetchAll();
+    }
+    setActionLoading(null);
+  };
+
+  const totalSalesCash = salesDepositList.reduce(
+    (s, d) => s + Number(d.jumlah_cash),
+    0,
+  );
+  const totalSalesTransfer = salesDepositList.reduce(
+    (s, d) => s + Number(d.jumlah_transfer),
+    0,
+  );
 
   const totalPotongan = potonganList.reduce((s, p) => s + Number(p.jumlah), 0);
   const totalSetoran = setoranList.reduce((s, st) => s + Number(st.jumlah), 0);
@@ -329,9 +369,19 @@ export function PotonganSetoranManagement({
             >
               Riwayat Setoran ke Owner
             </button>
+            <button
+              onClick={() => setActiveTab("setoran_sales")}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
+                activeTab === "setoran_sales"
+                  ? "bg-blue-50 text-blue-600"
+                  : "text-gray-600 hover:bg-[rgba(215,233,255,0.5)]"
+              }`}
+            >
+              Riwayat Setoran Sales
+            </button>
           </div>
           <div className="flex gap-2">
-            {activeTab === "potongan" ? (
+            {activeTab === "setoran_sales" ? null : activeTab === "potongan" ? (
               <button
                 onClick={() => setIsPotonganModalOpen(true)}
                 className="clay-red clay-pressable text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors cursor-pointer"
@@ -364,6 +414,142 @@ export function PotonganSetoranManagement({
             <div className="py-16 text-center">
               <RefreshCw className="w-8 h-8 text-gray-400 animate-spin mx-auto mb-3" />
               <p className="text-gray-500 text-sm">Memuat data...</p>
+            </div>
+          ) : activeTab === "setoran_sales" ? (
+            <div>
+              <div className="flex flex-wrap gap-x-6 gap-y-1 mb-4 text-sm text-gray-600">
+                <span>
+                  Total Cash:{" "}
+                  <span className="font-semibold text-gray-900">
+                    {formatRp(totalSalesCash)}
+                  </span>
+                </span>
+                <span>
+                  Total Transfer:{" "}
+                  <span className="font-semibold text-gray-900">
+                    {formatRp(totalSalesTransfer)}
+                  </span>
+                </span>
+                <span>
+                  Total Setoran:{" "}
+                  <span className="font-semibold text-green-600">
+                    {formatRp(totalSalesCash + totalSalesTransfer)}
+                  </span>
+                </span>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-[rgba(140,172,214,0.35)]">
+                      {[
+                        "Tanggal",
+                        "Sales",
+                        "Cash",
+                        "Transfer",
+                        "Total",
+                        "Diterima Oleh",
+                        "Keterangan",
+                        "Aksi",
+                      ].map((h) => (
+                        <th
+                          key={h}
+                          className="text-left py-3 px-4 text-sm font-semibold text-gray-700"
+                        >
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {salesDepositList.length === 0 ? (
+                      <tr>
+                        <td
+                          colSpan={8}
+                          className="py-12 text-center text-gray-500 text-sm"
+                        >
+                          Belum ada data setoran sales
+                        </td>
+                      </tr>
+                    ) : (
+                      salesDepositList.map((d) => (
+                        <tr
+                          key={d.id}
+                          className="border-b border-[rgba(140,172,214,0.2)] hover:bg-[rgba(215,233,255,0.5)]"
+                        >
+                          <td className="py-3 px-4 text-sm text-gray-600">
+                            {formatDate(d.tanggal)}
+                          </td>
+                          <td className="py-3 px-4 text-sm font-medium text-gray-900">
+                            <span
+                              className="inline-block w-2 h-2 rounded-full mr-2 align-middle bg-cyan-500"
+                              title="Sales"
+                            />
+                            {d.sales?.nama_sales ?? "—"}
+                          </td>
+                          <td className="py-3 px-4 text-sm text-gray-600">
+                            {formatRp(Number(d.jumlah_cash))}
+                          </td>
+                          <td className="py-3 px-4 text-sm text-gray-600">
+                            {formatRp(Number(d.jumlah_transfer))}
+                          </td>
+                          <td className="py-3 px-4 text-sm font-semibold text-green-600">
+                            {formatRp(
+                              Number(d.jumlah_cash) + Number(d.jumlah_transfer),
+                            )}
+                          </td>
+                          <td className="py-3 px-4 text-sm text-gray-600">
+                            {d.diterima_oleh ? (
+                              (d.user_penerima?.name ?? "—")
+                            ) : (
+                              <span className="inline-flex px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
+                                Belum dikonfirmasi
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-3 px-4 text-sm text-gray-500 max-w-xs truncate">
+                            {d.keterangan || "—"}
+                          </td>
+                          <td className="py-3 px-4">
+                            {actionLoading === d.id ? (
+                              <RefreshCw className="w-4 h-4 animate-spin text-gray-400" />
+                            ) : (
+                              <div className="flex items-center gap-1">
+                                {!d.diterima_oleh && (
+                                  <button
+                                    onClick={() =>
+                                      handleConfirmSalesDeposit(d.id)
+                                    }
+                                    className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors cursor-pointer"
+                                    title="Tandai sudah diterima"
+                                  >
+                                    <CheckCircle2 className="w-4 h-4" />
+                                  </button>
+                                )}
+                                <button
+                                  onClick={() =>
+                                    setConfirmDelete({
+                                      id: d.id,
+                                      type: "setoran_sales",
+                                      label: `Setoran ${d.sales?.nama_sales ?? "sales"} — ${formatRp(
+                                        Number(d.jumlah_cash) +
+                                          Number(d.jumlah_transfer),
+                                      )}`,
+                                    })
+                                  }
+                                  className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                                  title="Hapus"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           ) : activeTab === "potongan" ? (
             <div className="overflow-x-auto">
