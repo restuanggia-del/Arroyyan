@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { X, RefreshCw, AlertCircle } from "lucide-react";
 import { KasbonTransaction, addKasbonPayment } from "../../../services";
+import { localDateString } from "../../../lib/dateUtils";
 
 interface KasbonPaymentModalProps {
   transaction: KasbonTransaction;
@@ -9,7 +10,7 @@ interface KasbonPaymentModalProps {
 }
 
 const formatRp = (n: number) => "Rp " + n.toLocaleString("id-ID");
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => localDateString();
 
 export default function KasbonPaymentModal({
   transaction,
@@ -65,7 +66,9 @@ export default function KasbonPaymentModal({
       <div className="clay-raised-lg rounded-t-3xl w-full max-h-[92vh] flex flex-col">
         <div className="flex items-center justify-between px-5 py-4 border-b border-[rgba(140,172,214,0.35)] flex-shrink-0">
           <div>
-            <h2 className="font-bold text-[#111111]">Catat Pembayaran Titipan</h2>
+            <h2 className="font-bold text-[#111111]">
+              Catat Pembayaran Titipan
+            </h2>
             <p className="text-xs text-[#111111]/45">
               {transaction.customers?.customer_name ?? "—"}
             </p>

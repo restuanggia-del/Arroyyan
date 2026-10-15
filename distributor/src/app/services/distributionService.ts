@@ -1,5 +1,12 @@
 import { supabase } from '../../utils/supabase/client';
 
+export interface DistributionItem {
+    productId: string;
+    productName: string;
+    unit: string;
+    quantity: number;
+}
+
 export const getDistributionsForSales = async (salesId: string) => {
     const { data, error } = await supabase
         .from('distributions')
@@ -17,7 +24,7 @@ export const getDistributionsForSales = async (salesId: string) => {
         shortId: d.id.slice(0, 8).toUpperCase(),
         date: d.created_at,
         status: d.status as 'pending' | 'sent' | 'received',
-        items: (d.distribution_details ?? []).map((item: any) => ({
+        items: ((d.distribution_details ?? []) as any[]).map((item): DistributionItem => ({
             productId: item.product_id,
             productName: item.products?.product_name ?? '—',
             unit: item.products?.unit ?? 'unit',

@@ -16,6 +16,7 @@ import {
   getKomisiSummary,
 } from "../../../services";
 import ProfileModal from "./ProfileModal";
+import { parseDbDate } from "../../../lib/dateUtils";
 
 interface ProfilePageProps {
   user: SalesUser;
@@ -90,7 +91,7 @@ export default function ProfilePage({
   }, [tab]);
 
   const formatDate = (d: string) =>
-    new Date(d).toLocaleDateString("id-ID", {
+    parseDbDate(d).toLocaleDateString("id-ID", {
       day: "numeric",
       month: "short",
       hour: "2-digit",

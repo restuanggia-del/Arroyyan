@@ -12,6 +12,7 @@ import {
   getStockMovements,
   SalesProduct,
 } from "../../../services";
+import { parseDbDate } from "../../../lib/dateUtils";
 
 interface StockPageProps {
   salesId: string;
@@ -48,7 +49,7 @@ export default function StockPage({ salesId }: StockPageProps) {
   }, [load]);
 
   const formatDate = (d: string) =>
-    new Date(d).toLocaleDateString("id-ID", {
+    parseDbDate(d).toLocaleDateString("id-ID", {
       day: "numeric",
       month: "short",
       hour: "2-digit",

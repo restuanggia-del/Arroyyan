@@ -27,13 +27,14 @@ import {
   ChecklistItemValue,
   VehicleChecklist,
 } from "../../../services/checklistKebersihanService";
+import { localDateString, localPeriodeString } from "../../../lib/dateUtils";
 
 interface ChecklistKebersihanPageProps {
   user: SalesUser;
 }
 
-const todayStr = () => new Date().toISOString().slice(0, 10);
-const currentPeriode = () => new Date().toISOString().slice(0, 7);
+const todayStr = () => localDateString();
+const currentPeriode = () => localPeriodeString();
 
 const formatTanggal = (d: string) =>
   new Date(d + "T00:00:00").toLocaleDateString("id-ID", {

@@ -13,6 +13,7 @@ import { getKasbonTransactions, KasbonTransaction } from "../../../services";
 import KasbonCreateModal from "./KasbonCreateModal";
 import KasbonPaymentModal from "./KasbonPaymentModal";
 import KasbonHistoryModal from "./KasbonHistoryModal";
+import { parseDbDate } from "../../../lib/dateUtils";
 
 interface TitipanPageProps {
   salesId: string;
@@ -20,7 +21,7 @@ interface TitipanPageProps {
 
 const formatRp = (n: number) => "Rp " + n.toLocaleString("id-ID");
 const formatDate = (d: string) =>
-  new Date(d).toLocaleDateString("id-ID", {
+  parseDbDate(d).toLocaleDateString("id-ID", {
     day: "numeric",
     month: "short",
     year: "numeric",

@@ -16,6 +16,7 @@ import {
   getReturnsForSales,
   createReturn,
 } from "../../../services";
+import { parseDbDate } from "../../../lib/dateUtils";
 
 interface DistributionPageProps {
   salesId: string;
@@ -93,7 +94,7 @@ export default function DistributionPage({ salesId }: DistributionPageProps) {
   };
 
   const formatDate = (d: string) =>
-    new Date(d).toLocaleDateString("id-ID", {
+    parseDbDate(d).toLocaleDateString("id-ID", {
       day: "numeric",
       month: "long",
       year: "numeric",
@@ -145,10 +146,7 @@ export default function DistributionPage({ salesId }: DistributionPageProps) {
         ) : (
           <div className="space-y-3">
             {distributions.map((dist) => (
-              <div
-                key={dist.id}
-                className="clay-raised rounded-2xl p-4"
-              >
+              <div key={dist.id} className="clay-raised rounded-2xl p-4">
                 <div className="flex items-center justify-between mb-2.5">
                   <span className="text-xs text-[#111111]/35">
                     #{dist.shortId}
@@ -222,10 +220,7 @@ export default function DistributionPage({ salesId }: DistributionPageProps) {
       ) : (
         <div className="space-y-3">
           {returns.map((ret) => (
-            <div
-              key={ret.id}
-              className="clay-raised rounded-2xl p-4"
-            >
+            <div key={ret.id} className="clay-raised rounded-2xl p-4">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs text-[#111111]/35">
                   #{ret.shortId}
@@ -353,10 +348,7 @@ function ReturnModal({
           )}
 
           {distribution.items.map((item) => (
-            <div
-              key={item.productId}
-              className="clay-raised rounded-xl p-3"
-            >
+            <div key={item.productId} className="clay-raised rounded-xl p-3">
               <div className="flex items-center justify-between mb-2">
                 <p className="text-sm font-medium text-[#111111]">
                   {item.productName}

@@ -7,10 +7,8 @@ import {
   Plus,
   X,
 } from "lucide-react";
-import {
-  getSalesDepositHistory,
-  createSalesDeposit,
-} from "../../../services";
+import { getSalesDepositHistory, createSalesDeposit } from "../../../services";
+import { parseDbDate } from "../../../lib/dateUtils";
 
 interface SetoranPageProps {
   salesId: string;
@@ -44,7 +42,7 @@ export default function SetoranPage({ salesId }: SetoranPageProps) {
   }, [load]);
 
   const formatDate = (d: string) =>
-    new Date(d).toLocaleDateString("id-ID", {
+    parseDbDate(d).toLocaleDateString("id-ID", {
       day: "numeric",
       month: "short",
       year: "numeric",
@@ -84,10 +82,7 @@ export default function SetoranPage({ salesId }: SetoranPageProps) {
       ) : (
         <div className="space-y-2.5">
           {deposits.map((d) => (
-            <div
-              key={d.id}
-              className="clay-raised rounded-xl p-3.5"
-            >
+            <div key={d.id} className="clay-raised rounded-xl p-3.5">
               <div className="flex items-center justify-between mb-1.5">
                 <span className="text-xs text-[#111111]/35">
                   {formatDate(d.tanggal)}

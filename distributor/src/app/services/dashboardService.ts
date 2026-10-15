@@ -1,16 +1,17 @@
 import { supabase } from '../../utils/supabase/client';
 import { MIN_STOCK } from './productService';
+import { localDayRangeUtc, localDateString } from '../lib/dateUtils';
 
 export const getDashboardStats = async (salesId: string) => {
-    const todayStr = new Date().toISOString().split('T')[0];
+    const { start: todayStart, end: todayEnd } = localDayRangeUtc(localDateString());
 
     const [todayTx, stockRes, depositRes] = await Promise.all([
         supabase
             .from('transactions')
             .select('total_price, transaction_details(quantity, price, harga_pokok)')
             .eq('sales_id', salesId)
-            .gte('created_at', `${todayStr}T00:00:00`)
-            .lte('created_at', `${todayStr}T23:59:59`),
+            .gte('created_at', todayStart)
+            .lte('created_at', todayEnd),
         supabase
             .from('stocks')
             .select('stock_quantity, products(product_name, unit)')
@@ -19,7 +20,7 @@ export const getDashboardStats = async (salesId: string) => {
             .from('sales_deposits')
             .select('jumlah_cash, jumlah_transfer')
             .eq('sales_id', salesId)
-            .gte('tanggal', todayStr),
+            .gte('tanggal', localDateString()),
     ]);
 
     const todayData = (todayTx.data ?? []) as any[];

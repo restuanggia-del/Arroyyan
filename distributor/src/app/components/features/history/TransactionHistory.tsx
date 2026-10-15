@@ -8,6 +8,7 @@ import {
   Calendar,
 } from "lucide-react";
 import { getTransactionHistory } from "../../../services";
+import { parseDbDate, localDateString } from "../../../lib/dateUtils";
 
 interface TransactionHistoryProps {
   salesId: string;
@@ -28,13 +29,17 @@ const paymentColor: Record<string, string> = {
   kasbon: "bg-[#EE3D5A]/12 text-[#EE3D5A]",
 };
 
-const getTodayDate = () => new Date().toISOString().split("T")[0];
+const getTodayDate = () => localDateString();
 
-export default function TransactionHistory({ salesId }: TransactionHistoryProps) {
+export default function TransactionHistory({
+  salesId,
+}: TransactionHistoryProps) {
   const [transactions, setTransactions] = useState<TxRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [filterMode, setFilterMode] = useState<"today" | "all" | "custom">("all");
+  const [filterMode, setFilterMode] = useState<"today" | "all" | "custom">(
+    "all",
+  );
   const [customDate, setCustomDate] = useState("");
   const [selected, setSelected] = useState<TxRow | null>(null);
 
@@ -62,7 +67,7 @@ export default function TransactionHistory({ salesId }: TransactionHistoryProps)
   }, [load]);
 
   const formatDate = (d: string) =>
-    new Date(d).toLocaleDateString("id-ID", {
+    parseDbDate(d).toLocaleDateString("id-ID", {
       day: "numeric",
       month: "short",
       year: "numeric",
@@ -88,9 +93,7 @@ export default function TransactionHistory({ salesId }: TransactionHistoryProps)
         <button
           onClick={() => setFilterMode("all")}
           className={`flex-1 py-2 rounded-xl text-sm font-medium cursor-pointer transition-colors ${
-            filterMode === "all"
-              ? "clay-blue text-white"
-              : "text-[#111111]/50"
+            filterMode === "all" ? "clay-blue text-white" : "text-[#111111]/50"
           }`}
         >
           Semua
@@ -189,11 +192,15 @@ export default function TransactionHistory({ salesId }: TransactionHistoryProps)
             <div className="overflow-y-auto flex-1 px-5 py-4 space-y-3">
               <div className="flex justify-between text-sm">
                 <span className="text-[#111111]/45">No. Transaksi</span>
-                <span className="font-semibold text-[#111111]">#{selected.id}</span>
+                <span className="font-semibold text-[#111111]">
+                  #{selected.id}
+                </span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-[#111111]/45">Tanggal</span>
-                <span className="text-[#111111]">{formatDate(selected.createdAt)}</span>
+                <span className="text-[#111111]">
+                  {formatDate(selected.createdAt)}
+                </span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-[#111111]/45">Pelanggan</span>
@@ -212,7 +219,10 @@ export default function TransactionHistory({ salesId }: TransactionHistoryProps)
                 </p>
                 <div className="space-y-2">
                   {selected.items.map((item, i) => (
-                    <div key={i} className="flex items-center justify-between text-sm">
+                    <div
+                      key={i}
+                      className="flex items-center justify-between text-sm"
+                    >
                       <div>
                         <p className="text-[#111111]">{item.name}</p>
                         <p className="text-xs text-[#111111]/40">

@@ -1,4 +1,5 @@
 import { supabase } from '../../utils/supabase/client';
+import { localDayRangeUtc } from '../lib/dateUtils';
 
 export interface TxItemInput {
     productId: string;
@@ -168,6 +169,14 @@ export const createSalesStockOut = async (
     return { success: true };
 };
 
+export interface TxHistoryItem {
+    name: string;
+    quantity: number;
+    price: number;
+    hargaPokok: number;
+    subtotal: number;
+}
+
 export const getTransactionHistory = async (salesId: string, dateFilter?: string) => {
     let query = supabase
         .from('transactions')
@@ -181,21 +190,22 @@ export const getTransactionHistory = async (salesId: string, dateFilter?: string
         .limit(50);
 
     if (dateFilter) {
-        query = query.gte('created_at', `${dateFilter}T00:00:00`).lte('created_at', `${dateFilter}T23:59:59`);
+        const { start, end } = localDayRangeUtc(dateFilter);
+        query = query.gte('created_at', start).lte('created_at', end);
     }
 
     const { data, error } = await query;
     if (error) throw new Error(error.message);
 
     return (data ?? []).map((t: any) => {
-        const items = (t.transaction_details ?? []).map((d: any) => ({
+        const items: TxHistoryItem[] = (t.transaction_details ?? []).map((d: any) => ({
             name: d.products?.product_name ?? '—',
             quantity: d.quantity,
             price: d.price,
             hargaPokok: d.harga_pokok,
             subtotal: d.subtotal,
         }));
-        const komisi = items.reduce((s: number, i: any) => s + (i.price - i.hargaPokok) * i.quantity, 0);
+        const komisi = items.reduce((s, i) => s + (i.price - i.hargaPokok) * i.quantity, 0);
 
         return {
             id: t.id.slice(0, 8).toUpperCase(),

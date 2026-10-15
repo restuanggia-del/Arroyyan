@@ -18,6 +18,7 @@ import {
   SalesCustomer,
 } from "../../../services";
 import CustomerFormModal, { CustomerFormValue } from "./CustomerFormModal";
+import { parseDbDate } from "../../../lib/dateUtils";
 
 type TxRow = Awaited<ReturnType<typeof getTransactionHistory>>[number];
 
@@ -109,7 +110,7 @@ export default function CustomerPage({
   };
 
   const formatDate = (d: string) =>
-    new Date(d).toLocaleDateString("id-ID", {
+    parseDbDate(d).toLocaleDateString("id-ID", {
       day: "numeric",
       month: "short",
       hour: "2-digit",

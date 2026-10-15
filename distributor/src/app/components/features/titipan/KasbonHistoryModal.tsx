@@ -5,6 +5,7 @@ import {
   KasbonPayment,
   getKasbonPaymentHistory,
 } from "../../../services";
+import { parseDbDate } from "../../../lib/dateUtils";
 
 interface KasbonHistoryModalProps {
   transaction: KasbonTransaction;
@@ -13,7 +14,7 @@ interface KasbonHistoryModalProps {
 
 const formatRp = (n: number) => "Rp " + n.toLocaleString("id-ID");
 const formatDate = (d: string) =>
-  new Date(d).toLocaleDateString("id-ID", {
+  parseDbDate(d).toLocaleDateString("id-ID", {
     day: "numeric",
     month: "short",
     year: "numeric",
