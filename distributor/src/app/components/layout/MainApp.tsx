@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   LayoutDashboard,
   ShoppingCart,
@@ -70,12 +70,23 @@ const titleMap: Record<TabKey, string> = {
   checklist: "Checklist Kebersihan",
 };
 
+const ACTIVE_TAB_KEY = "sales_active_tab";
+
+const readSavedTab = (): TabKey => {
+  try {
+    const saved = sessionStorage.getItem(ACTIVE_TAB_KEY);
+    if (saved && saved in titleMap) return saved as TabKey;
+  } catch {
+  }
+  return "dashboard";
+};
+
 export default function MainApp({
   user,
   onLogout,
   onProfileUpdated,
 }: MainAppProps) {
-  const [activeTab, setActiveTab] = useState<TabKey>("dashboard");
+  const [activeTab, setActiveTab] = useState<TabKey>(readSavedTab);
   const [showMenu, setShowMenu] = useState(false);
   const [showTransactionMenu, setShowTransactionMenu] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -85,6 +96,13 @@ export default function MainApp({
     setLocalUser((prev) => ({ ...prev, ...updated }));
     onProfileUpdated?.(updated);
   };
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(ACTIVE_TAB_KEY, activeTab);
+    } catch {
+    }
+  }, [activeTab]);
 
   const requestLogout = () => setShowLogoutConfirm(true);
 
@@ -328,6 +346,11 @@ export default function MainApp({
               <button
                 onClick={() => {
                   setShowLogoutConfirm(false);
+                  try {
+                    sessionStorage.removeItem(ACTIVE_TAB_KEY);
+                  } catch {
+                    // abaikan
+                  }
                   onLogout();
                 }}
                 className="flex-1 py-3 rounded-2xl font-semibold text-sm text-white bg-gradient-to-br from-[#f4657d] to-[#EE3D5A] shadow-[4px_4px_10px_rgba(238,61,90,0.35),-2px_-2px_8px_rgba(255,255,255,0.3)] cursor-pointer"
