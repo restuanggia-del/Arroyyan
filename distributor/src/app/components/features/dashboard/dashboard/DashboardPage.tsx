@@ -13,7 +13,7 @@ import {
   Calendar,
   Sparkles,
 } from "lucide-react";
-import { getDashboardStats, SalesUser } from "../../../services";
+import { getDashboardStats, SalesUser } from "../../../../services";
 
 interface DashboardPageProps {
   user: SalesUser;

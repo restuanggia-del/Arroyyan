@@ -6,8 +6,8 @@ import {
   createSalesTransaction,
   SalesProduct,
   SalesCustomer,
-} from "../../../services";
-import CustomerPage from "../customer/CustomerPage";
+} from "../../../../services";
+import CustomerPage from "../../dashboard/customer/CustomerPage";
 
 interface KasbonCreateModalProps {
   salesId: string;

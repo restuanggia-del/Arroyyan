@@ -9,11 +9,11 @@ import {
   History,
   DollarSign,
 } from "lucide-react";
-import { getKasbonTransactions, KasbonTransaction } from "../../../services";
+import { getKasbonTransactions, KasbonTransaction } from "../../../../services";
 import KasbonCreateModal from "./KasbonCreateModal";
 import KasbonPaymentModal from "./KasbonPaymentModal";
 import KasbonHistoryModal from "./KasbonHistoryModal";
-import { parseDbDate } from "../../../lib/dateUtils";
+import { parseDbDate } from "../../../../lib/dateUtils";
 
 interface TitipanPageProps {
   salesId: string;

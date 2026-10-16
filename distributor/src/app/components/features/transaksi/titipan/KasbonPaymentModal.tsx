@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { X, RefreshCw, AlertCircle } from "lucide-react";
-import { KasbonTransaction, addKasbonPayment } from "../../../services";
-import { localDateString } from "../../../lib/dateUtils";
+import { KasbonTransaction, addKasbonPayment } from "../../../../services";
+import { localDateString } from "../../../../lib/dateUtils";
 
 interface KasbonPaymentModalProps {
   transaction: KasbonTransaction;

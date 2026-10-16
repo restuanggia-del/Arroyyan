@@ -16,9 +16,9 @@ import {
   getCustomers,
   getTransactionHistory,
   SalesCustomer,
-} from "../../../services";
+} from "../../../../services";
 import CustomerFormModal, { CustomerFormValue } from "./CustomerFormModal";
-import { parseDbDate } from "../../../lib/dateUtils";
+import { parseDbDate } from "../../../../lib/dateUtils";
 
 type TxRow = Awaited<ReturnType<typeof getTransactionHistory>>[number];
 

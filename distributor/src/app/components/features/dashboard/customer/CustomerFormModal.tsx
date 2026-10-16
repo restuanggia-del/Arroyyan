@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { X, RefreshCw, AlertCircle } from "lucide-react";
-import { createCustomer, updateCustomer } from "../../../services";
+import { createCustomer, updateCustomer } from "../../../../services";
 
 export interface CustomerFormValue {
   id: string;

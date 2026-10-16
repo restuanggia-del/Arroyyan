@@ -25,9 +25,9 @@ import {
   SalesProduct,
   TxItemInput,
   StockOutMovementType,
-} from "../../../services";
+} from "../../../../services";
 import ReceiptDialog from "./ReceiptDialog";
-import CustomerPage from "../customer/CustomerPage";
+import CustomerPage from "../../dashboard/customer/CustomerPage";
 
 interface TransactionPageProps {
   salesId: string;

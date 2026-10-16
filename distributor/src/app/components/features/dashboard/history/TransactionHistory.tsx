@@ -7,8 +7,8 @@ import {
   Receipt,
   Calendar,
 } from "lucide-react";
-import { getTransactionHistory } from "../../../services";
-import { parseDbDate, localDateString } from "../../../lib/dateUtils";
+import { getTransactionHistory } from "../../../../services";
+import { parseDbDate, localDateString } from "../../../../lib/dateUtils";
 
 interface TransactionHistoryProps {
   salesId: string;

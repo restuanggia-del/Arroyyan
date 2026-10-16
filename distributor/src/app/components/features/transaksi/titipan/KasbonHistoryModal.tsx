@@ -4,8 +4,8 @@ import {
   KasbonTransaction,
   KasbonPayment,
   getKasbonPaymentHistory,
-} from "../../../services";
-import { parseDbDate } from "../../../lib/dateUtils";
+} from "../../../../services";
+import { parseDbDate } from "../../../../lib/dateUtils";
 
 interface KasbonHistoryModalProps {
   transaction: KasbonTransaction;

@@ -15,7 +15,7 @@ import {
   Gauge,
   Route,
 } from "lucide-react";
-import { SalesUser } from "../../../services";
+import { SalesUser } from "../../../../services";
 import {
   CHECKLIST_KEBERSIHAN_ITEMS,
   buildEmptyItems,
@@ -26,8 +26,8 @@ import {
   saveChecklist,
   ChecklistItemValue,
   VehicleChecklist,
-} from "../../../services/checklistKebersihanService";
-import { localDateString, localPeriodeString } from "../../../lib/dateUtils";
+} from "../../../../services/checklistKebersihanService";
+import { localDateString, localPeriodeString } from "../../../../lib/dateUtils";
 
 interface ChecklistKebersihanPageProps {
   user: SalesUser;

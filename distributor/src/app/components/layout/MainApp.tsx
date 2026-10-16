@@ -11,16 +11,16 @@ import {
   Receipt,
 } from "lucide-react";
 import { SalesUser } from "../../services";
-import DashboardPage from "../features/dashboard/DashboardPage";
-import TransactionPage from "../features/transaction/TransactionPage";
+import DashboardPage from "../features/dashboard/dashboard/DashboardPage";
+import TransactionPage from "../features/transaksi/transaction/TransactionPage";
 import StockPage from "../features/stock/StockPage";
 import DistributionPage from "../features/distribution/DistributionPage";
 import SetoranPage from "../features/setoran/SetoranPage";
 import ProfilePage from "../features/profile/ProfilePage";
-import TransactionHistory from "../features/history/TransactionHistory";
-import CustomerPage from "../features/customer/CustomerPage";
-import TitipanPage from "../features/titipan/TitipanPage";
-import ChecklistKebersihanPage from "../features/checklist/ChecklistKebersihanPage";
+import TransactionHistory from "../features/dashboard/history/TransactionHistory";
+import CustomerPage from "../features/dashboard/customer/CustomerPage";
+import TitipanPage from "../features/transaksi/titipan/TitipanPage";
+import ChecklistKebersihanPage from "../features/dashboard/checklist/ChecklistKebersihanPage";
 
 interface MainAppProps {
   user: SalesUser;
@@ -76,8 +76,7 @@ const readSavedTab = (): TabKey => {
   try {
     const saved = sessionStorage.getItem(ACTIVE_TAB_KEY);
     if (saved && saved in titleMap) return saved as TabKey;
-  } catch {
-  }
+  } catch {}
   return "dashboard";
 };
 
@@ -100,8 +99,7 @@ export default function MainApp({
   useEffect(() => {
     try {
       sessionStorage.setItem(ACTIVE_TAB_KEY, activeTab);
-    } catch {
-    }
+    } catch {}
   }, [activeTab]);
 
   const requestLogout = () => setShowLogoutConfirm(true);
