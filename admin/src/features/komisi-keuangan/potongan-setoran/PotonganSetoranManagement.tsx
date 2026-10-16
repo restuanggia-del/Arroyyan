@@ -18,7 +18,7 @@ import {
   getSalesDeposits,
   confirmSalesDeposit,
   deleteSalesDeposit,
-} from "../../services/salesDepositService";
+} from "../../../services/salesDepositService";
 import {
   Potongan,
   SetoranOwner,
@@ -32,7 +32,7 @@ import {
   deleteSetoran,
   deleteCashMasuk,
   KATEGORI_POTONGAN_LABEL,
-} from "../../services/potonganSetoranService";
+} from "../../../services/potonganSetoranService";
 
 interface PotonganSetoranManagementProps {
   currentUserId: string;

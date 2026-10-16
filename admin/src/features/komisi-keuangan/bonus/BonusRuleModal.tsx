@@ -12,7 +12,7 @@ import {
   TARGET_TYPE_LABEL,
   createBonusRule,
   updateBonusRule,
-} from "../../services/bonusService";
+} from "../../../services/bonusService";
 
 interface BonusRuleModalProps {
   rule?: BonusRule | null;

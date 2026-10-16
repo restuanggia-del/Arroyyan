@@ -1,11 +1,11 @@
 import { useState, useEffect, useMemo } from "react";
 import { X, RefreshCw, AlertCircle, Factory } from "lucide-react";
-import { getActiveKaryawan, Karyawan } from "../../services/karyawanService";
+import { getActiveKaryawan, Karyawan } from "../../../services/karyawanService";
 import {
   createInsentifProduksi,
   ProduksiKategori,
   RATE_DEFAULT_PER_KATEGORI,
-} from "../../services/insentifService";
+} from "../../../services/insentifService";
 
 interface InsentifProduksiModalProps {
   onClose: () => void;

@@ -12,7 +12,7 @@ import {
   FeeRekapan,
   getFeeRekapan,
   deleteFeeRekapan,
-} from "../../services/feeRekapanService";
+} from "../../../services/feeRekapanService";
 
 const formatRp = (n: number) => `Rp ${n.toLocaleString("id-ID")}`;
 const currentPeriode = () => new Date().toISOString().slice(0, 7);

@@ -7,8 +7,8 @@ import {
   UserPlus,
   Trash2,
 } from "lucide-react";
-import { getActiveKaryawan, Karyawan } from "../../services/karyawanService";
-import { createHandlingFee } from "../../services/handlingFeeService";
+import { getActiveKaryawan, Karyawan } from "../../../services/karyawanService";
+import { createHandlingFee } from "../../../services/handlingFeeService";
 
 interface HandlingFeeModalProps {
   onClose: () => void;

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { X, RefreshCw, AlertCircle, Wallet } from "lucide-react";
-import { getActiveKaryawan, Karyawan } from "../../services/karyawanService";
-import { createSetoran } from "../../services/potonganSetoranService";
+import { getActiveKaryawan, Karyawan } from "../../../services/karyawanService";
+import { createSetoran } from "../../../services/potonganSetoranService";
 
 interface SetoranModalProps {
   currentUserId: string;

@@ -26,7 +26,7 @@ import {
   savePayments,
   deletePayment,
   DEFAULT_RATE_FEE_PENJUALAN,
-} from "../../services/insentifService";
+} from "../../../services/insentifService";
 
 const formatRp = (n: number) => `Rp ${n.toLocaleString("id-ID")}`;
 const formatDate = (d: string) =>

@@ -1,14 +1,14 @@
 import { useState, useEffect } from "react";
 import { X, RefreshCw, AlertCircle, MinusCircle } from "lucide-react";
-import { getActiveKaryawan, Karyawan } from "../../services/karyawanService";
-import { getActiveSales, Sales } from "../../services/salesService";
+import { getActiveKaryawan, Karyawan } from "../../../services/karyawanService";
+import { getActiveSales, Sales } from "../../../services/salesService";
 import {
   createPotongan,
   PotonganKategori,
   PotonganOwnerType,
   KATEGORI_POTONGAN_LABEL,
   OWNER_TYPE_LABEL,
-} from "../../services/potonganSetoranService";
+} from "../../../services/potonganSetoranService";
 
 interface PotonganModalProps {
   onClose: () => void;

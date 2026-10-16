@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { X, RefreshCw, AlertCircle, Banknote } from "lucide-react";
-import { getActiveKaryawan, Karyawan } from "../../services/karyawanService";
-import { createCashMasuk } from "../../services/potonganSetoranService";
+import { getActiveKaryawan, Karyawan } from "../../../services/karyawanService";
+import { createCashMasuk } from "../../../services/potonganSetoranService";
 
 interface CashMasukModalProps {
   currentUserId: string;

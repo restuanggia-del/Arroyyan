@@ -25,7 +25,7 @@ import {
   RULE_MODE_LABEL,
   TARGET_TYPE_LABEL,
   OWNER_TYPE_LABEL,
-} from "../../services/bonusService";
+} from "../../../services/bonusService";
 
 const formatRp = (n: number) => `Rp ${n.toLocaleString("id-ID")}`;
 const formatDus = (n: number) =>

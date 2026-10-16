@@ -1,14 +1,14 @@
 import { useState, useEffect } from "react";
 import { X, RefreshCw, AlertCircle, FileSpreadsheet } from "lucide-react";
-import { getActiveKaryawan, Karyawan } from "../../services/karyawanService";
-import { getActiveSales, Sales } from "../../services/salesService";
+import { getActiveKaryawan, Karyawan } from "../../../services/karyawanService";
+import { getActiveSales, Sales } from "../../../services/salesService";
 import {
   FeeRekapan,
   FeeRekapanOwnerType,
   OWNER_TYPE_LABEL,
   createFeeRekapan,
   updateFeeRekapan,
-} from "../../services/feeRekapanService";
+} from "../../../services/feeRekapanService";
 
 interface FeeRekapanModalProps {
   entry?: FeeRekapan | null;

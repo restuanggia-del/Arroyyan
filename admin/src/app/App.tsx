@@ -24,11 +24,11 @@ import { KaryawanManagement } from "../features/manajemen/distributor-karyawan/K
 import { SalesManagement } from "../features/manajemen/sales/SalesManagement";
 import { SalesTransaction } from "../features/transaksi/transaksi-penjualan/SalesTransaction";
 import { TransaksiTitipan } from "../features/transaksi/transaksi-titipan/TransaksiTitipan";
-import { PotonganSetoranManagement } from "../features/potongan-setoran/PotonganSetoranManagement";
-import { BonusManagement } from "../features/bonus/BonusManagement";
-import { HandlingFeeManagement } from "../features/handling-fee/HandlingFeeManagement";
-import { InsentifProduksiManagement } from "../features/insentif/InsentifProduksiManagement";
-import { FeeRekapanManagement } from "../features/fee-rekapan/FeeRekapanManagement";
+import { PotonganSetoranManagement } from "../features/komisi-keuangan/potongan-setoran/PotonganSetoranManagement";
+import { BonusManagement } from "../features/komisi-keuangan/bonus/BonusManagement";
+import { HandlingFeeManagement } from "../features/komisi-keuangan/handling-fee/HandlingFeeManagement";
+import { InsentifProduksiManagement } from "../features/komisi-keuangan/insentif/InsentifProduksiManagement";
+import { FeeRekapanManagement } from "../features/komisi-keuangan/fee-rekapan/FeeRekapanManagement";
 import { LaporanBonus } from "../features/laporan/bonus/LaporanBonus";
 import { LaporanHandlingFee } from "../features/laporan/handling-fee/LaporanHandlingFee";
 import { LaporanInsentif } from "../features/laporan/insentif/LaporanInsentif";
