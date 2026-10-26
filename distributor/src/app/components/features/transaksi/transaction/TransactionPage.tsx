@@ -292,7 +292,7 @@ export default function TransactionPage({
   }
 
   return (
-    <div className="pb-24">
+    <div className="pb-32">
       <div className="p-4 sticky top-0 clay-page-bg z-10 flex items-center gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#111111]/35" />
@@ -399,7 +399,7 @@ export default function TransactionPage({
       {cart.length > 0 && !showCart && (
         <button
           onClick={() => setShowCart(true)}
-          className="fixed bottom-[76px] left-4 right-4 clay-blue clay-pressable text-white rounded-2xl py-3.5 px-5 flex items-center justify-between cursor-pointer z-20"
+          className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+118px)] left-4 right-4 clay-blue clay-pressable text-white rounded-2xl py-4 px-5 flex items-center justify-between cursor-pointer z-20"
         >
           <span className="flex items-center gap-2 font-semibold text-sm">
             <ShoppingCart className="w-4.5 h-4.5" />
