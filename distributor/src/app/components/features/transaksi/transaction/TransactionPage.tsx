@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   ShoppingCart,
   Trash2,
@@ -88,7 +88,9 @@ export default function TransactionPage({
   const [search, setSearch] = useState("");
 
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [showCart, setShowCart] = useState(false);
+  const [showCart, setShowCart] = useState(false); // sheet ter-mount
+  const [cartOpen, setCartOpen] = useState(false); // state animasi (masuk/keluar)
+  const cartTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [jenisTransaksi, setJenisTransaksi] =
     useState<JenisTransaksi>("penjualan");
   const [paymentMethod, setPaymentMethod] = useState<
@@ -192,13 +194,33 @@ export default function TransactionPage({
     p.name.toLowerCase().includes(search.toLowerCase()),
   );
 
+  const CART_ANIM_MS = 320;
+
+  const openCart = () => {
+    if (cartTimerRef.current) clearTimeout(cartTimerRef.current);
+    setShowCart(true);
+    requestAnimationFrame(() => requestAnimationFrame(() => setCartOpen(true)));
+  };
+
+  const closeCart = () => {
+    setCartOpen(false);
+    if (cartTimerRef.current) clearTimeout(cartTimerRef.current);
+    cartTimerRef.current = setTimeout(() => setShowCart(false), CART_ANIM_MS);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (cartTimerRef.current) clearTimeout(cartTimerRef.current);
+    };
+  }, []);
+
   const resetCheckoutState = () => {
     setCart([]);
     setSelectedCustomer(null);
     setPaymentMethod("cash");
     setNote("");
     setJenisTransaksi("penjualan");
-    setShowCart(false);
+    closeCart();
   };
 
   const handleCheckout = async () => {
@@ -398,7 +420,7 @@ export default function TransactionPage({
 
       {cart.length > 0 && !showCart && (
         <button
-          onClick={() => setShowCart(true)}
+          onClick={openCart}
           className="fixed bottom-[calc(env(safe-area-inset-bottom,0px)+118px)] left-4 right-4 clay-blue clay-pressable text-white rounded-2xl py-4 px-5 flex items-center justify-between cursor-pointer z-20"
         >
           <span className="flex items-center gap-2 font-semibold text-sm">
@@ -410,12 +432,23 @@ export default function TransactionPage({
       )}
 
       {showCart && (
-        <div className="fixed inset-0 bg-black/50 z-40 flex items-end">
-          <div className="clay-raised-lg rounded-t-3xl w-full max-h-[88vh] flex flex-col">
+        <div
+          onClick={(e) => {
+            if (e.target === e.currentTarget) closeCart();
+          }}
+          className={`fixed inset-0 z-40 flex items-end bg-black/50 backdrop-blur-[2px] transition-opacity duration-300 ease-out motion-reduce:transition-none ${
+            cartOpen ? "opacity-100" : "opacity-0"
+          }`}
+        >
+          <div
+            className={`clay-raised-lg rounded-t-3xl w-full max-h-[88vh] flex flex-col transform-gpu will-change-transform transition-transform duration-[320ms] ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none ${
+              cartOpen ? "translate-y-0" : "translate-y-full"
+            }`}
+          >
             <div className="flex items-center justify-between px-5 py-4 border-b border-[rgba(140,172,214,0.35)]">
               <h2 className="font-bold text-[#111111]">Keranjang</h2>
               <button
-                onClick={() => setShowCart(false)}
+                onClick={closeCart}
                 className="p-1.5 clay-raised-sm clay-pressable rounded-xl cursor-pointer"
               >
                 <X className="w-5 h-5 text-[#111111]/45" />
