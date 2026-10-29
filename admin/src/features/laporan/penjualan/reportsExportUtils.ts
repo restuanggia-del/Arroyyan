@@ -48,6 +48,10 @@ export const exportReportToExcel = async (
             `ringkasan-transaksi-${startDate}-${endDate}`,
             "Laporan",
             EMPTY_DESCRIPTION,
+            {
+                title: `Ringkasan Transaksi Penjualan (${startDate} s/d ${endDate})`,
+                currencyColumns: ["Total"],
+            },
         );
     } else if (activeReport === "distribution") {
         await downloadExcel(
@@ -63,6 +67,7 @@ export const exportReportToExcel = async (
             `laporan-distribusi-${startDate}-${endDate}`,
             "Laporan",
             EMPTY_DESCRIPTION,
+            { title: `Laporan Distribusi (${startDate} s/d ${endDate})` },
         );
     } else if (activeReport === "topProducts") {
         await downloadExcel(
@@ -77,6 +82,7 @@ export const exportReportToExcel = async (
             "laporan-produk-terlaris",
             "Laporan",
             EMPTY_DESCRIPTION,
+            { title: "Laporan Produk Terlaris", currencyColumns: ["Pendapatan"] },
         );
     } else {
         await downloadExcel(
@@ -101,6 +107,7 @@ export const exportReportToExcel = async (
             `laporan-stok-${today}`,
             "Laporan",
             EMPTY_DESCRIPTION,
+            { title: `Laporan Stok (${today})` },
         );
     }
 };
