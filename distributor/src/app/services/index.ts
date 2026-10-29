@@ -10,3 +10,4 @@ export * from './returnService';        // returns to factory
 export * from './depositService';       // sales deposits to admin
 export * from './commissionService';    // komisi summary
 export * from './checklistKebersihanService'; // checklist kebersihan kendaraan
+export * from './bonusService';         // progres & notifikasi bonus penjualan

@@ -21,6 +21,7 @@ import TransactionHistory from "../features/dashboard/history/TransactionHistory
 import CustomerPage from "../features/dashboard/customer/CustomerPage";
 import TitipanPage from "../features/transaksi/titipan/TitipanPage";
 import ChecklistKebersihanPage from "../features/dashboard/checklist/ChecklistKebersihanPage";
+import BonusNotifier from "../features/bonus/BonusNotifier";
 
 interface MainAppProps {
   user: SalesUser;
@@ -156,6 +157,10 @@ export default function MainApp({
 
   return (
     <div className="h-[100dvh] flex flex-col clay-page-bg overflow-hidden relative">
+      <BonusNotifier
+        salesId={localUser.salesId}
+        onViewDetail={() => setActiveTab("dashboard")}
+      />
       <header className="fixed top-0 left-0 right-0 z-30 h-16 bg-gradient-to-r from-[#0249E1] to-[#4a86f4] rounded-b-[28px] flex items-center px-5 gap-3 shadow-[0_10px_24px_rgba(2,55,150,0.35)]">
         <div className="flex-1 min-w-0">
           <p className="text-[15px] font-extrabold text-white leading-tight truncate">

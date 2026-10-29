@@ -14,6 +14,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { getDashboardStats, SalesUser } from "../../../../services";
+import BonusCard from "../../bonus/BonusCard";
 
 interface DashboardPageProps {
   user: SalesUser;
@@ -187,6 +188,8 @@ export default function DashboardPage({
               </p>
             </button>
           </div>
+
+          <BonusCard salesId={user.salesId} />
 
           {stats.hasStock && (
             <div className="clay-raised rounded-3xl p-5 flex items-center gap-4">

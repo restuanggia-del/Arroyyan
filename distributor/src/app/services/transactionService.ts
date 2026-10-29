@@ -83,6 +83,10 @@ export const createSalesTransaction = async (
         description: `Transaksi #${trx.id.slice(0, 8)} | Mode: sales | Total: Rp ${totalPrice.toLocaleString('id-ID')}`,
     }]);
 
+    if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('sales-transaction-created'));
+    }
+
     return trx;
 };
 
