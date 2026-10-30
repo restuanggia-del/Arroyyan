@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "../lib/supabaseAdmin";
+import { effectiveSubtotal } from "../lib/salesBasePrice";
 import { toDusQuantity, estimasiRpFromDus } from "../services/unitConversion";
 
 export interface LaporanGlobalRow {
@@ -90,8 +91,8 @@ export const getLaporanGlobal = async (
         supabaseAdmin
             .from("transaction_details")
             .select(`
-        product_id, quantity, subtotal,
-        transactions!inner ( payment_method, created_at )
+        product_id, quantity, subtotal, harga_pokok,
+        transactions!inner ( payment_method, created_at, sales_id )
       `)
             .gte("transactions.created_at", startDate)
             .lt("transactions.created_at", endDate),
@@ -165,7 +166,7 @@ export const getLaporanGlobal = async (
         const row = getRow(t.product_id);
         if (!row) continue;
         const dus = toDus(t.product_id, Number(t.quantity));
-        const rp = Number(t.subtotal);
+        const rp = effectiveSubtotal(!!t.transactions?.sales_id, t);
         const isBon = t.transactions?.payment_method === "kasbon";
 
         if (isBon) {

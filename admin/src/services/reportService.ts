@@ -1,4 +1,6 @@
 import { supabaseAdmin } from "../lib/supabaseAdmin";
+import { effectiveTotal, effectiveSubtotal } from "../lib/salesBasePrice";
+const TX_BASE_SELECT = "total_price, sales_id, transaction_details ( quantity, harga_pokok )";
 
 export interface DashboardStats {
     salesToday: number;
@@ -13,19 +15,19 @@ export const getDashboardStats = async (): Promise<DashboardStats> => {
     const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
 
     const [todayRes, monthRes] = await Promise.all([
-        supabaseAdmin.from("transactions").select("total_price")
+        supabaseAdmin.from("transactions").select(TX_BASE_SELECT)
             .gte("created_at", `${todayStr}T00:00:00`)
             .lte("created_at", `${todayStr}T23:59:59`),
-        supabaseAdmin.from("transactions").select("total_price")
+        supabaseAdmin.from("transactions").select(TX_BASE_SELECT)
             .gte("created_at", `${monthStart}T00:00:00`),
     ]);
 
-    const todayTx = todayRes.data ?? [];
-    const monthTx = monthRes.data ?? [];
+    const todayTx = (todayRes.data ?? []) as any[];
+    const monthTx = (monthRes.data ?? []) as any[];
 
     return {
-        salesToday: todayTx.reduce((s, t) => s + (t.total_price ?? 0), 0),
-        salesThisMonth: monthTx.reduce((s, t) => s + (t.total_price ?? 0), 0),
+        salesToday: todayTx.reduce((s, t) => s + effectiveTotal(t), 0),
+        salesThisMonth: monthTx.reduce((s, t) => s + effectiveTotal(t), 0),
         totalTransactionsToday: todayTx.length,
         totalTransactionsMonth: monthTx.length,
     };
@@ -45,12 +47,12 @@ export const getDailySales = async (): Promise<DailySales[]> => {
         const d = new Date();
         d.setDate(d.getDate() - i);
         const dateStr = d.toISOString().split("T")[0];
-        const { data } = await supabaseAdmin.from("transactions").select("total_price")
+        const { data } = await supabaseAdmin.from("transactions").select(TX_BASE_SELECT)
             .gte("created_at", `${dateStr}T00:00:00`)
             .lte("created_at", `${dateStr}T23:59:59`);
         days.push({
             hari: dayNames[d.getDay()],
-            penjualan: (data ?? []).reduce((s, t) => s + (t.total_price ?? 0), 0),
+            penjualan: ((data ?? []) as any[]).reduce((s, t) => s + effectiveTotal(t), 0),
             date: dateStr,
         });
     }
@@ -79,13 +81,13 @@ export const getMonthlySales = async (): Promise<MonthlySales[]> => {
             ? `${year + 1}-01-01`
             : `${year}-${String(month + 1).padStart(2, "0")}-01`;
 
-        const { data } = await supabaseAdmin.from("transactions").select("total_price")
+        const { data } = await supabaseAdmin.from("transactions").select(TX_BASE_SELECT)
             .gte("created_at", `${monthStart}T00:00:00`)
             .lt("created_at", `${nextMonth}T00:00:00`);
 
         months.push({
             bulan: `${monthNames[month - 1]} ${year}`,
-            penjualan: (data ?? []).reduce((s, t) => s + (t.total_price ?? 0), 0),
+            penjualan: ((data ?? []) as any[]).reduce((s, t) => s + effectiveTotal(t), 0),
             year,
             month,
         });
@@ -105,7 +107,7 @@ export interface TopProduct {
 export const getTopProducts = async (limit = 5): Promise<TopProduct[]> => {
     const { data, error } = await supabaseAdmin
         .from("transaction_details")
-        .select("product_id, quantity, subtotal, products ( product_name, category )");
+        .select("product_id, quantity, subtotal, harga_pokok, transactions ( sales_id ), products ( product_name, category )");
 
     if (error || !data) return [];
 
@@ -114,7 +116,7 @@ export const getTopProducts = async (limit = 5): Promise<TopProduct[]> => {
         const pid = row.product_id;
         if (!map[pid]) map[pid] = { product_name: row.products?.product_name ?? "—", category: row.products?.category ?? "—", totalSold: 0, revenue: 0 };
         map[pid].totalSold += row.quantity ?? 0;
-        map[pid].revenue += row.subtotal ?? 0;
+        map[pid].revenue += effectiveSubtotal(!!row.transactions?.sales_id, row);
     }
 
     const sorted = Object.entries(map)
@@ -183,9 +185,10 @@ export const getSalesReport = async (
     const { data: txData, error } = await supabaseAdmin
         .from("transactions")
         .select(`
-      id, created_at, total_price, payment_method,
+      id, created_at, total_price, payment_method, sales_id,
       customers    ( customer_name ),
-      karyawan ( nama )
+      karyawan ( nama ),
+      transaction_details ( quantity, harga_pokok )
     `)
         .gte("created_at", `${startDate}T00:00:00`)
         .lte("created_at", `${endDate}T23:59:59`)
@@ -213,7 +216,7 @@ export const getSalesReport = async (
         customer: trx.customers?.customer_name ?? "Umum",
         karyawan: trx.karyawan?.nama ?? "Pabrik",
         items: (detailMap[trx.id] ?? []).join(", "),
-        total: trx.total_price,
+        total: effectiveTotal(trx),
         payment: trx.payment_method === "cash" ? "Cash" : "Transfer",
     }));
 };

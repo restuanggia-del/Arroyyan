@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "../lib/supabaseAdmin";
+import { effectiveTotal, effectiveSubtotal } from "../lib/salesBasePrice";
 import { PotonganKategori, KATEGORI_POTONGAN_LABEL } from "./potonganSetoranService";
 import { toDusQuantity } from "./unitConversion";
 
@@ -205,8 +206,8 @@ export const getLaporanPenjualan = async (
         supabaseAdmin
             .from("transaction_details")
             .select(`
-        product_id, quantity, subtotal,
-        transactions!inner ( payment_method, created_at )
+        product_id, quantity, subtotal, harga_pokok,
+        transactions!inner ( payment_method, created_at, sales_id )
       `)
             .gte("transactions.created_at", startDate)
             .lt("transactions.created_at", endDate),
@@ -218,7 +219,7 @@ export const getLaporanPenjualan = async (
             .order("tanggal", { ascending: true }),
         supabaseAdmin
             .from("transactions")
-            .select("total_price, created_at, karyawan ( nama ), sales ( nama_sales )")
+            .select("total_price, sales_id, created_at, karyawan ( nama ), sales ( nama_sales ), transaction_details ( quantity, harga_pokok )")
             .eq("payment_method", "transfer")
             .gte("created_at", startDate)
             .lt("created_at", endDate),
@@ -243,7 +244,7 @@ export const getLaporanPenjualan = async (
         id, karyawan_id, sales_id, total_price, created_at,
         karyawan ( nama ),
         sales ( nama_sales ),
-        transaction_details ( quantity, products ( size, unit, isi_per_dus ) )
+        transaction_details ( quantity, harga_pokok, products ( size, unit, isi_per_dus ) )
       `)
             .eq("payment_method", "kasbon")
             .gte("created_at", startDate)
@@ -347,7 +348,7 @@ export const getLaporanPenjualan = async (
     for (const t of (trxDetailRes.data ?? []) as any[]) {
         const tanggal: string = (t.transactions.created_at as string).slice(0, 10);
         const dus = toDus(t.product_id, Number(t.quantity));
-        const rp = Number(t.subtotal);
+        const rp = effectiveSubtotal(!!t.transactions?.sales_id, t);
         const isBon = t.transactions?.payment_method === "kasbon";
         const row = getDay(t.product_id, tanggal);
 
@@ -459,7 +460,7 @@ export const getLaporanPenjualan = async (
         transferItems.push({
             tanggal: (t.created_at as string).slice(0, 10),
             keterangan: `Penjualan transfer${namaActor ? " — " + namaActor : ""}`,
-            jumlah: Number(t.total_price),
+            jumlah: effectiveTotal(t),
         });
     }
     for (const kp of (kasbonPaymentsRes.data ?? []) as any[]) {
@@ -518,10 +519,10 @@ export const getLaporanPenjualan = async (
             tanggal: (t.created_at as string).slice(0, 10),
             keterangan: labelFromDetails || sizes.join(", ") || "—",
             dus: round2(totalDus),
-            rp: Number(t.total_price),
+            rp: effectiveTotal(t),
         });
         bucket.total_dus += totalDus;
-        bucket.total_rp += Number(t.total_price);
+        bucket.total_rp += effectiveTotal(t);
     }
     const titipanPerSales = Array.from(titipanBySales.values())
         .map((b) => ({

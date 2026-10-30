@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "../lib/supabaseAdmin";
+import { effectiveTotal } from "../lib/salesBasePrice";
 import { calculateReceiptTotals } from "./incentiveReceiptService";
 import { KATEGORI_POTONGAN_LABEL, PotonganKategori } from "./potonganSetoranService";
 
@@ -85,12 +86,12 @@ export const getRekapanSetoran = async (
     ] = await Promise.all([
         supabaseAdmin
             .from("transactions")
-            .select("total_price")
+            .select("total_price, sales_id, transaction_details ( quantity, harga_pokok )")
             .gte("created_at", startDate)
             .lt("created_at", endDate),
         supabaseAdmin
             .from("transactions")
-            .select("total_price")
+            .select("total_price, sales_id, transaction_details ( quantity, harga_pokok )")
             .eq("payment_method", "transfer")
             .gte("created_at", startDate)
             .lt("created_at", endDate),
@@ -123,8 +124,8 @@ export const getRekapanSetoran = async (
     if (potonganRes.error) return { data: null, error: potonganRes.error };
     if (insentifTotals.error) return { data: null, error: insentifTotals.error };
 
-    const penjualanBulanIni = ((trxBulanIniRes.data ?? []) as { total_price: number }[]).reduce(
-        (s, t) => s + Number(t.total_price),
+    const penjualanBulanIni = ((trxBulanIniRes.data ?? []) as any[]).reduce(
+        (s, t) => s + effectiveTotal(t),
         0,
     );
 
@@ -156,8 +157,8 @@ export const getRekapanSetoran = async (
 
     const totalDana = penjualanBulanIni + totalTitipanLama;
 
-    const transferPenjualan = ((trxTransferRes.data ?? []) as { total_price: number }[]).reduce(
-        (s, t) => s + Number(t.total_price),
+    const transferPenjualan = ((trxTransferRes.data ?? []) as any[]).reduce(
+        (s, t) => s + effectiveTotal(t),
         0,
     );
     const totalTransfer = transferPenjualan + transferTitipanTotal;

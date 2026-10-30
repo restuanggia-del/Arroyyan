@@ -10,6 +10,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { supabaseAdmin } from "../../lib/supabaseAdmin";
+import { effectiveTotal } from "../../lib/salesBasePrice";
 
 type ResultCategory = "produk" | "karyawan" | "pelanggan" | "transaksi";
 
@@ -83,7 +84,7 @@ const searchAll = async (query: string): Promise<SearchResult[]> => {
     supabaseAdmin
       .from("transactions")
       .select(
-        "id, total_price, payment_method, created_at, customers(customer_name)",
+        "id, total_price, sales_id, payment_method, created_at, customers(customer_name), transaction_details(quantity, harga_pokok)",
       )
       .or(`id.ilike.%${q}%`)
       .order("created_at", { ascending: false })
@@ -127,7 +128,7 @@ const searchAll = async (query: string): Promise<SearchResult[]> => {
       category: "transaksi",
       title: `#${t.id.slice(0, 8).toUpperCase()}`,
       subtitle: customerName,
-      meta: `Rp ${(t.total_price ?? 0).toLocaleString("id-ID")}`,
+      meta: `Rp ${effectiveTotal(t).toLocaleString("id-ID")}`,
     });
   }
 
