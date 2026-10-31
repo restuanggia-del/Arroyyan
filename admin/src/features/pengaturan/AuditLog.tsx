@@ -54,8 +54,14 @@ const getBadge = (type: string) => {
   return { label: "Distribusi & Stok", cls: "bg-orange-100 text-orange-700" };
 };
 
+const parseUtc = (d: string) =>
+  /(Z|[+-]\d{2}(:?\d{2})?)$/.test(d)
+    ? new Date(d)
+    : new Date(`${d.replace(" ", "T")}Z`);
+
 const formatDate = (d: string) =>
-  new Date(d).toLocaleString("id-ID", {
+  parseUtc(d).toLocaleString("id-ID", {
+    timeZone: "Asia/Jakarta",
     day: "2-digit",
     month: "short",
     year: "numeric",

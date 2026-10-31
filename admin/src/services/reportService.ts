@@ -315,9 +315,11 @@ export const getAuditLogs = async (dateFilter?: string): Promise<AuditLogRow[]> 
         .limit(200);
 
     if (dateFilter) {
+        const awal = new Date(`${dateFilter}T00:00:00+07:00`).toISOString();
+        const akhir = new Date(`${dateFilter}T23:59:59.999+07:00`).toISOString();
         query = query
-            .gte("created_at", `${dateFilter}T00:00:00`)
-            .lte("created_at", `${dateFilter}T23:59:59`);
+            .gte("created_at", awal)
+            .lte("created_at", akhir);
     }
 
     const { data, error } = await query;
