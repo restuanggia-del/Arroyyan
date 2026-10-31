@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "../lib/supabaseAdmin";
+import { movementDateField } from "../lib/movementDate";
 
 export interface Material {
     id: string;
@@ -196,7 +197,8 @@ export const addMaterialStock = async (
     materialId: string,
     quantity: number,
     note: string,
-    movementType: "masuk" | "stok_awal" = "masuk"
+    movementType: "masuk" | "stok_awal" = "masuk",
+    tanggal?: string
 ) => {
     const { data: existing, error: fetchErr } = await supabaseAdmin
         .from("materials")
@@ -220,6 +222,7 @@ export const addMaterialStock = async (
             movement_type: movementType,
             quantity,
             note: note || null,
+            ...movementDateField(tanggal),
         }]);
 
     if (movErr) return { error: movErr };
@@ -229,7 +232,8 @@ export const addMaterialStock = async (
 export const reduceMaterialStock = async (
     materialId: string,
     quantity: number,
-    note: string
+    note: string,
+    tanggal?: string
 ) => {
     const { data: existing, error: fetchErr } = await supabaseAdmin
         .from("materials")
@@ -256,6 +260,7 @@ export const reduceMaterialStock = async (
             movement_type: "keluar",
             quantity,
             note: note || null,
+            ...movementDateField(tanggal),
         }]);
 
     if (movErr) return { error: movErr };
@@ -265,7 +270,8 @@ export const reduceMaterialStock = async (
 export const moveToSementara = async (
     materialId: string,
     quantity: number,
-    note: string
+    note: string,
+    tanggal?: string
 ) => {
     const { data: existing, error: fetchErr } = await supabaseAdmin
         .from("materials")
@@ -295,6 +301,7 @@ export const moveToSementara = async (
             movement_type: "ke_sementara",
             quantity,
             note: note || null,
+            ...movementDateField(tanggal),
         }]);
 
     if (movErr) return { error: movErr };
@@ -304,7 +311,8 @@ export const moveToSementara = async (
 export const addSementaraStokAwal = async (
     materialId: string,
     quantity: number,
-    note: string
+    note: string,
+    tanggal?: string
 ) => {
     const { data: existing, error: fetchErr } = await supabaseAdmin
         .from("materials")
@@ -328,6 +336,7 @@ export const addSementaraStokAwal = async (
             movement_type: "stok_awal_sementara",
             quantity,
             note: note || null,
+            ...movementDateField(tanggal),
         }]);
 
     if (movErr) return { error: movErr };
@@ -409,7 +418,8 @@ export const rejectSementara = async (
 export const recordSampel = async (
     materialId: string,
     quantity: number,
-    note: string
+    note: string,
+    tanggal?: string
 ) => {
     if (quantity < 1) {
         return { error: { message: "Jumlah sampel harus minimal 1." } };
@@ -440,6 +450,7 @@ export const recordSampel = async (
             movement_type: "sampel_out",
             quantity: Math.round(quantity),
             note: note || null,
+            ...movementDateField(tanggal),
         }]);
 
     if (movErr) return { error: movErr };
@@ -450,7 +461,8 @@ export const recordRejectBahan = async (
     materialId: string,
     quantity: number,
     reason: string,
-    note: string
+    note: string,
+    tanggal?: string
 ) => {
     if (quantity < 1) {
         return { error: { message: "Jumlah reject bahan harus minimal 1." } };
@@ -482,6 +494,7 @@ export const recordRejectBahan = async (
             quantity: Math.round(quantity),
             reason: reason || null,
             note: note || null,
+            ...movementDateField(tanggal),
         }]);
 
     if (movErr) return { error: movErr };

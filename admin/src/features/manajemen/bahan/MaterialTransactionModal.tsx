@@ -22,6 +22,7 @@ import {
   MOVEMENT_TYPE_LABEL,
   REJECT_BAHAN_REASON_SUGGESTIONS,
 } from "../../../services/materialService";
+import { todayLocal, formatTanggalPanjang } from "../../../lib/movementDate";
 
 export type MaterialTxType =
   | "masuk"
@@ -168,6 +169,7 @@ export function MaterialTransactionModal({
   const [quantity, setQuantity] = useState(0);
   const [singleReason, setSingleReason] = useState("");
   const [note, setNote] = useState("");
+  const [tanggal, setTanggal] = useState(todayLocal());
 
   useEffect(() => {
     const load = async () => {
@@ -222,29 +224,50 @@ export function MaterialTransactionModal({
       return;
     }
 
+    if (!tanggal) {
+      setFormError("Tanggal transaksi wajib diisi.");
+      return;
+    }
+    if (tanggal > todayLocal()) {
+      setFormError("Tanggal transaksi tidak boleh melebihi hari ini.");
+      return;
+    }
+
     setSaving(true);
     setFormError(null);
 
     let error;
     if (type === "masuk" || type === "stok_awal") {
-      ({ error } = await addMaterialStock(materialId, quantity, note, type));
+      ({ error } = await addMaterialStock(
+        materialId,
+        quantity,
+        note,
+        type,
+        tanggal,
+      ));
     } else if (type === "stok_awal_sementara") {
-      ({ error } = await addSementaraStokAwal(materialId, quantity, note));
+      ({ error } = await addSementaraStokAwal(
+        materialId,
+        quantity,
+        note,
+        tanggal,
+      ));
     } else if (type === "sampel") {
-      ({ error } = await recordSampel(materialId, quantity, note));
+      ({ error } = await recordSampel(materialId, quantity, note, tanggal));
     } else if (type === "reject_bahan") {
       ({ error } = await recordRejectBahan(
         materialId,
         quantity,
         singleReason || "Lainnya",
         note,
+        tanggal,
       ));
     } else {
       const fn = {
         keluar: reduceMaterialStock,
         ke_sementara: moveToSementara,
       }[type];
-      ({ error } = await fn(materialId, quantity, note));
+      ({ error } = await fn(materialId, quantity, note, tanggal));
     }
 
     if (error) {
@@ -400,6 +423,32 @@ export function MaterialTransactionModal({
               </datalist>
             </div>
           )}
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Tanggal Transaksi <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="date"
+              required
+              value={tanggal}
+              max={todayLocal()}
+              onChange={(e) => {
+                setTanggal(e.target.value);
+                setFormError(null);
+              }}
+              className="w-full px-4 py-2.5 clay-inset border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
+            />
+            {tanggal && tanggal !== todayLocal() && (
+              <p className="text-xs text-amber-600 mt-1.5">
+                Transaksi akan dicatat pada tanggal{" "}
+                <span className="font-semibold">
+                  {formatTanggalPanjang(tanggal)}
+                </span>
+                , bukan hari ini.
+              </p>
+            )}
+          </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
