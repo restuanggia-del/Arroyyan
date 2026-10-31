@@ -12,6 +12,7 @@ export const ROLE_ALLOWED_MENUS: Record<PanelRole, string[] | "all"> = {
         "laporan-bahan",
         "laporan-handling-fee",
         "laporan-stok",
+        "laporan-distribusi-sales",
     ],
 
     admin_produk: [

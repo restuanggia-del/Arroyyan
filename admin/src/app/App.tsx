@@ -57,6 +57,7 @@ import {
 import { supabase } from "../lib/supabase";
 import { supabaseAdmin } from "../lib/supabaseAdmin";
 import { isMenuAllowedForRole, getRoleLabel } from "../config/rolePermissions";
+import { LaporanDistribusiSales } from "../features/laporan/distribusi-sales/LaporanDistribusiSales";
 
 const calcMA = (values: number[], n: number): number => {
   if (values.length < n) return 0;
@@ -435,6 +436,8 @@ export default function App() {
         return <MaterialManagement />;
       case "distribusi":
         return <DistributionManagement currentUserId={currentUser?.id ?? ""} />;
+      case "laporan-distribusi-sales":
+        return <LaporanDistribusiSales role={currentUser?.role} />;
       case "transaksi":
         return <SalesTransaction role="admin" />;
       case "titipan":

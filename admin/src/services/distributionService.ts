@@ -14,6 +14,7 @@ export interface Distribution {
     distribution_date: string;
     status: "pending" | "sent" | "received";
     created_at: string;
+    keterangan?: string | null;
     karyawan?: { nama: string; address: string } | null;
     sales?: { nama_sales: string; address: string } | null;
     distribution_details?: {
@@ -28,7 +29,7 @@ export const getAllDistributions = async () => {
     const { data, error } = await supabaseAdmin
         .from("distributions")
         .select(`
-      id, karyawan_id, sales_id, created_by, distribution_date, status, created_at,
+      id, karyawan_id, sales_id, created_by, distribution_date, status, created_at, keterangan,
       karyawan ( nama, address ),
       sales ( nama_sales, address ),
       distribution_details (
@@ -45,8 +46,10 @@ export const getAllDistributions = async () => {
 export const createDistribution = async (
     salesId: string,
     createdBy: string,
-    items: DistributionItem[]
+    items: DistributionItem[],
+    keterangan?: string
 ) => {
+    const keteranganBersih = keterangan?.trim() || null;
     for (const item of items) {
         const { data: stock, error: stockErr } = await supabaseAdmin
             .from("stocks")
@@ -69,6 +72,7 @@ export const createDistribution = async (
             created_by: createdBy,
             distribution_date: new Date().toISOString().split("T")[0],
             status: "pending",
+            keterangan: keteranganBersih,
         }])
         .select()
         .single();
