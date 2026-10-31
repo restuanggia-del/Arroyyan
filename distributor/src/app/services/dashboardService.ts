@@ -30,6 +30,11 @@ export const getDashboardStats = async (salesId: string) => {
         return s + details.reduce((ds, d) => ds + (d.price - d.harga_pokok) * d.quantity, 0);
     }, 0);
 
+    const totalPabrikToday = todayData.reduce((s, t) => {
+        const details = (t.transaction_details ?? []) as any[];
+        return s + details.reduce((ds, d) => ds + Number(d.harga_pokok ?? 0) * d.quantity, 0);
+    }, 0);
+
     const stockRows = (stockRes.data ?? []) as any[];
     const totalStock = stockRows.reduce((s, r) => s + (r.stock_quantity ?? 0), 0);
     const lowStockProducts = stockRows
@@ -41,13 +46,14 @@ export const getDashboardStats = async (salesId: string) => {
             minStock: MIN_STOCK,
         }));
 
-    const belumDisetorToday = totalSalesToday - ((depositRes.data ?? []) as any[]).reduce(
+    const belumDisetorToday = totalPabrikToday - ((depositRes.data ?? []) as any[]).reduce(
         (s, d) => s + Number(d.jumlah_cash) + Number(d.jumlah_transfer),
         0,
     );
 
     return {
         totalSalesToday,
+        totalPabrikToday,
         totalTransactionsToday: todayData.length,
         komisiToday,
         totalStock,
