@@ -406,9 +406,6 @@ export function DistributionModal({
                   Keterangan{" "}
                   <span className="text-gray-400 font-normal">(opsional)</span>
                 </label>
-                <span className="text-xs text-gray-400">
-                  {keterangan.length}/{KETERANGAN_MAX}
-                </span>
               </div>
               <textarea
                 value={keterangan}
@@ -416,13 +413,9 @@ export function DistributionModal({
                   setKeterangan(e.target.value.slice(0, KETERANGAN_MAX))
                 }
                 rows={3}
-                placeholder="Contoh: Pengganti barang retur. Alasan retur: kemasan bocor. Ditukar dengan produk yang sama sesuai jumlah retur."
+                placeholder="Contoh: Pengiriman ke toko / retur produk / dll"
                 className="w-full px-4 py-2.5 clay-inset border-0 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40 resize-none"
               />
-              <p className="text-xs text-gray-500 mt-1">
-                Isi bila distribusi ini untuk mengganti barang retur: tulis
-                alasan retur dan produk baru yang ditukar.
-              </p>
             </div>
 
             <div className="flex gap-3 pt-2">
