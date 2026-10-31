@@ -19,9 +19,19 @@ export interface KasbonTransaction extends Transaction {
     total_dus: number;
     sisa_dus: number;
     sisa_rp: number;
+    total_tagihan: number;
+    sisa_tagihan_pabrik: number;
     is_lunas: boolean;
     last_payment_at: string | null;
 }
+
+const hitungTagihanPabrik = (
+    details: { quantity: number; harga_pokok?: number | null }[],
+    fallbackTotal: number,
+): number => {
+    const total = details.reduce((s, d) => s + Number(d.harga_pokok ?? 0) * d.quantity, 0);
+    return total > 0 ? total : fallbackTotal;
+};
 
 export const getKasbonTransactions = async () => {
     const { data, error } = await supabaseAdmin
@@ -42,6 +52,7 @@ export const getKasbonTransactions = async () => {
         product_id,
         quantity,
         price,
+        harga_pokok,
         subtotal,
         products ( product_name, category )
       )
@@ -84,9 +95,18 @@ export const getKasbonTransactions = async () => {
         const sisaDus = lastPayment ? lastPayment.sisa_dus : totalDus;
         const sisaRp = lastPayment ? lastPayment.sisa_rp : t.total_price;
 
+        const totalTagihan = hitungTagihanPabrik(
+            (t.transaction_details ?? []) as unknown as { quantity: number; harga_pokok?: number | null }[],
+            t.total_price,
+        );
+        const rasio = t.total_price > 0 ? totalTagihan / t.total_price : 1;
+        const sisaTagihanPabrik = Math.round(Math.max(0, sisaRp) * rasio);
+
         return {
             ...t,
             total_dus: totalDus,
+            total_tagihan: totalTagihan,
+            sisa_tagihan_pabrik: sisaTagihanPabrik,
             sisa_dus: sisaDus,
             sisa_rp: sisaRp,
             is_lunas: sisaRp <= 0 && sisaDus <= 0,

@@ -46,7 +46,8 @@ export function KasbonHistoryModal({
             </h2>
             <p className="text-sm text-gray-500">
               {transaction.customers?.customer_name ?? "—"} · Total titipan{" "}
-              {transaction.total_dus} unit / {formatRp(transaction.total_price)}
+              {transaction.total_dus} unit /{" "}
+              {formatRp(transaction.total_tagihan)}
             </p>
           </div>
           <button

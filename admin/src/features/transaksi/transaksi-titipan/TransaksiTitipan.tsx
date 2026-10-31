@@ -64,7 +64,7 @@ export function TransaksiTitipan() {
   const totalBelumLunas = transactions.filter((t) => !t.is_lunas).length;
   const totalSisaRp = transactions
     .filter((t) => !t.is_lunas)
-    .reduce((s, t) => s + Math.max(0, t.sisa_rp), 0);
+    .reduce((s, t) => s + Math.max(0, t.sisa_tagihan_pabrik), 0);
   const totalSisaDus = transactions
     .filter((t) => !t.is_lunas)
     .reduce((s, t) => s + Math.max(0, t.sisa_dus), 0);
@@ -207,13 +207,13 @@ export function TransaksiTitipan() {
                         {t.sales?.nama_sales ?? t.karyawan?.nama ?? "—"}
                       </td>
                       <td className="py-3 px-4 text-sm text-gray-600 whitespace-nowrap">
-                        {t.total_dus} unit / {formatRp(t.total_price)}
+                        {t.total_dus} unit / {formatRp(t.total_tagihan)}
                       </td>
                       <td className="py-3 px-4 text-sm font-semibold text-gray-900">
                         {Math.max(0, t.sisa_dus)} unit
                       </td>
                       <td className="py-3 px-4 text-sm font-semibold text-gray-900 whitespace-nowrap">
-                        {formatRp(Math.max(0, t.sisa_rp))}
+                        {formatRp(Math.max(0, t.sisa_tagihan_pabrik))}
                       </td>
                       <td className="py-3 px-4">
                         <span
