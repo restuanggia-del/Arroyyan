@@ -81,8 +81,7 @@ export function StockTransactionModal({
         ? categoriesMasuk
         : categoriesKeluar;
 
-  const selectedProduct = products.find((p) => p.id === formData.productId);
-  const unitLabel = selectedProduct?.unit || "unit";
+  const unitLabel = "dus";
 
   const handleChange = <K extends keyof FormState>(
     field: K,
