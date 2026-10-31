@@ -12,6 +12,7 @@ import {
   addCentralStock,
   reduceCentralStock,
 } from "../../../services/stockService";
+import { todayLocal, formatTanggalPanjang } from "../../../lib/movementDate";
 
 interface StockTransactionModalProps {
   type: "awal" | "masuk" | "keluar";
@@ -24,6 +25,7 @@ interface FormState {
   quantity: number;
   movementType: string;
   note: string;
+  tanggal: string;
 }
 
 export function StockTransactionModal({
@@ -46,6 +48,7 @@ export function StockTransactionModal({
           ? "stock_in"
           : "sale_out",
     note: "",
+    tanggal: todayLocal(),
   });
 
   useEffect(() => {
@@ -101,6 +104,15 @@ export function StockTransactionModal({
       return;
     }
 
+    if (!formData.tanggal) {
+      setFormError("Tanggal transaksi wajib diisi.");
+      return;
+    }
+    if (formData.tanggal > todayLocal()) {
+      setFormError("Tanggal transaksi tidak boleh melebihi hari ini.");
+      return;
+    }
+
     setSaving(true);
     setFormError(null);
 
@@ -111,6 +123,7 @@ export function StockTransactionModal({
         formData.quantity,
         formData.movementType as "stock_in" | "stok_awal",
         formData.note,
+        formData.tanggal,
       ));
     } else {
       ({ error } = await reduceCentralStock(
@@ -122,6 +135,7 @@ export function StockTransactionModal({
           | "pribadi_out"
           | "bonus_out",
         formData.note,
+        formData.tanggal,
       ));
     }
 
@@ -281,6 +295,29 @@ export function StockTransactionModal({
               placeholder="0"
               className="w-full px-4 py-2.5 clay-inset border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Tanggal Transaksi <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="date"
+              required
+              value={formData.tanggal}
+              max={todayLocal()}
+              onChange={(e) => handleChange("tanggal", e.target.value)}
+              className="w-full px-4 py-2.5 clay-inset border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
+            />
+            {formData.tanggal && formData.tanggal !== todayLocal() && (
+              <p className="text-xs text-amber-600 mt-1.5">
+                Transaksi akan dicatat pada tanggal{" "}
+                <span className="font-semibold">
+                  {formatTanggalPanjang(formData.tanggal)}
+                </span>
+                , bukan hari ini.
+              </p>
+            )}
           </div>
 
           <div>

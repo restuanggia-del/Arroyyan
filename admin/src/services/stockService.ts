@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "../lib/supabaseAdmin";
+import { movementDateField } from "../lib/movementDate";
 
 export interface StockItem {
     id: string;
@@ -155,7 +156,8 @@ export const addCentralStock = async (
     productId: string,
     quantity: number,
     movementType: "stock_in" | "stok_awal",
-    note: string
+    note: string,
+    tanggal?: string
 ) => {
     const { data: existing, error: fetchErr } = await supabaseAdmin
         .from("stocks")
@@ -192,6 +194,7 @@ export const addCentralStock = async (
             movement_type: movementType,
             quantity,
             note: note || null,
+            ...movementDateField(tanggal),
         }]);
 
     if (movErr) return { error: movErr };
@@ -202,7 +205,8 @@ export const reduceCentralStock = async (
     productId: string,
     quantity: number,
     movementType: "sale_out" | "sodaqoh_out" | "pribadi_out" | "bonus_out",
-    note: string
+    note: string,
+    tanggal?: string
 ) => {
     const { data: existing, error: fetchErr } = await supabaseAdmin
         .from("stocks")
@@ -234,6 +238,7 @@ export const reduceCentralStock = async (
             movement_type: movementType,
             quantity,
             note: note || null,
+            ...movementDateField(tanggal),
         }]);
 
     if (movErr) return { error: movErr };
