@@ -22,6 +22,8 @@ interface DistributionModalProps {
   onSaveSuccess: () => void;
 }
 
+const KETERANGAN_MAX = 500;
+
 interface ItemRow {
   product_id: string;
   quantity: number;
@@ -45,6 +47,7 @@ export function DistributionModal({
   const [items, setItems] = useState<ItemRow[]>([
     { product_id: "", quantity: 0 },
   ]);
+  const [keterangan, setKeterangan] = useState("");
 
   useEffect(() => {
     const load = async () => {
@@ -130,6 +133,7 @@ export function DistributionModal({
       salesId,
       currentUserId,
       distributionItems,
+      keterangan,
     );
 
     if (error) {
@@ -357,6 +361,24 @@ export function DistributionModal({
                 </div>
               </div>
             )}
+
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-sm font-medium text-gray-700">
+                  Keterangan{" "}
+                  <span className="text-gray-400 font-normal">(opsional)</span>
+                </label>
+              </div>
+              <textarea
+                value={keterangan}
+                onChange={(e) =>
+                  setKeterangan(e.target.value.slice(0, KETERANGAN_MAX))
+                }
+                rows={3}
+                placeholder="Contoh: Distribusi ke Rawajitu / Barang retur"
+                className="w-full px-4 py-2.5 clay-inset border-0 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40 resize-none"
+              />
+            </div>
 
             <div className="flex gap-3 pt-2">
               <button
