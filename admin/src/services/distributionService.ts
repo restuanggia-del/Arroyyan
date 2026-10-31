@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "../lib/supabaseAdmin";
+import { todayLocal, movementDateField } from "../lib/movementDate";
 
 export interface DistributionItem {
     product_id: string;
@@ -47,7 +48,8 @@ export const createDistribution = async (
     salesId: string,
     createdBy: string,
     items: DistributionItem[],
-    keterangan?: string
+    keterangan?: string,
+    tanggal?: string
 ) => {
     const keteranganBersih = keterangan?.trim() || null;
     for (const item of items) {
@@ -70,7 +72,7 @@ export const createDistribution = async (
             sales_id: salesId,
             karyawan_id: null,
             created_by: createdBy,
-            distribution_date: new Date().toISOString().split("T")[0],
+            distribution_date: tanggal || todayLocal(),
             status: "pending",
             keterangan: keteranganBersih,
         }])
@@ -111,6 +113,7 @@ export const createDistribution = async (
             movement_type: "distribution_out",
             quantity: item.quantity,
             note: `Distribusi #${dist.id.slice(0, 8)} — keluar dari stok pusat`,
+            ...movementDateField(tanggal),
         }]);
     }
 

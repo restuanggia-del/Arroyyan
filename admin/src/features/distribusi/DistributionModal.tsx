@@ -11,6 +11,7 @@ import {
 import { getActiveSales, Sales } from "../../services/salesService";
 import { getActiveProducts, Product } from "../../services/productService";
 import { getCentralStock } from "../../services/stockService";
+import { todayLocal, formatTanggalPanjang } from "../../lib/movementDate";
 import {
   createDistribution,
   DistributionItem,
@@ -48,6 +49,7 @@ export function DistributionModal({
     { product_id: "", quantity: 0 },
   ]);
   const [keterangan, setKeterangan] = useState("");
+  const [tanggal, setTanggal] = useState(todayLocal());
 
   useEffect(() => {
     const load = async () => {
@@ -120,6 +122,15 @@ export function DistributionModal({
       }
     }
 
+    if (!tanggal) {
+      setFormError("Tanggal distribusi wajib diisi.");
+      return;
+    }
+    if (tanggal > todayLocal()) {
+      setFormError("Tanggal distribusi tidak boleh melebihi hari ini.");
+      return;
+    }
+
     setSaving(true);
 
     const distributionItems: DistributionItem[] = validItems.map((item) => ({
@@ -134,6 +145,7 @@ export function DistributionModal({
       currentUserId,
       distributionItems,
       keterangan,
+      tanggal,
     );
 
     if (error) {
@@ -363,11 +375,40 @@ export function DistributionModal({
             )}
 
             <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Tanggal Distribusi <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="date"
+                required
+                value={tanggal}
+                max={todayLocal()}
+                onChange={(e) => {
+                  setTanggal(e.target.value);
+                  setFormError(null);
+                }}
+                className="w-full px-4 py-2.5 clay-inset border-0 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40"
+              />
+              {tanggal && tanggal !== todayLocal() && (
+                <p className="text-xs text-amber-600 mt-1.5">
+                  Distribusi akan dicatat pada tanggal{" "}
+                  <span className="font-semibold">
+                    {formatTanggalPanjang(tanggal)}
+                  </span>
+                  , bukan hari ini.
+                </p>
+              )}
+            </div>
+
+            <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className="text-sm font-medium text-gray-700">
                   Keterangan{" "}
                   <span className="text-gray-400 font-normal">(opsional)</span>
                 </label>
+                <span className="text-xs text-gray-400">
+                  {keterangan.length}/{KETERANGAN_MAX}
+                </span>
               </div>
               <textarea
                 value={keterangan}
@@ -375,9 +416,13 @@ export function DistributionModal({
                   setKeterangan(e.target.value.slice(0, KETERANGAN_MAX))
                 }
                 rows={3}
-                placeholder="Contoh: Distribusi ke Rawajitu / Barang retur"
+                placeholder="Contoh: Pengganti barang retur. Alasan retur: kemasan bocor. Ditukar dengan produk yang sama sesuai jumlah retur."
                 className="w-full px-4 py-2.5 clay-inset border-0 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0249E1]/40 resize-none"
               />
+              <p className="text-xs text-gray-500 mt-1">
+                Isi bila distribusi ini untuk mengganti barang retur: tulis
+                alasan retur dan produk baru yang ditukar.
+              </p>
             </div>
 
             <div className="flex gap-3 pt-2">
